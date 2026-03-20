@@ -25,6 +25,8 @@ app.get("/", (req, res) => {
   res.send("Nestle Connect MVP Backend Running");
 });
 
+
+
 app.get("/app", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/ad-entry.html"));
 });
