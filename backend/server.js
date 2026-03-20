@@ -26,7 +26,6 @@ app.get("/", (req, res) => {
 });
 
 
-
 app.get("/app", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/ad-entry.html"));
 });
