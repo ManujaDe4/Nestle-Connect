@@ -2,21 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Store Verification</title>
+  <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
-  <h1>Store Verification</h1>
 
-  <p id="shopName">Loading shop details...</p>
+  <div class="page-wrapper">
 
-  <div>
-    <label for="voucherCode">Voucher Code:</label><br />
-    <input type="text" id="voucherCode" placeholder="Enter voucher code" />
-    <br /><br />
-    <button id="submitBtn">Submit</button>
+    <!-- Brand -->
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12l2 2 4-4" />
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+        </svg>
+      </div>
+      <span class="brand-name">Nestlé Connect</span>
+      <span class="brand-divider">·</span>
+      <span class="brand-sub">Store Portal</span>
+    </div>
+
+    <!-- Card -->
+    <div class="card">
+      <div class="corner-mark">V</div>
+
+      <div class="card-header">
+        <h1 class="card-title">Store <span>Verification</span></h1>
+        <p id="shopName">Loading shop details…</p>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="form-group">
+        <label for="voucherCode">Voucher Code</label>
+        <input
+          type="text"
+          id="voucherCode"
+          placeholder="e.g. NSTL-XXXX-0000"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+
+      <button id="submitBtn"><span>Redeem Voucher</span></button>
+
+      <hr class="divider" />
+
+      <div id="responseMsg">Awaiting voucher submission…</div>
+
+      <p class="card-footer">
+        Transactions are secured and logged. For support, contact your regional rep.
+      </p>
+    </div>
+
   </div>
-
-  <p id="responseMsg">Waiting for action...</p>
 
   <script>
     const API_BASE = "https://nestle-connect.onrender.com";
@@ -30,9 +70,10 @@
 
     async function loadShop() {
       shopSlug = getShopSlug();
+      const shopEl = document.getElementById("shopName");
 
       if (!shopSlug) {
-        document.getElementById("shopName").innerText = "Invalid shop link: no shop slug found.";
+        shopEl.innerText = "No shop slug found in URL.";
         return;
       }
 
@@ -41,88 +82,93 @@
         const data = await res.json();
 
         if (!res.ok) {
-          document.getElementById("shopName").innerText = data.message || "Shop not found.";
+          shopEl.innerText = data.message || "Shop not found.";
           return;
         }
 
-        document.getElementById("shopName").innerText = `Shop: ${data.shop_name}`;
+        shopEl.innerText = data.shop_name;
+        shopEl.classList.add("loaded");
       } catch (err) {
         console.error(err);
-        document.getElementById("shopName").innerText = "Error loading shop details.";
+        shopEl.innerText = "Error loading shop details.";
       }
     }
 
     async function startRedemption() {
       const voucherCode = document.getElementById("voucherCode").value.trim();
+      const msgEl = document.getElementById("responseMsg");
+
+      msgEl.className = "";
 
       if (!voucherCode) {
-        document.getElementById("responseMsg").innerText = "Please enter a voucher code.";
+        msgEl.innerText = "Please enter a voucher code before submitting.";
+        msgEl.classList.add("state-error");
         return;
       }
+
+      msgEl.innerText = "Processing…";
 
       try {
         const res = await fetch(`${API_BASE}/api/redemptions/start`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            voucher_code: voucherCode,
-            shop_slug: shopSlug
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ voucher_code: voucherCode, shop_slug: shopSlug })
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-          document.getElementById("responseMsg").innerText = data.message || "Failed to start redemption.";
+          msgEl.innerText = data.message || "Failed to start redemption.";
+          msgEl.classList.add("state-error");
           return;
         }
 
         redemptionId = data.redemption?.redemption_id || data.redemption_id || "";
         const otp = data.redemption?.otp_code || data.otp_code || "(hidden)";
 
-        document.getElementById("responseMsg").innerHTML =
-          `OTP generated: <b>${otp}</b><br><button onclick="verifyOTP()">Verify OTP</button>`;
+        msgEl.innerHTML = `OTP generated: <b>${otp}</b><br><button onclick="verifyOTP()">Verify OTP</button>`;
       } catch (err) {
         console.error(err);
-        document.getElementById("responseMsg").innerText = "Server error while starting redemption.";
+        msgEl.innerText = "Server error while starting redemption.";
+        msgEl.classList.add("state-error");
       }
     }
 
     async function verifyOTP() {
-      const otp = prompt("Enter OTP:");
+      const otp = prompt("Enter the OTP sent to the customer:");
+      const msgEl = document.getElementById("responseMsg");
       if (!otp) return;
+
+      msgEl.innerText = "Verifying…";
+      msgEl.className = "";
 
       try {
         const res = await fetch(`${API_BASE}/api/redemptions/verify`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            redemption_id: redemptionId,
-            otp_code: otp
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ redemption_id: redemptionId, otp_code: otp })
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-          document.getElementById("responseMsg").innerText = data.message || "OTP verification failed.";
+          msgEl.innerText = data.message || "OTP verification failed.";
+          msgEl.classList.add("state-error");
           return;
         }
 
-        document.getElementById("responseMsg").innerText = "Redemption successful.";
+        msgEl.innerText = "✓ Redemption successful. Transaction recorded.";
+        msgEl.classList.add("state-success");
       } catch (err) {
         console.error(err);
-        document.getElementById("responseMsg").innerText = "Server error while verifying OTP.";
+        msgEl.innerText = "Server error while verifying OTP.";
+        msgEl.classList.add("state-error");
       }
     }
 
     document.getElementById("submitBtn").addEventListener("click", startRedemption);
-
     loadShop();
   </script>
+
 </body>
 </html>
