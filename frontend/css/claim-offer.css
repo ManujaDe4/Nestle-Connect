@@ -148,8 +148,8 @@ body {
   color: var(--accent);
 }
 
-/* ─── Shop name pill ─── */
-#shopName {
+/* ─── Campaign tag pill ─── */
+#campaignTag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -164,24 +164,14 @@ body {
   margin-top: 8px;
 }
 
-#shopName::before {
+#campaignTag::before {
   content: '';
   display: inline-block;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--ink-faint);
+  background: var(--accent);
   flex-shrink: 0;
-}
-
-#shopName.loaded::before {
-  background: var(--success);
-  animation: pulse 2s ease infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
 }
 
 /* ─── Divider ─── */
@@ -234,7 +224,7 @@ input[type="text"]:focus {
 }
 
 /* ─── Primary button ─── */
-button#submitBtn,
+button#claimBtn,
 .btn-primary {
   font-family: 'DM Mono', monospace;
   font-size: 0.78rem;
@@ -253,7 +243,7 @@ button#submitBtn,
   overflow: hidden;
 }
 
-button#submitBtn::after,
+button#claimBtn::after,
 .btn-primary::after {
   content: '';
   position: absolute;
@@ -264,50 +254,27 @@ button#submitBtn::after,
   z-index: 0;
 }
 
-button#submitBtn:hover::after,
+button#claimBtn:hover::after,
 .btn-primary:hover::after {
   transform: translateX(0);
 }
 
-button#submitBtn span,
+button#claimBtn span,
 .btn-primary span {
   position: relative;
   z-index: 1;
 }
 
-button#submitBtn:hover,
+button#claimBtn:hover,
 .btn-primary:hover {
   border-color: var(--accent);
   box-shadow: var(--shadow-hover);
   transform: translateY(-1px);
 }
 
-button#submitBtn:active,
+button#claimBtn:active,
 .btn-primary:active {
   transform: translateY(0);
-}
-
-/* ─── Verify OTP button (injected via JS) ─── */
-#responseMsg button {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.75rem;
-  font-weight: 400;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid rgba(192,112,74,0.25);
-  border-radius: var(--radius-sm);
-  padding: 10px 20px;
-  margin-top: 14px;
-  cursor: pointer;
-  display: inline-block;
-  transition: background var(--transition), transform var(--transition);
-}
-
-#responseMsg button:hover {
-  background: rgba(192,112,74,0.18);
-  transform: translateY(-1px);
 }
 
 /* ─── Response / Status message ─── */
@@ -339,11 +306,73 @@ button#submitBtn:active,
 #responseMsg b {
   font-weight: 400;
   color: var(--ink);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   background: var(--surface);
   padding: 2px 8px;
   border-radius: 4px;
   border: 1px solid var(--border);
+}
+
+/* ─── Result section ─── */
+.result-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.result-box {
+  background: var(--border-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+
+.result-label {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+.result-value {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+  word-break: break-word;
+}
+
+.success-note {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+/* ─── Continue link button ─── */
+.link-button {
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--surface);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  padding: 13px 24px;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.link-button:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
 }
 
 /* ─── Footer note ─── */
@@ -371,6 +400,15 @@ button#submitBtn:active,
   letter-spacing: -0.04em;
 }
 
+/* ─── Disabled states ─── */
+button:disabled,
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 480px) {
   .card {
@@ -380,12 +418,4 @@ button#submitBtn:active,
   .card-title {
     font-size: 1.5rem;
   }
-}
-
-button:disabled,
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }

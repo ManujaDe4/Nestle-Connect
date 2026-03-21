@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claim Offer</title>
+  <link rel="stylesheet" href="/frontend/css/claim-offer.css" />
+</head>
+<body>
+
+  <div class="page-wrapper">
+
+    <!-- Brand -->
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12l2 2 4-4" />
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+        </svg>
+      </div>
+      <span class="brand-name">Nestlé Connect</span>
+      <span class="brand-divider">·</span>
+      <span class="brand-sub">Customer Portal</span>
+    </div>
+
+    <!-- Card -->
+    <div class="card">
+      <div class="corner-mark">C</div>
+
+      <div class="card-header">
+        <h1 class="card-title">Claim <span>Your Offer</span></h1>
+        <p id="campaignTag">Campaign: CMP001 · Ad: AD001</p>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="form-group">
+        <label for="mobileNumber">Mobile Number</label>
+        <input
+          type="text"
+          id="mobileNumber"
+          placeholder="e.g. 0771234567"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+
+      <button id="claimBtn"><span>Claim Voucher</span></button>
+
+      <hr class="divider" />
+
+      <div id="responseMsg">Awaiting mobile number input…</div>
+
+      <div id="successSection" style="display: none;">
+        <hr class="divider" />
+
+        <div class="result-grid">
+          <div class="result-box">
+            <span class="result-label">Claim ID</span>
+            <span id="claimIdValue" class="result-value">-</span>
+          </div>
+
+          <div class="result-box">
+            <span class="result-label">Voucher Code</span>
+            <span id="voucherCodeValue" class="result-value">-</span>
+          </div>
+        </div>
+
+        <p class="card-footer success-note">
+          Voucher generated successfully. The same voucher code has been sent to the
+          customer by SMS (simulated for MVP).
+        </p>
+
+        <a id="continueLink" class="link-button" href="store-verify.html?shop=nugegoda-local-shop">
+          Continue to Store Verification
+        </a>
+      </div>
+
+      <p class="card-footer">
+        Your mobile number is used only for offer identification and redemption tracking.
+      </p>
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE = "https://nestle-connect.onrender.com";
+
+    const claimBtn = document.getElementById("claimBtn");
+    const mobileInput = document.getElementById("mobileNumber");
+    const responseMsg = document.getElementById("responseMsg");
+    const successSection = document.getElementById("successSection");
+    const claimIdValue = document.getElementById("claimIdValue");
+    const voucherCodeValue = document.getElementById("voucherCodeValue");
+
+    function setMessage(message, type = "") {
+      responseMsg.className = "";
+      responseMsg.innerHTML = message;
+
+      if (type === "success") {
+        responseMsg.classList.add("state-success");
+      } else if (type === "error") {
+        responseMsg.classList.add("state-error");
+      }
+    }
+
+    function setButtonState(button, disabled, text) {
+      button.disabled = disabled;
+      const span = button.querySelector("span");
+      if (span && text) span.innerText = text;
+    }
+
+    function isValidMobile(number) {
+      return /^0\d{9}$/.test(number);
+    }
+
+    async function claimVoucher() {
+      const customerMobile = mobileInput.value.trim();
+
+      successSection.style.display = "none";
+
+      if (!customerMobile) {
+        setMessage("Please enter your mobile number before continuing.", "error");
+        return;
+      }
+
+      if (!isValidMobile(customerMobile)) {
+        setMessage("Invalid mobile number format. Please use a valid Sri Lankan mobile number.", "error");
+        return;
+      }
+
+      setButtonState(claimBtn, true, "Processing...");
+      setMessage("Generating voucher...");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/vouchers/claim`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            customer_mobile: customerMobile,
+            campaign_id: "CMP001",
+            ad_id: "AD001"
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setMessage(data.message || "Failed to claim voucher.", "error");
+          setButtonState(claimBtn, false, "Claim Voucher");
+          return;
+        }
+
+        const voucher = data.voucher || {};
+        const claimId = voucher.claim_id || data.claim_id || "-";
+        const voucherCode = voucher.voucher_code || data.voucher_code || "-";
+
+        claimIdValue.innerText = claimId;
+        voucherCodeValue.innerText = voucherCode;
+
+        setMessage(
+          `Voucher claimed successfully.<br><br><b>SMS Status:</b> ${data.sms_message || "Voucher sent successfully."}`,
+          "success"
+        );
+
+        successSection.style.display = "block";
+      } catch (err) {
+        console.error(err);
+        setMessage("Server error while claiming voucher.", "error");
+      } finally {
+        setButtonState(claimBtn, false, "Claim Voucher");
+      }
+    }
+
+    claimBtn.addEventListener("click", claimVoucher);
+  </script>
+
+</body>
+</html>
