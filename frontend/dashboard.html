@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketing Dashboard</title>
+  <link rel="stylesheet" href="./css/claim-offer.css" />
+</head>
+<body>
+
+  <div class="page-wrapper">
+
+    <!-- Brand -->
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24">
+          <path d="M9 12l2 2 4-4" />
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+        </svg>
+      </div>
+      <span class="brand-name">Nestlé Connect</span>
+      <span class="brand-divider">·</span>
+      <span class="brand-sub">Marketing Dashboard</span>
+    </div>
+
+    <!-- Card -->
+    <div class="card">
+      <div class="corner-mark">D</div>
+
+      <div class="card-header">
+        <h1 class="card-title">Campaign <span>Insights</span></h1>
+        <p id="campaignTag">Live Performance Overview</p>
+      </div>
+
+      <hr class="divider" />
+
+      <!-- Metrics -->
+      <div class="result-grid">
+
+        <div class="result-box">
+          <span class="result-label">Total Claims</span>
+          <span id="totalClaims" class="result-value">--</span>
+        </div>
+
+        <div class="result-box">
+          <span class="result-label">Total Redemptions</span>
+          <span id="totalRedemptions" class="result-value">--</span>
+        </div>
+
+        <div class="result-box">
+          <span class="result-label">Redemption Rate</span>
+          <span id="conversionRate" class="result-value">--</span>
+        </div>
+
+        <div class="result-box">
+          <span class="result-label">Latest Redemption</span>
+          <span id="latestRedemption" class="result-value">--</span>
+        </div>
+
+      </div>
+
+      <hr class="divider" />
+
+      <div id="responseMsg">Loading dashboard data…</div>
+
+      <p class="card-footer">
+        This dashboard reflects real-time campaign performance based on customer redemptions.
+      </p>
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE = "https://nestle-connect.onrender.com";
+
+    const totalClaimsEl = document.getElementById("totalClaims");
+    const totalRedemptionsEl = document.getElementById("totalRedemptions");
+    const conversionRateEl = document.getElementById("conversionRate");
+    const latestRedemptionEl = document.getElementById("latestRedemption");
+    const responseMsg = document.getElementById("responseMsg");
+
+    function setMessage(message, type = "") {
+      responseMsg.className = "";
+      responseMsg.innerText = message;
+
+      if (type === "success") {
+        responseMsg.classList.add("state-success");
+      } else if (type === "error") {
+        responseMsg.classList.add("state-error");
+      }
+    }
+
+    async function loadDashboard() {
+      try {
+        const res = await fetch(`${API_BASE}/api/dashboard/summary`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          setMessage(data.message || "Failed to load dashboard.", "error");
+          return;
+        }
+
+        totalClaimsEl.innerText = data.total_claims ?? 0;
+        totalRedemptionsEl.innerText = data.total_redemptions ?? 0;
+        conversionRateEl.innerText = data.conversion_rate ?? "0%";
+
+        if (data.latest_sale) {
+          latestRedemptionEl.innerText =
+            data.latest_sale.voucher_code + " · " +
+            data.latest_sale.redeemed_at;
+        } else {
+          latestRedemptionEl.innerText = "No redemptions yet";
+        }
+
+        setMessage("Dashboard updated successfully.", "success");
+
+      } catch (err) {
+        console.error(err);
+        setMessage("Server error while loading dashboard.", "error");
+      }
+    }
+
+    loadDashboard();
+  </script>
+
+</body>
+</html>
