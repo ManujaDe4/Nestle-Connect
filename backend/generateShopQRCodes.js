@@ -29,7 +29,7 @@ if (!fs.existsSync(outputDir)) {
 async function generateQRCodes() {
   try {
     for (const shop of shops) {
-      const shopUrl = `http://https://nestle-connect.onrender.com:5000/store-verify.html?shop=${shop.qr_slug}`;
+      const shopUrl = `https://nestle-connect.onrender.com/store-verify.html?shop=${shop.qr_slug}`;
       const outputFile = path.join(outputDir, `${shop.shop_id}.png`);
 
       await QRCode.toFile(outputFile, shopUrl, {
