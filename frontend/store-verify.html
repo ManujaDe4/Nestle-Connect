@@ -4,41 +4,35 @@
   <meta charset="UTF-8" />
   <title>Store Verification</title>
 </head>
-
 <body>
-
   <h1>Store Verification</h1>
 
-  <p id="shopName">Loading shop...</p>
+  <p id="shopName">Loading shop details...</p>
 
-  <hr />
+  <div>
+    <label for="voucherCode">Voucher Code:</label><br />
+    <input type="text" id="voucherCode" placeholder="Enter voucher code" />
+    <br /><br />
+    <button id="submitBtn">Submit</button>
+  </div>
 
-  <h3>Enter Voucher Code</h3>
-
-  <input type="text" id="voucherCode" placeholder="Enter voucher code" />
-  <br /><br />
-  <button onclick="startRedemption()">Submit</button>
-
-  <p id="responseMsg"></p>
+  <p id="responseMsg">Waiting for action...</p>
 
   <script>
     const API_BASE = "https://nestle-connect.onrender.com";
-
     let shopSlug = "";
     let redemptionId = "";
 
-    // Get shop slug from URL
     function getShopSlug() {
       const params = new URLSearchParams(window.location.search);
       return params.get("shop");
     }
 
-    // Load shop details
     async function loadShop() {
       shopSlug = getShopSlug();
 
       if (!shopSlug) {
-        document.getElementById("shopName").innerText = "Invalid shop link";
+        document.getElementById("shopName").innerText = "Invalid shop link: no shop slug found.";
         return;
       }
 
@@ -46,21 +40,23 @@
         const res = await fetch(`${API_BASE}/api/shops/${shopSlug}`);
         const data = await res.json();
 
-        document.getElementById("shopName").innerText =
-          "Shop: " + data.shop_name;
+        if (!res.ok) {
+          document.getElementById("shopName").innerText = data.message || "Shop not found.";
+          return;
+        }
 
+        document.getElementById("shopName").innerText = `Shop: ${data.shop_name}`;
       } catch (err) {
-        document.getElementById("shopName").innerText =
-          "Error loading shop";
+        console.error(err);
+        document.getElementById("shopName").innerText = "Error loading shop details.";
       }
     }
 
-    // Start redemption
     async function startRedemption() {
-      const voucherCode = document.getElementById("voucherCode").value;
+      const voucherCode = document.getElementById("voucherCode").value.trim();
 
       if (!voucherCode) {
-        alert("Enter voucher code");
+        document.getElementById("responseMsg").innerText = "Please enter a voucher code.";
         return;
       }
 
@@ -78,28 +74,24 @@
 
         const data = await res.json();
 
-        if (res.ok) {
-          redemptionId = data.redemption_id;
-
-          document.getElementById("responseMsg").innerHTML =
-            "OTP: <b>" + data.otp_code + "</b><br/>" +
-            "<button onclick='verifyOTP()'>Verify OTP</button>";
-
-        } else {
-          document.getElementById("responseMsg").innerText =
-            data.message || "Error";
+        if (!res.ok) {
+          document.getElementById("responseMsg").innerText = data.message || "Failed to start redemption.";
+          return;
         }
 
+        redemptionId = data.redemption?.redemption_id || data.redemption_id || "";
+        const otp = data.redemption?.otp_code || data.otp_code || "(hidden)";
+
+        document.getElementById("responseMsg").innerHTML =
+          `OTP generated: <b>${otp}</b><br><button onclick="verifyOTP()">Verify OTP</button>`;
       } catch (err) {
-        document.getElementById("responseMsg").innerText =
-          "Server error";
+        console.error(err);
+        document.getElementById("responseMsg").innerText = "Server error while starting redemption.";
       }
     }
 
-    // Verify OTP
     async function verifyOTP() {
       const otp = prompt("Enter OTP:");
-
       if (!otp) return;
 
       try {
@@ -116,23 +108,21 @@
 
         const data = await res.json();
 
-        if (res.ok) {
-          document.getElementById("responseMsg").innerText =
-            "✅ Redemption successful!";
-        } else {
-          document.getElementById("responseMsg").innerText =
-            data.message || "Invalid OTP";
+        if (!res.ok) {
+          document.getElementById("responseMsg").innerText = data.message || "OTP verification failed.";
+          return;
         }
 
+        document.getElementById("responseMsg").innerText = "Redemption successful.";
       } catch (err) {
-        document.getElementById("responseMsg").innerText =
-          "Server error";
+        console.error(err);
+        document.getElementById("responseMsg").innerText = "Server error while verifying OTP.";
       }
     }
 
-    // Run on page load
+    document.getElementById("submitBtn").addEventListener("click", startRedemption);
+
     loadShop();
   </script>
-
 </body>
 </html>
