@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Store Verification</title>
+</head>
+
+<body>
+
+  <h1>Store Verification</h1>
+
+  <p id="shopName">Loading shop...</p>
+
+  <hr />
+
+  <h3>Enter Voucher Code</h3>
+
+  <input type="text" id="voucherCode" placeholder="Enter voucher code" />
+  <br /><br />
+  <button onclick="startRedemption()">Submit</button>
+
+  <p id="responseMsg"></p>
+
+  <script>
+    const API_BASE = "https://nestle-connect.onrender.com";
+
+    let shopSlug = "";
+    let redemptionId = "";
+
+    // Get shop slug from URL
+    function getShopSlug() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("shop");
+    }
+
+    // Load shop details
+    async function loadShop() {
+      shopSlug = getShopSlug();
+
+      if (!shopSlug) {
+        document.getElementById("shopName").innerText = "Invalid shop link";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/shops/${shopSlug}`);
+        const data = await res.json();
+
+        document.getElementById("shopName").innerText =
+          "Shop: " + data.shop_name;
+
+      } catch (err) {
+        document.getElementById("shopName").innerText =
+          "Error loading shop";
+      }
+    }
+
+    // Start redemption
+    async function startRedemption() {
+      const voucherCode = document.getElementById("voucherCode").value;
+
+      if (!voucherCode) {
+        alert("Enter voucher code");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/redemptions/start`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            voucher_code: voucherCode,
+            shop_slug: shopSlug
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          redemptionId = data.redemption_id;
+
+          document.getElementById("responseMsg").innerHTML =
+            "OTP: <b>" + data.otp_code + "</b><br/>" +
+            "<button onclick='verifyOTP()'>Verify OTP</button>";
+
+        } else {
+          document.getElementById("responseMsg").innerText =
+            data.message || "Error";
+        }
+
+      } catch (err) {
+        document.getElementById("responseMsg").innerText =
+          "Server error";
+      }
+    }
+
+    // Verify OTP
+    async function verifyOTP() {
+      const otp = prompt("Enter OTP:");
+
+      if (!otp) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/redemptions/verify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            redemption_id: redemptionId,
+            otp_code: otp
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          document.getElementById("responseMsg").innerText =
+            "✅ Redemption successful!";
+        } else {
+          document.getElementById("responseMsg").innerText =
+            data.message || "Invalid OTP";
+        }
+
+      } catch (err) {
+        document.getElementById("responseMsg").innerText =
+          "Server error";
+      }
+    }
+
+    // Run on page load
+    loadShop();
+  </script>
+
+</body>
+</html>
