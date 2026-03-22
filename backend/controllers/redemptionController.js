@@ -1,5 +1,6 @@
 const pool = require("../config/db");
 const { generateRedemptionId, generateOtpCode } = require("../utils/generateCodes");
+const sendSMS = require("../services/sms");
 
 const startRedemption = async (req, res) => {
   try {
@@ -57,11 +58,27 @@ const startRedemption = async (req, res) => {
     const insertValues = [redemptionId, voucher.claim_id, shop.shop_id, otpCode];
     const redemptionResult = await pool.query(insertQuery, insertValues);
 
+    // SMS to customer
+    await sendSMS(
+      voucher.customer_mobile,
+      `Your OTP is ${otpCode}. Use this to confirm your redemption.`,
+      "otp_customer",
+      redemptionId
+    );
+
+    // SMS to shop owner
+    await sendSMS(
+      shop.owner_mobile,
+      `Customer OTP is ${otpCode}. Enter this to verify the redemption.`,
+      "otp_shop_owner",
+      redemptionId
+    );
+
     res.status(201).json({
-      message: "OTP generated and sent to shop owner (simulated)",
+      message: "OTP generated and sent to customer and shop owner (simulated)",
       redemption: redemptionResult.rows[0],
       customer_message: `OTP sent for verification at ${shop.shop_name}.`,
-      simulated_shop_sms: `OTP ${otpCode} sent to shop owner ${shop.owner_mobile}.`,
+      simulated_shop_sms: `OTP ${otpCode} sent to shop owner ${shop.owner_mobile}.`
     });
   } catch (error) {
     console.error("startRedemption error:", error);
@@ -114,7 +131,7 @@ const verifyOtpAndRedeem = async (req, res) => {
 
     res.status(200).json({
       message: "Voucher redeemed successfully",
-      redemption_id,
+      redemption_id
     });
   } catch (error) {
     console.error("verifyOtpAndRedeem error:", error);
@@ -124,5 +141,5 @@ const verifyOtpAndRedeem = async (req, res) => {
 
 module.exports = {
   startRedemption,
-  verifyOtpAndRedeem,
+  verifyOtpAndRedeem
 };

@@ -1,5 +1,6 @@
 const pool = require("../config/db");
 const { generateClaimId, generateVoucherCode } = require("../utils/generateCodes");
+const sendSMS = require("../services/sms");
 
 const claimVoucher = async (req, res) => {
   try {
@@ -22,10 +23,17 @@ const claimVoucher = async (req, res) => {
     const values = [claimId, campaign_id, ad_id, customer_mobile, voucherCode];
     const result = await pool.query(query, values);
 
+    await sendSMS(
+      customer_mobile,
+      `Your Nestlé voucher code is ${voucherCode}`,
+      "voucher_customer",
+      claimId
+    );
+
     res.status(201).json({
       message: "Voucher claimed successfully",
       sms_message: `Voucher code ${voucherCode} sent to customer ${customer_mobile} (simulated).`,
-      voucher: result.rows[0],
+      voucher: result.rows[0]
     });
   } catch (error) {
     console.error("claimVoucher error:", error);

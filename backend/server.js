@@ -7,6 +7,7 @@ const voucherRoutes = require("./routes/vouchers");
 const shopRoutes = require("./routes/shops");
 const redemptionRoutes = require("./routes/redemptions");
 const dashboardRoutes = require("./routes/dashboard");
+const smsRoutes = require("./routes/sms");
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use("/api/vouchers", voucherRoutes);
 app.use("/api/shops", shopRoutes);
 app.use("/api/redemptions", redemptionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/sms", smsRoutes);
 
 app.use(express.static(path.join(__dirname, "../frontend")));
 
