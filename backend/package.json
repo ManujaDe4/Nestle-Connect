@@ -4,7 +4,8 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "pg": "^8.20.0",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "twilio": "^5.13.0"
   },
   "name": "backend",
   "version": "1.0.0",
