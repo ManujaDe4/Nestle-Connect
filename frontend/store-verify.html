@@ -19,13 +19,14 @@
       </div>
       <span class="brand-name">Nestlé Connect</span>
       <span class="brand-divider">·</span>
-      <span class="brand-sub">Store Portal</span>
+      <span class="brand-sub">Customer Verification</span>
     </div>
 
     <div class="card">
+      <div class="corner-mark">C</div>
 
       <div class="card-header">
-        <h1 class="card-title">Store <span>Verification</span></h1>
+        <h1 class="card-title">Customer <span>Voucher Entry</span></h1>
         <p id="shopName">Loading shop details…</p>
       </div>
 
@@ -36,35 +37,37 @@
         <input
           type="text"
           id="voucherCode"
-          placeholder="e.g. 482931"
+          placeholder="Enter voucher code"
           autocomplete="off"
           spellcheck="false"
         />
       </div>
 
-      <button id="submitBtn"><span>Redeem Voucher</span></button>
-
-      <div id="otpSection" style="display: none; margin-top: 20px;">
-        <div class="form-group">
-          <label for="otpCode">OTP Code</label>
-          <input
-            type="text"
-            id="otpCode"
-            placeholder="Enter OTP"
-            autocomplete="off"
-            spellcheck="false"
-          />
-        </div>
-
-        <button id="verifyBtn" class="btn-primary"><span>Verify OTP</span></button>
-      </div>
+      <button id="submitBtn"><span>Send OTP</span></button>
 
       <hr class="divider" />
 
       <div id="responseMsg">Awaiting voucher submission…</div>
 
+      <div id="successSection" style="display: none; margin-top: 20px;">
+        <div class="result-grid">
+          <div class="result-box">
+            <span class="result-label">Redemption Reference</span>
+            <span id="redemptionRefValue" class="result-value">-</span>
+          </div>
+        </div>
+
+        <p class="card-footer success-note">
+          OTP has been sent to both the customer and the relevant shop owner. Please ask the shop owner to complete verification on the separate owner verification page.
+        </p>
+
+        <a id="ownerLink" class="link-button" href="shop-owner-verify.html">
+          Go to Shop Owner Verification
+        </a>
+      </div>
+
       <p class="card-footer">
-        Transactions are secured and logged. For support, contact your regional rep.
+        This page is used only to validate the voucher and trigger OTP generation.
       </p>
     </div>
 
@@ -74,16 +77,13 @@
     const API_BASE = "https://nestle-connect.onrender.com";
 
     let shopSlug = "";
-    let redemptionId = "";
-    let currentOtp = "";
 
     const shopEl = document.getElementById("shopName");
     const voucherInput = document.getElementById("voucherCode");
     const submitBtn = document.getElementById("submitBtn");
     const responseMsg = document.getElementById("responseMsg");
-    const otpSection = document.getElementById("otpSection");
-    const otpInput = document.getElementById("otpCode");
-    const verifyBtn = document.getElementById("verifyBtn");
+    const successSection = document.getElementById("successSection");
+    const redemptionRefValue = document.getElementById("redemptionRefValue");
 
     function getShopSlug() {
       const params = new URLSearchParams(window.location.search);
@@ -134,6 +134,7 @@
 
     async function startRedemption() {
       const voucherCode = voucherInput.value.trim();
+      successSection.style.display = "none";
 
       if (!voucherCode) {
         setMessage("Please enter a voucher code before submitting.", "error");
@@ -146,7 +147,7 @@
       }
 
       setButtonState(submitBtn, true, "Processing...");
-      setMessage("Processing voucher redemption request...");
+      setMessage("Generating OTP and notifying both parties...");
 
       try {
         const res = await fetch(`${API_BASE}/api/redemptions/start`, {
@@ -162,79 +163,30 @@
 
         if (!res.ok) {
           setMessage(data.message || "Failed to start redemption.", "error");
-          setButtonState(submitBtn, false, "Redeem Voucher");
+          setButtonState(submitBtn, false, "Send OTP");
           return;
         }
 
-        redemptionId = data.redemption?.redemption_id || data.redemption_id || "";
-        currentOtp = data.redemption?.otp_code || data.otp_code || "";
+        const redemptionId = data.redemption?.redemption_id || data.redemption_id || "-";
+        redemptionRefValue.innerText = redemptionId;
 
-        otpSection.style.display = "block";
+        localStorage.setItem("latestRedemptionId", redemptionId);
 
         setMessage(
-          `OTP generated successfully.<br><br><b>Demo OTP:</b> ${currentOtp}<br><br>Enter the OTP below to complete verification.`,
+          `OTP sent successfully to both the customer and the shop owner.<br><br><b>Demo OTP:</b> ${data.redemption?.otp_code || data.otp_code || "(hidden)"}`,
           "success"
         );
 
+        successSection.style.display = "block";
       } catch (err) {
         console.error(err);
         setMessage("Server error while starting redemption.", "error");
       } finally {
-        setButtonState(submitBtn, false, "Redeem Voucher");
-      }
-    }
-
-    async function verifyOTP() {
-      const otp = otpInput.value.trim();
-
-      if (!otp) {
-        setMessage("Please enter the OTP before verification.", "error");
-        return;
-      }
-
-      if (!redemptionId) {
-        setMessage("No active redemption found. Please start redemption first.", "error");
-        return;
-      }
-
-      setButtonState(verifyBtn, true, "Verifying...");
-      setMessage("Verifying OTP...");
-
-      try {
-        const res = await fetch(`${API_BASE}/api/redemptions/verify`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            redemption_id: redemptionId,
-            otp_code: otp
-          })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          setMessage(data.message || "OTP verification failed.", "error");
-          setButtonState(verifyBtn, false, "Verify OTP");
-          return;
-        }
-
-        setMessage("✓ Redemption successful. Transaction recorded.", "success");
-        otpInput.disabled = true;
-        verifyBtn.disabled = true;
-        submitBtn.disabled = true;
-      } catch (err) {
-        console.error(err);
-        setMessage("Server error while verifying OTP.", "error");
-      } finally {
-        if (!verifyBtn.disabled) {
-          setButtonState(verifyBtn, false, "Verify OTP");
-        }
+        setButtonState(submitBtn, false, "Send OTP");
       }
     }
 
     submitBtn.addEventListener("click", startRedemption);
-    verifyBtn.addEventListener("click", verifyOTP);
-
     loadShop();
   </script>
 

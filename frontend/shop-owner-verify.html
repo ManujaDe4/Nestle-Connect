@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shop Owner Verification</title>
+  <link rel="stylesheet" href="./css/shop-owner-verify.css" />
+</head>
+<body>
+
+  <div class="page-wrapper">
+
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12l2 2 4-4" />
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+        </svg>
+      </div>
+      <span class="brand-name">Nestlé Connect</span>
+      <span class="brand-divider">·</span>
+      <span class="brand-sub">Shop Owner Portal</span>
+    </div>
+
+    <div class="card">
+      <div class="corner-mark">S</div>
+
+      <div class="card-header">
+        <h1 class="card-title">Owner <span>Verification</span></h1>
+        <p id="ownerTag">Enter the redemption reference and OTP to complete verification.</p>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="form-group">
+        <label for="redemptionId">Redemption Reference</label>
+        <input
+          type="text"
+          id="redemptionId"
+          placeholder="Enter redemption reference"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="otpCode">OTP Code</label>
+        <input
+          type="text"
+          id="otpCode"
+          placeholder="Enter OTP provided by customer"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+
+      <button id="verifyBtn"><span>Verify Redemption</span></button>
+
+      <hr class="divider" />
+
+      <div id="responseMsg">Awaiting redemption verification…</div>
+
+      <p class="card-footer">
+        The shop owner should only approve redemption after confirming that the customer's OTP matches the OTP received by SMS.
+      </p>
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE = "https://nestle-connect.onrender.com";
+
+    const redemptionInput = document.getElementById("redemptionId");
+    const otpInput = document.getElementById("otpCode");
+    const verifyBtn = document.getElementById("verifyBtn");
+    const responseMsg = document.getElementById("responseMsg");
+
+    const latestRedemptionId = localStorage.getItem("latestRedemptionId");
+    if (latestRedemptionId) {
+      redemptionInput.value = latestRedemptionId;
+    }
+
+    function setMessage(message, type = "") {
+      responseMsg.className = "";
+      responseMsg.innerHTML = message;
+
+      if (type === "success") {
+        responseMsg.classList.add("state-success");
+      } else if (type === "error") {
+        responseMsg.classList.add("state-error");
+      }
+    }
+
+    function setButtonState(button, disabled, text) {
+      button.disabled = disabled;
+      const span = button.querySelector("span");
+      if (span && text) span.innerText = text;
+    }
+
+    async function verifyRedemption() {
+      const redemptionId = redemptionInput.value.trim();
+      const otpCode = otpInput.value.trim();
+
+      if (!redemptionId || !otpCode) {
+        setMessage("Please enter both the redemption reference and OTP.", "error");
+        return;
+      }
+
+      setButtonState(verifyBtn, true, "Verifying...");
+      setMessage("Verifying redemption...");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/redemptions/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            redemption_id: redemptionId,
+            otp_code: otpCode
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setMessage(data.message || "Verification failed.", "error");
+          setButtonState(verifyBtn, false, "Verify Redemption");
+          return;
+        }
+
+        setMessage("✓ Redemption verified successfully. Transaction recorded.", "success");
+        redemptionInput.disabled = true;
+        otpInput.disabled = true;
+        verifyBtn.disabled = true;
+      } catch (err) {
+        console.error(err);
+        setMessage("Server error while verifying redemption.", "error");
+      } finally {
+        if (!verifyBtn.disabled) {
+          setButtonState(verifyBtn, false, "Verify Redemption");
+        }
+      }
+    }
+
+    verifyBtn.addEventListener("click", verifyRedemption);
+  </script>
+
+</body>
+</html>
