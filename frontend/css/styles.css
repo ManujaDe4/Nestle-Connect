@@ -124,7 +124,9 @@ body {
 .card::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 3px;
   background: linear-gradient(90deg, var(--accent), transparent);
   opacity: 0.7;
@@ -148,8 +150,10 @@ body {
   color: var(--accent);
 }
 
-/* ─── Shop name pill ─── */
-#shopName {
+/* ─── Meta pill / helper tag ─── */
+#shopName,
+#ownerTag,
+#campaignTag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -162,9 +166,12 @@ body {
   border-radius: 999px;
   padding: 5px 12px;
   margin-top: 8px;
+  line-height: 1.5;
 }
 
-#shopName::before {
+#shopName::before,
+#ownerTag::before,
+#campaignTag::before {
   content: '';
   display: inline-block;
   width: 6px;
@@ -179,9 +186,14 @@ body {
   animation: pulse 2s ease infinite;
 }
 
+#ownerTag::before,
+#campaignTag::before {
+  background: var(--accent);
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
+  50% { opacity: 0.4; }
 }
 
 /* ─── Divider ─── */
@@ -218,7 +230,10 @@ input[type="text"] {
   padding: 13px 16px;
   width: 100%;
   outline: none;
-  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    background var(--transition);
   letter-spacing: 0.05em;
 }
 
@@ -233,8 +248,10 @@ input[type="text"]:focus {
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-/* ─── Primary button ─── */
+/* ─── Primary buttons ─── */
 button#submitBtn,
+button#verifyBtn,
+button#claimBtn,
 .btn-primary {
   font-family: 'DM Mono', monospace;
   font-size: 0.78rem;
@@ -248,12 +265,18 @@ button#submitBtn,
   padding: 13px 24px;
   width: 100%;
   cursor: pointer;
-  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+  transition:
+    background var(--transition),
+    transform var(--transition),
+    box-shadow var(--transition),
+    border-color var(--transition);
   position: relative;
   overflow: hidden;
 }
 
 button#submitBtn::after,
+button#verifyBtn::after,
+button#claimBtn::after,
 .btn-primary::after {
   content: '';
   position: absolute;
@@ -265,17 +288,23 @@ button#submitBtn::after,
 }
 
 button#submitBtn:hover::after,
+button#verifyBtn:hover::after,
+button#claimBtn:hover::after,
 .btn-primary:hover::after {
   transform: translateX(0);
 }
 
 button#submitBtn span,
+button#verifyBtn span,
+button#claimBtn span,
 .btn-primary span {
   position: relative;
   z-index: 1;
 }
 
 button#submitBtn:hover,
+button#verifyBtn:hover,
+button#claimBtn:hover,
 .btn-primary:hover {
   border-color: var(--accent);
   box-shadow: var(--shadow-hover);
@@ -283,31 +312,71 @@ button#submitBtn:hover,
 }
 
 button#submitBtn:active,
+button#verifyBtn:active,
+button#claimBtn:active,
 .btn-primary:active {
   transform: translateY(0);
 }
 
-/* ─── Verify OTP button (injected via JS) ─── */
-#responseMsg button {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.75rem;
-  font-weight: 400;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid rgba(192,112,74,0.25);
-  border-radius: var(--radius-sm);
-  padding: 10px 20px;
-  margin-top: 14px;
-  cursor: pointer;
+/* ─── Secondary link button ─── */
+.link-button {
   display: inline-block;
-  transition: background var(--transition), transform var(--transition);
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--surface);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  padding: 13px 24px;
+  transition:
+    background var(--transition),
+    transform var(--transition),
+    box-shadow var(--transition),
+    border-color var(--transition);
 }
 
-#responseMsg button:hover {
-  background: rgba(192,112,74,0.18);
+.link-button:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-hover);
   transform: translateY(-1px);
+}
+
+/* ─── Result / meta grid ─── */
+.result-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.result-box {
+  background: var(--border-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+
+.result-label {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+.result-value {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+  word-break: break-word;
 }
 
 /* ─── Response / Status message ─── */
@@ -321,7 +390,10 @@ button#submitBtn:active,
   border-radius: var(--radius-sm);
   padding: 14px 16px;
   min-height: 54px;
-  transition: background var(--transition), border-color var(--transition), color var(--transition);
+  transition:
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition);
 }
 
 #responseMsg.state-success {
@@ -339,7 +411,7 @@ button#submitBtn:active,
 #responseMsg b {
   font-weight: 400;
   color: var(--ink);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   background: var(--surface);
   padding: 2px 8px;
   border-radius: 4px;
@@ -354,6 +426,11 @@ button#submitBtn:active,
   text-align: center;
   letter-spacing: 0.04em;
   line-height: 1.6;
+}
+
+.success-note {
+  margin-top: 16px;
+  margin-bottom: 16px;
 }
 
 /* ─── Decorative corner mark ─── */
@@ -371,6 +448,15 @@ button#submitBtn:active,
   letter-spacing: -0.04em;
 }
 
+/* ─── Disabled states ─── */
+button:disabled,
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 480px) {
   .card {
@@ -380,12 +466,10 @@ button#submitBtn:active,
   .card-title {
     font-size: 1.5rem;
   }
-}
 
-button:disabled,
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  #shopName,
+  #ownerTag,
+  #campaignTag {
+    font-size: 0.68rem;
+  }
 }
