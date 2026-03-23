@@ -23,7 +23,6 @@
     </div>
 
     <div class="card">
-      <div class="corner-mark">V</div>
 
       <div class="card-header">
         <h1 class="card-title">Store <span>Verification</span></h1>
@@ -37,21 +36,21 @@
         <input
           type="text"
           id="voucherCode"
-          placeholder="Enter voucher code"
+          placeholder="e.g. 482931"
           autocomplete="off"
           spellcheck="false"
         />
       </div>
 
-      <button id="submitBtn"><span>Send OTP</span></button>
+      <button id="submitBtn"><span>Redeem Voucher</span></button>
 
       <div id="otpSection" style="display: none; margin-top: 20px;">
         <div class="form-group">
-          <label for="otpCode">OTP Verification</label>
+          <label for="otpCode">OTP Code</label>
           <input
             type="text"
             id="otpCode"
-            placeholder="Enter OTP provided by customer"
+            placeholder="Enter OTP"
             autocomplete="off"
             spellcheck="false"
           />
@@ -65,7 +64,7 @@
       <div id="responseMsg">Awaiting voucher submission…</div>
 
       <p class="card-footer">
-        The same OTP is sent to both the customer and the relevant shop owner. Ask the customer for the OTP and verify it here.
+        Transactions are secured and logged. For support, contact your regional rep.
       </p>
     </div>
 
@@ -147,7 +146,7 @@
       }
 
       setButtonState(submitBtn, true, "Processing...");
-      setMessage("Generating OTP and sending to customer and shop owner...");
+      setMessage("Processing voucher redemption request...");
 
       try {
         const res = await fetch(`${API_BASE}/api/redemptions/start`, {
@@ -163,7 +162,7 @@
 
         if (!res.ok) {
           setMessage(data.message || "Failed to start redemption.", "error");
-          setButtonState(submitBtn, false, "Send OTP");
+          setButtonState(submitBtn, false, "Redeem Voucher");
           return;
         }
 
@@ -173,14 +172,15 @@
         otpSection.style.display = "block";
 
         setMessage(
-          `OTP sent successfully to both the customer and the shop owner.<br><br><b>Demo OTP:</b> ${currentOtp}<br><br>Ask the customer for the OTP and enter it below to complete verification.`,
+          `OTP generated successfully.<br><br><b>Demo OTP:</b> ${currentOtp}<br><br>Enter the OTP below to complete verification.`,
           "success"
         );
+
       } catch (err) {
         console.error(err);
         setMessage("Server error while starting redemption.", "error");
       } finally {
-        setButtonState(submitBtn, false, "Send OTP");
+        setButtonState(submitBtn, false, "Redeem Voucher");
       }
     }
 
