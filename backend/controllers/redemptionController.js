@@ -50,26 +50,24 @@ const startRedemption = async (req, res) => {
 
     const insertQuery = `
       INSERT INTO redemptions
-      (redemption_id, claim_id, shop_id, otp_code, otp_status, final_status)
-      VALUES ($1, $2, $3, $4, 'sent', 'pending')
+      (redemption_id, claim_id, shop_id, otp_code, otp_status, final_status, otp_expires_at, otp_attempts)
+      VALUES ($1, $2, $3, $4, 'sent', 'pending', NOW() + INTERVAL '5 minutes', 0)
       RETURNING *;
     `;
 
     const insertValues = [redemptionId, voucher.claim_id, shop.shop_id, otpCode];
     const redemptionResult = await pool.query(insertQuery, insertValues);
 
-    // SMS to customer
     await sendSMS(
       voucher.customer_mobile,
-      `Your OTP is ${otpCode}. Use this to confirm your redemption.`,
+      `Your OTP is ${otpCode}. Share this with the shop owner. Valid for 5 minutes.`,
       "otp_customer",
       redemptionId
     );
 
-    // SMS to shop owner
     await sendSMS(
       shop.owner_mobile,
-      `Customer OTP is ${otpCode}. Enter this to verify the redemption.`,
+      `Customer OTP is ${otpCode}. Ask the customer for the same code to verify redemption. Valid for 5 minutes.`,
       "otp_shop_owner",
       redemptionId
     );
@@ -109,7 +107,18 @@ const verifyOtpAndRedeem = async (req, res) => {
       return res.status(400).json({ message: "Redemption already completed" });
     }
 
+    if (new Date() > new Date(redemption.otp_expires_at)) {
+      return res.status(400).json({ message: "OTP expired. Please start redemption again." });
+    }
+
     if (redemption.otp_code !== otp_code) {
+      await pool.query(
+        `UPDATE redemptions
+         SET otp_attempts = otp_attempts + 1
+         WHERE redemption_id = $1`,
+        [redemption_id]
+      );
+
       return res.status(400).json({ message: "Invalid OTP code" });
     }
 
