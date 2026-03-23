@@ -50,13 +50,14 @@
       <div id="responseMsg">Awaiting voucher submission…</div>
 
       <div id="successSection" style="display: none; margin-top: 20px;">
-        <div class="result-grid">
-          <div class="result-box">
-            <span class="result-label">Redemption Reference</span>
-            <span id="redemptionRefValue" class="result-value">-</span>
-          </div>
-        </div>
+        <p class="card-footer success-note">
+         OTP has been sent to both the customer and the relevant shop owner. Please ask the shop owner to complete verification.
+        </p>
 
+       <a id="ownerLink" class="link-button" href="shop-owner-verify.html">
+        Go to Shop Owner Verification
+      </a>
+      </div>
         <p class="card-footer success-note">
           OTP has been sent to both the customer and the relevant shop owner. Please ask the shop owner to complete verification on the separate owner verification page.
         </p>
@@ -83,7 +84,6 @@
     const submitBtn = document.getElementById("submitBtn");
     const responseMsg = document.getElementById("responseMsg");
     const successSection = document.getElementById("successSection");
-    const redemptionRefValue = document.getElementById("redemptionRefValue");
 
     function getShopSlug() {
       const params = new URLSearchParams(window.location.search);
@@ -168,7 +168,6 @@
         }
 
         const redemptionId = data.redemption?.redemption_id || data.redemption_id || "-";
-        redemptionRefValue.innerText = redemptionId;
 
         localStorage.setItem("latestRedemptionId", redemptionId);
 
