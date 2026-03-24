@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shop Owner Verification</title>
-  <link rel="stylesheet" href="./css/shop-owner-verify.css" />
+  <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
 
@@ -27,12 +27,10 @@
 
       <div class="card-header">
         <h1 class="card-title">Owner <span>Verification</span></h1>
-        <p id="ownerTag">Enter the redemption reference and OTP to complete verification.</p>
+        <p id="ownerTag">Enter the OTP to complete redemption verification.</p>
       </div>
 
       <hr class="divider" />
-
-    
 
       <div class="form-group">
         <label for="otpCode">OTP Code</label>
@@ -83,11 +81,16 @@
     }
 
     async function verifyRedemption() {
-      const redemptionId = redemptionInput.value.trim();
       const otpCode = otpInput.value.trim();
+      const redemptionId = localStorage.getItem("latestRedemptionId");
 
-        if (!otpCode)
-        setMessage("Please enter both the redemption reference and OTP.", "error");
+      if (!otpCode) {
+        setMessage("Please enter the OTP.", "error");
+        return;
+      }
+
+      if (!redemptionId) {
+        setMessage("No redemption reference found. Please start the redemption flow again.", "error");
         return;
       }
 
@@ -99,8 +102,9 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            redemption_id: redemptionId,
             otp_code: otpCode
-        })
+          })
         });
 
         const data = await res.json();
@@ -112,7 +116,6 @@
         }
 
         setMessage("✓ Redemption verified successfully. Transaction recorded.", "success");
-        redemptionInput.disabled = true;
         otpInput.disabled = true;
         verifyBtn.disabled = true;
       } catch (err) {
@@ -123,6 +126,7 @@
           setButtonState(verifyBtn, false, "Verify Redemption");
         }
       }
+    }
 
     verifyBtn.addEventListener("click", verifyRedemption);
   </script>
