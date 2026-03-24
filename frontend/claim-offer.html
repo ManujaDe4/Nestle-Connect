@@ -4,9 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Claim Offer</title>
-  <link rel="stylesheet" href="./css/claim-offer.css" />
+  <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
+
+  <!-- Toast Popup -->
+  <div id="toast" class="toast">
+    <span id="toastMessage">Message</span>
+  </div>
 
   <div class="page-wrapper">
 
@@ -25,10 +30,12 @@
 
     <!-- Card -->
     <div class="card">
+      <div class="corner-mark">C</div>
 
       <div class="card-header">
         <h1 class="card-title">Claim <span>Your Offer</span></h1>
-   
+        <p id="campaignTag">Campaign: CMP001 · Ad: AD001</p>
+      </div>
 
       <hr class="divider" />
 
@@ -65,11 +72,14 @@
         </div>
 
         <p class="card-footer success-note">
-          Voucher generated successfully. The same voucher code has been sent to the
-          customer
+          The voucher has been generated and linked to the customer mobile number. It can now be redeemed at a participating local shop.
         </p>
 
-    
+        <a id="continueLink" class="link-button" href="store-verify.html?shop=nugegoda-local-shop">
+          Continue to Store Verification
+        </a>
+      </div>
+
       <p class="card-footer">
         Your mobile number is used only for offer identification and redemption tracking.
       </p>
@@ -86,6 +96,9 @@
     const successSection = document.getElementById("successSection");
     const claimIdValue = document.getElementById("claimIdValue");
     const voucherCodeValue = document.getElementById("voucherCodeValue");
+
+    const toast = document.getElementById("toast");
+    const toastMessage = document.getElementById("toastMessage");
 
     function setMessage(message, type = "") {
       responseMsg.className = "";
@@ -108,6 +121,23 @@
       return /^0\d{9}$/.test(number);
     }
 
+    function showToast(message, type = "success") {
+      toastMessage.textContent = message;
+      toast.className = "toast show";
+
+      if (type === "success") {
+        toast.classList.add("toast-success");
+      } else if (type === "error") {
+        toast.classList.add("toast-error");
+      } else if (type === "info") {
+        toast.classList.add("toast-info");
+      }
+
+      setTimeout(() => {
+        toast.className = "toast";
+      }, 3000);
+    }
+
     async function claimVoucher() {
       const customerMobile = mobileInput.value.trim();
 
@@ -115,11 +145,13 @@
 
       if (!customerMobile) {
         setMessage("Please enter your mobile number before continuing.", "error");
+        showToast("Please enter your mobile number.", "error");
         return;
       }
 
       if (!isValidMobile(customerMobile)) {
         setMessage("Invalid mobile number format. Please use a valid Sri Lankan mobile number.", "error");
+        showToast("Invalid mobile number format.", "error");
         return;
       }
 
@@ -143,6 +175,7 @@
 
         if (!res.ok) {
           setMessage(data.message || "Failed to claim voucher.", "error");
+          showToast(data.message || "Failed to claim voucher.", "error");
           setButtonState(claimBtn, false, "Claim Voucher");
           return;
         }
@@ -154,15 +187,25 @@
         claimIdValue.innerText = claimId;
         voucherCodeValue.innerText = voucherCode;
 
-        setMessage(
-          `Voucher claimed successfully.<br><br><b>SMS Status:</b> ${data.sms_message || "Voucher sent successfully."}`,
-          "success"
-        );
+        if (data.already_claimed) {
+          setMessage(
+            `This mobile number has already claimed a voucher for this advertisement.<br><br><b>Existing voucher returned.</b>`,
+            "success"
+          );
+          showToast("Voucher already claimed. Existing voucher returned.", "info");
+        } else {
+          setMessage(
+            `Voucher claimed successfully.<br><br><b>SMS Status:</b> ${data.sms_message || "Voucher sent successfully."}`,
+            "success"
+          );
+          showToast("Voucher claimed successfully.", "success");
+        }
 
         successSection.style.display = "block";
       } catch (err) {
         console.error(err);
         setMessage("Server error while claiming voucher.", "error");
+        showToast("Server error while claiming voucher.", "error");
       } finally {
         setButtonState(claimBtn, false, "Claim Voucher");
       }

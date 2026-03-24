@@ -1,19 +1,41 @@
 const pool = require("../config/db");
 const { generateClaimId, generateVoucherCode } = require("../utils/generateCodes");
+const normalizeMobile = require("../utils/normalizeMobile");
 const sendSMS = require("../services/sms");
 
 const claimVoucher = async (req, res) => {
   try {
-    const { customer_mobile, campaign_id, ad_id } = req.body;
+    let { customer_mobile, campaign_id, ad_id } = req.body;
 
     if (!customer_mobile || !campaign_id || !ad_id) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+    customer_mobile = normalizeMobile(customer_mobile);
+
+    const existingVoucherQuery = `
+      SELECT * FROM vouchers
+      WHERE customer_mobile = $1 AND ad_id = $2
+      LIMIT 1;
+    `;
+
+    const existingVoucherResult = await pool.query(existingVoucherQuery, [
+      customer_mobile,
+      ad_id
+    ]);
+
+    if (existingVoucherResult.rows.length > 0) {
+      return res.status(200).json({
+        message: "This customer has already claimed a voucher for this advertisement.",
+        already_claimed: true,
+        voucher: existingVoucherResult.rows[0]
+      });
+    }
+
     const claimId = generateClaimId();
     const voucherCode = generateVoucherCode();
 
-    const query = `
+    const insertQuery = `
       INSERT INTO vouchers
       (claim_id, campaign_id, ad_id, customer_mobile, voucher_code, claim_status, sms_sent)
       VALUES ($1, $2, $3, $4, $5, 'claimed', true)
@@ -21,7 +43,7 @@ const claimVoucher = async (req, res) => {
     `;
 
     const values = [claimId, campaign_id, ad_id, customer_mobile, voucherCode];
-    const result = await pool.query(query, values);
+    const result = await pool.query(insertQuery, values);
 
     await sendSMS(
       customer_mobile,
@@ -32,11 +54,19 @@ const claimVoucher = async (req, res) => {
 
     res.status(201).json({
       message: "Voucher claimed successfully",
-      sms_message: `Voucher code ${voucherCode} sent to customer ${customer_mobile} (simulated).`,
+      already_claimed: false,
+      sms_message: `Voucher code ${voucherCode} sent to customer ${customer_mobile}.`,
       voucher: result.rows[0]
     });
   } catch (error) {
     console.error("claimVoucher error:", error);
+
+    if (error.code === "23505") {
+      return res.status(409).json({
+        message: "A voucher has already been claimed for this advertisement by this customer."
+      });
+    }
+
     res.status(500).json({ message: "Server error while claiming voucher" });
   }
 };

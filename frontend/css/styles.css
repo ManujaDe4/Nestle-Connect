@@ -473,3 +473,49 @@ button:disabled,
     font-size: 0.68rem;
   }
 }
+
+/* ─── Toast Popup ─── */
+.toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  min-width: 260px;
+  max-width: 360px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  font-family: 'DM Mono', monospace;
+  color: var(--surface);
+  background: var(--ink);
+  box-shadow: 0 10px 30px rgba(30, 27, 23, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 9999;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.toast.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.toast-success {
+  background: var(--success);
+}
+
+.toast-error {
+  background: var(--error);
+}
+
+.toast-info {
+  background: var(--accent);
+}
+
+/* better spacing for success section */
+#successSection {
+  margin-top: 20px;
+}
