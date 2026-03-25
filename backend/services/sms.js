@@ -1,5 +1,6 @@
 const axios = require("axios");
 const pool = require("../config/db");
+const { response } = require("express");
 
 async function sendSMS(to, message, smsType = "general", relatedId = null) {
   const token = process.env.TEXTLK_API_TOKEN;
@@ -20,6 +21,7 @@ async function sendSMS(to, message, smsType = "general", relatedId = null) {
         message
       },
       {
+
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -38,7 +40,7 @@ async function sendSMS(to, message, smsType = "general", relatedId = null) {
     return {
       success: true,
       provider: "textlk",
-      response: res.data
+      response: res.data  
     };
   } catch (error) {
     console.error("Text.lk SMS error:", error.response?.data || error.message);

@@ -4,16 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Marketing Dashboard</title>
-  <link rel="stylesheet" href="./css/claim-offer.css" />
+  <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
 
   <div class="page-wrapper">
 
-    <!-- Brand -->
     <div class="brand">
       <div class="brand-mark">
-        <svg viewBox="0 0 24 24">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 12l2 2 4-4" />
           <rect x="3" y="3" width="18" height="18" rx="3" />
         </svg>
@@ -23,8 +22,8 @@
       <span class="brand-sub">Marketing Dashboard</span>
     </div>
 
-    <!-- Card -->
     <div class="card">
+      <div class="corner-mark">D</div>
 
       <div class="card-header">
         <h1 class="card-title">Campaign <span>Insights</span></h1>
@@ -33,9 +32,7 @@
 
       <hr class="divider" />
 
-      <!-- Metrics -->
       <div class="result-grid">
-
         <div class="result-box">
           <span class="result-label">Total Claims</span>
           <span id="totalClaims" class="result-value">--</span>
@@ -55,7 +52,6 @@
           <span class="result-label">Latest Redemption</span>
           <span id="latestRedemption" class="result-value">--</span>
         </div>
-
       </div>
 
       <hr class="divider" />
@@ -63,7 +59,7 @@
       <div id="responseMsg">Loading dashboard data…</div>
 
       <p class="card-footer">
-        This dashboard reflects real-time campaign performance based on customer redemptions.
+        This dashboard reflects real-time campaign performance based on customer claims and confirmed redemptions.
       </p>
     </div>
 
@@ -94,27 +90,36 @@
         const res = await fetch(`${API_BASE}/api/dashboard/summary`);
         const data = await res.json();
 
+        console.log("Dashboard API response:", data);
+
         if (!res.ok) {
           setMessage(data.message || "Failed to load dashboard.", "error");
           return;
         }
 
-        totalClaimsEl.innerText = data.total_claims ?? 0;
-        totalRedemptionsEl.innerText = data.total_redemptions ?? 0;
-        conversionRateEl.innerText = data.conversion_rate ?? "0%";
+        // Match your current backend response keys
+        totalClaimsEl.innerText = data.totalClaims ?? 0;
+        totalRedemptionsEl.innerText = data.totalConfirmedSales ?? 0;
+        conversionRateEl.innerText = data.redemptionRate ?? "0%";
 
-        if (data.latest_sale) {
-          latestRedemptionEl.innerText =
-            data.latest_sale.voucher_code + " · " +
-            data.latest_sale.redeemed_at;
+        if (data.latestConfirmedSale) {
+          const latest = data.latestConfirmedSale;
+
+          if (typeof latest === "string") {
+            latestRedemptionEl.innerText = latest;
+          } else if (latest.voucher_code && latest.redeemed_at) {
+            latestRedemptionEl.innerText =
+              `${latest.voucher_code} · ${new Date(latest.redeemed_at).toLocaleString()}`;
+          } else {
+            latestRedemptionEl.innerText = JSON.stringify(latest);
+          }
         } else {
           latestRedemptionEl.innerText = "No redemptions yet";
         }
 
         setMessage("Dashboard updated successfully.", "success");
-
       } catch (err) {
-        console.error(err);
+        console.error("Dashboard load error:", err);
         setMessage("Server error while loading dashboard.", "error");
       }
     }
