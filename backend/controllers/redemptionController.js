@@ -58,30 +58,23 @@ const startRedemption = async (req, res) => {
     const insertValues = [redemptionId, voucher.claim_id, shop.shop_id, otpCode];
     const redemptionResult = await pool.query(insertQuery, insertValues);
 
-console.log("About to send OTP to customer:", voucher.customer_mobile);
+    await sendSMS(
+      voucher.customer_mobile,
+      `Your OTP is ${otpCode}. Share this with the shop owner. Valid for 5 minutes.`,
+      "otp_customer",
+      redemptionId
+    );
 
-await sendSMS(
-  voucher.customer_mobile,
-  `Your OTP is ${otpCode}. Share this with the shop owner.`,
-  "otp_customer",
-  redemptionId
-);
+    await sendSMS(
+      shop.owner_mobile,
+      `Customer OTP is ${otpCode}. Ask the customer for the same code to verify redemption. Valid for 5 minutes.`,
+      "otp_shop_owner",
+      redemptionId
+    );
 
-console.log("About to send OTP to shop owner:", shop.owner_mobile);
-
-await sendSMS(
-  shop.owner_mobile,
-  `Customer OTP is ${otpCode}.`,
-  "otp_shop_owner",
-  redemptionId
-);
-
-console.log("Finished both SMS sends");
     res.status(201).json({
-      message: "OTP generated and sent to customer and shop owner (simulated)",
-      redemption: redemptionResult.rows[0],
-      customer_message: `OTP sent for verification at ${shop.shop_name}.`,
-      simulated_shop_sms: `OTP ${otpCode} sent to shop owner ${shop.owner_mobile}.`
+      message: "OTP generated and sent to customer and shop owner",
+      redemption: redemptionResult.rows[0]
     });
   } catch (error) {
     console.error("startRedemption error:", error);

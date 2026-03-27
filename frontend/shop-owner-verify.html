@@ -90,7 +90,7 @@
       }
 
       if (!redemptionId) {
-        setMessage("No redemption reference found. Please start the redemption flow again.", "error");
+        setMessage("No redemption request found. Please start the redemption flow again.", "error");
         return;
       }
 
@@ -118,6 +118,8 @@
         setMessage("✓ Redemption verified successfully. Transaction recorded.", "success");
         otpInput.disabled = true;
         verifyBtn.disabled = true;
+
+        localStorage.removeItem("latestRedemptionId");
       } catch (err) {
         console.error(err);
         setMessage("Server error while verifying redemption.", "error");
