@@ -51,12 +51,9 @@
 
       <div id="successSection" style="display: none; margin-top: 20px;">
         <p class="card-footer success-note">
-          OTP has been sent to both the customer and the relevant shop owner. Please ask the shop owner to complete verification.
+          OTP has been sent to both the customer and the shop owner.<br><br>
+          Please provide the OTP to the shop owner to complete verification.
         </p>
-
-        <a id="ownerLink" class="link-button" href="shop-owner-verify.html">
-          Go to Shop Owner Verification
-        </a>
       </div>
 
       <p class="card-footer">
@@ -103,7 +100,7 @@
       shopSlug = getShopSlug();
 
       if (!shopSlug) {
-        shopEl.innerText = "No shop slug found in URL.";
+        shopEl.innerText = "No shop selected.";
         return;
       }
 
@@ -162,12 +159,13 @@
         const redemptionId = data.redemption?.redemption_id || data.redemption_id || null;
         const otpCode = data.redemption?.otp_code || data.otp_code || "(hidden)";
 
+        // store silently for shop owner page
         if (redemptionId) {
           localStorage.setItem("latestRedemptionId", redemptionId);
         }
 
         setMessage(
-          `OTP sent successfully to both the customer and the shop owner.<br><br><b>Demo OTP:</b> ${otpCode}`,
+          `OTP sent successfully.<br><br><b>Demo OTP:</b> ${otpCode}`,
           "success"
         );
 
