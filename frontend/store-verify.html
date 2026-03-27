@@ -10,6 +10,7 @@
 
   <div class="page-wrapper">
 
+    <!-- Brand -->
     <div class="brand">
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -22,6 +23,7 @@
       <span class="brand-sub">Customer Verification</span>
     </div>
 
+    <!-- Card -->
     <div class="card">
       <div class="corner-mark">C</div>
 
@@ -32,6 +34,7 @@
 
       <hr class="divider" />
 
+      <!-- Input -->
       <div class="form-group">
         <label for="voucherCode">Voucher Code</label>
         <input
@@ -43,12 +46,15 @@
         />
       </div>
 
+      <!-- Button -->
       <button id="submitBtn"><span>Send OTP</span></button>
 
       <hr class="divider" />
 
+      <!-- Response -->
       <div id="responseMsg">Awaiting voucher submission…</div>
 
+      <!-- Success -->
       <div id="successSection" style="display: none; margin-top: 20px;">
         <p class="card-footer success-note">
           OTP has been sent to both the customer and the shop owner.<br><br>
@@ -56,6 +62,7 @@
         </p>
       </div>
 
+      <!-- Footer -->
       <p class="card-footer">
         This page is used only to validate the voucher and trigger OTP generation.
       </p>
@@ -159,7 +166,7 @@
         const redemptionId = data.redemption?.redemption_id || data.redemption_id || null;
         const otpCode = data.redemption?.otp_code || data.otp_code || "(hidden)";
 
-        // store silently for shop owner page
+        // store for owner verification
         if (redemptionId) {
           localStorage.setItem("latestRedemptionId", redemptionId);
         }
