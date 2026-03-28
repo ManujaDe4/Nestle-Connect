@@ -419,3 +419,20 @@ button:disabled,
     font-size: 1.5rem;
   }
 }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ✅ NEW LOGO STYLE */
+.brand-logo {
+  width: 40px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* OPTIONAL: nicer spacing */
+.brand-name {
+  font-weight: 600;
+}
