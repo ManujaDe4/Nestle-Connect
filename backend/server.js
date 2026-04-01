@@ -34,21 +34,13 @@ const frontendPath = path.join(__dirname, "../frontend");
 app.use(express.static(frontendPath));
 
 /* =========================
-   ROOT ROUTE (IMPORTANT FIX)
+   ROOT ROUTES
 ========================= */
 app.get("/", (req, res) => {
   res.sendFile(path.join(frontendPath, "ad-entry.html"));
 });
 
-/* OPTIONAL: direct app route */
 app.get("/app", (req, res) => {
-  res.sendFile(path.join(frontendPath, "ad-entry.html"));
-});
-
-/* =========================
-   FALLBACK (OPTIONAL BUT NICE)
-========================= */
-app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "ad-entry.html"));
 });
 
@@ -58,5 +50,5 @@ app.get("*", (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
