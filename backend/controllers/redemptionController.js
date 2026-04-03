@@ -10,6 +10,7 @@ const startRedemption = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+    // Find shop
     const shopResult = await pool.query(
       "SELECT * FROM shops WHERE qr_slug = $1",
       [shop_slug]
@@ -21,6 +22,7 @@ const startRedemption = async (req, res) => {
 
     const shop = shopResult.rows[0];
 
+    // Find voucher
     const voucherResult = await pool.query(
       "SELECT * FROM vouchers WHERE voucher_code = $1",
       [voucher_code]
@@ -36,6 +38,7 @@ const startRedemption = async (req, res) => {
       return res.status(400).json({ message: "Voucher already redeemed" });
     }
 
+    // Prevent multiple active redemptions for same voucher
     const pendingCheck = await pool.query(
       "SELECT * FROM redemptions WHERE claim_id = $1 AND final_status = 'pending'",
       [voucher.claim_id]
@@ -58,6 +61,7 @@ const startRedemption = async (req, res) => {
     const insertValues = [redemptionId, voucher.claim_id, shop.shop_id, otpCode];
     const redemptionResult = await pool.query(insertQuery, insertValues);
 
+    // OTP to customer
     await sendSMS(
       voucher.customer_mobile,
       `Your OTP is ${otpCode}. Share this with the shop owner. Valid for 5 minutes.`,
@@ -65,9 +69,10 @@ const startRedemption = async (req, res) => {
       redemptionId
     );
 
+    // OTP to shop owner
     await sendSMS(
       shop.owner_mobile,
-      `Customer OTP is ${otpCode}. Ask the customer for the same code to verify redemption. Valid for 5 minutes.`,
+      `Customer OTP is ${otpCode}. Use this to verify redemption. Valid for 5 minutes.`,
       "otp_shop_owner",
       redemptionId
     );
@@ -84,49 +89,54 @@ const startRedemption = async (req, res) => {
 
 const verifyOtpAndRedeem = async (req, res) => {
   try {
-    const { redemption_id, otp_code } = req.body;
+    const { otp_code, shop_slug } = req.body;
 
-    if (!redemption_id || !otp_code) {
-      return res.status(400).json({ message: "Missing required fields" });
+    if (!otp_code || !shop_slug) {
+      return res.status(400).json({ message: "Missing OTP or shop information" });
     }
 
+    // Find shop
+    const shopResult = await pool.query(
+      "SELECT * FROM shops WHERE qr_slug = $1",
+      [shop_slug]
+    );
+
+    if (shopResult.rows.length === 0) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    const shop = shopResult.rows[0];
+
+    // Find pending redemption by shop + OTP
     const redemptionResult = await pool.query(
-      "SELECT * FROM redemptions WHERE redemption_id = $1",
-      [redemption_id]
+      `SELECT * FROM redemptions
+       WHERE shop_id = $1
+         AND otp_code = $2
+         AND final_status = 'pending'
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [shop.shop_id, otp_code]
     );
 
     if (redemptionResult.rows.length === 0) {
-      return res.status(404).json({ message: "Redemption request not found" });
+      return res.status(404).json({ message: "No matching pending redemption found for this OTP." });
     }
 
     const redemption = redemptionResult.rows[0];
 
-    if (redemption.final_status === "redeemed") {
-      return res.status(400).json({ message: "Redemption already completed" });
-    }
-
+    // Expiry check
     if (new Date() > new Date(redemption.otp_expires_at)) {
       return res.status(400).json({ message: "OTP expired. Please start redemption again." });
     }
 
-    if (redemption.otp_code !== otp_code) {
-      await pool.query(
-        `UPDATE redemptions
-         SET otp_attempts = otp_attempts + 1
-         WHERE redemption_id = $1`,
-        [redemption_id]
-      );
-
-      return res.status(400).json({ message: "Invalid OTP code" });
-    }
-
+    // Mark redemption as successful
     await pool.query(
       `UPDATE redemptions
        SET otp_status = 'verified',
            final_status = 'redeemed',
            redeemed_at = CURRENT_TIMESTAMP
        WHERE redemption_id = $1`,
-      [redemption_id]
+      [redemption.redemption_id]
     );
 
     await pool.query(
@@ -138,7 +148,7 @@ const verifyOtpAndRedeem = async (req, res) => {
 
     res.status(200).json({
       message: "Voucher redeemed successfully",
-      redemption_id
+      redemption_id: redemption.redemption_id
     });
   } catch (error) {
     console.error("verifyOtpAndRedeem error:", error);

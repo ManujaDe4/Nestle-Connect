@@ -10,17 +10,12 @@
 
   <div class="page-wrapper">
 
-     <!-- BRAND -->
     <div class="brand">
-
-      <!-- ✅ NEW LOGO -->
-      <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" class="brand-logo" />
-
+      <img src="./assets/nestle-logo.png" alt="Nestlé Logo" class="brand-logo" />
       <span class="brand-name">Nestlé Connect</span>
       <span class="brand-divider">·</span>
       <span class="brand-sub">Retailer Portal</span>
     </div>
-
 
     <div class="card">
       <div class="corner-mark">S</div>
@@ -37,7 +32,7 @@
         <input
           type="text"
           id="otpCode"
-          placeholder="Enter OTP provided by customer"
+          placeholder="Enter OTP received by SMS"
           autocomplete="off"
           spellcheck="false"
         />
@@ -63,6 +58,11 @@
     const verifyBtn = document.getElementById("verifyBtn");
     const responseMsg = document.getElementById("responseMsg");
 
+    function getShopSlug() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("shop");
+    }
+
     function setMessage(message, type = "") {
       responseMsg.className = "";
       responseMsg.innerHTML = message;
@@ -82,15 +82,15 @@
 
     async function verifyRedemption() {
       const otpCode = otpInput.value.trim();
-      const redemptionId = localStorage.getItem("latestRedemptionId");
+      const shopSlug = getShopSlug();
 
       if (!otpCode) {
         setMessage("Please enter the OTP.", "error");
         return;
       }
 
-      if (!redemptionId) {
-        setMessage("No redemption request found. Please start the redemption flow again.", "error");
+      if (!shopSlug) {
+        setMessage("Shop not identified. Please open the correct retailer verification page.", "error");
         return;
       }
 
@@ -102,8 +102,8 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            redemption_id: redemptionId,
-            otp_code: otpCode
+            otp_code: otpCode,
+            shop_slug: shopSlug
           })
         });
 
@@ -118,8 +118,6 @@
         setMessage("✓ Redemption verified successfully. Transaction recorded.", "success");
         otpInput.disabled = true;
         verifyBtn.disabled = true;
-
-        localStorage.removeItem("latestRedemptionId");
       } catch (err) {
         console.error(err);
         setMessage("Server error while verifying redemption.", "error");
