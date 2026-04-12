@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shop Owner Registration</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+
+  <div class="page-wrapper">
+
+    <div class="brand">
+      <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" class="brand-logo" />
+      <span class="brand-name">Nestlé Connect</span>
+      <span class="brand-divider">·</span>
+      <span class="brand-sub">Rep Portal</span>
+    </div>
+
+    <div class="card">
+      <div class="corner-mark">R</div>
+
+      <div class="card-header">
+        <h1 class="card-title">Shop Owner <span>Registration</span></h1>
+        <p>Enter the shop details to register a new shop owner.</p>
+      </div>
+
+      <hr class="divider" />
+
+      <form id="registrationForm">
+        <div class="form-group">
+          <label for="shopName">Shop Name</label>
+          <input
+            type="text"
+            id="shopName"
+            placeholder="Enter shop name"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="ownerMobile">Owner Mobile</label>
+          <input
+            type="tel"
+            id="ownerMobile"
+            placeholder="Enter owner mobile number"
+            required
+          />
+        </div>
+
+        <button type="submit" id="registerBtn"><span>Register Shop</span></button>
+      </form>
+
+      <hr class="divider" />
+
+      <div id="responseMsg">Fill in the details and click register.</div>
+
+      <div id="qrSection" style="display: none;">
+        <h3>Shop Registered Successfully!</h3>
+        <p><strong>Shop ID:</strong> <span id="shopId"></span></p>
+        <p><strong>Shop Name:</strong> <span id="shopNameDisplay"></span></p>
+        <p><strong>Owner Mobile:</strong> <span id="ownerMobileDisplay"></span></p>
+        <p><strong>QR Slug:</strong> <span id="qrSlug"></span></p>
+        <img id="qrCode" src="" alt="QR Code" />
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+
+    const form = document.getElementById("registrationForm");
+    const registerBtn = document.getElementById("registerBtn");
+    const responseMsg = document.getElementById("responseMsg");
+    const qrSection = document.getElementById("qrSection");
+
+    function setMessage(message, type = "") {
+      responseMsg.className = "";
+      responseMsg.innerHTML = message;
+
+      if (type === "success") {
+        responseMsg.classList.add("state-success");
+      } else if (type === "error") {
+        responseMsg.classList.add("state-error");
+      }
+    }
+
+    function setButtonState(button, disabled, text) {
+      button.disabled = disabled;
+      const span = button.querySelector("span");
+      if (span && text) span.innerText = text;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const shopName = document.getElementById("shopName").value.trim();
+      const ownerMobile = document.getElementById("ownerMobile").value.trim();
+
+      if (!shopName || !ownerMobile) {
+        setMessage("Please fill in all fields.", "error");
+        return;
+      }
+
+      setButtonState(registerBtn, true, "Registering...");
+      setMessage("Registering shop...");
+
+      try {
+        const response = await fetch(`${API_BASE}/api/shops`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            shop_name: shopName,
+            owner_mobile: ownerMobile,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setMessage(data.message, "success");
+          // Display QR and details
+          document.getElementById("shopId").textContent = data.shop.shop_id;
+          document.getElementById("shopNameDisplay").textContent = data.shop.shop_name;
+          document.getElementById("ownerMobileDisplay").textContent = data.shop.owner_mobile;
+          document.getElementById("qrSlug").textContent = data.shop.qr_slug;
+          document.getElementById("qrCode").src = data.qrCode;
+          qrSection.style.display = "block";
+        } else {
+          setMessage(data.message || "Registration failed.", "error");
+        }
+      } catch (error) {
+        console.error("Registration error:", error);
+        setMessage("An error occurred during registration.", "error");
+      } finally {
+        setButtonState(registerBtn, false, "Register Shop");
+      }
+    });
+  </script>
+
+</body>
+</html>
