@@ -219,15 +219,25 @@ label {
   color: var(--ink-muted);
 }
 
-input[type="text"] {
+.form-note {
+  margin-top: 12px;
+  color: var(--ink-muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+input[type="text"],
+input[type="tel"],
+input[type="password"],
+select {
   font-family: 'DM Mono', monospace;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 300;
   color: var(--ink);
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 13px 16px;
+  padding: 14px 16px;
   width: 100%;
   outline: none;
   transition:
@@ -235,48 +245,71 @@ input[type="text"] {
     box-shadow var(--transition),
     background var(--transition);
   letter-spacing: 0.05em;
+  appearance: none;
 }
 
-input[type="text"]::placeholder {
+input[type="text"]::placeholder,
+input[type="tel"]::placeholder,
+input[type="password"]::placeholder {
   color: var(--ink-faint);
   font-weight: 300;
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus,
+input[type="tel"]:focus,
+input[type="password"]:focus,
+select:focus {
   border-color: var(--accent);
   background: var(--surface);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 /* ─── Primary buttons ─── */
-button#submitBtn,
-button#verifyBtn,
-button#claimBtn,
-.btn-primary {
+button,
+.btn-primary,
+.btn-secondary {
   font-family: 'DM Mono', monospace;
-  font-size: 0.78rem;
-  font-weight: 400;
-  letter-spacing: 0.07em;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--surface);
-  background: var(--ink);
-  border: 1px solid var(--ink);
+  outline: none;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 22px;
   border-radius: var(--radius-sm);
-  padding: 13px 24px;
-  width: 100%;
-  cursor: pointer;
   transition:
     background var(--transition),
     transform var(--transition),
     box-shadow var(--transition),
-    border-color var(--transition);
+    border-color var(--transition),
+    color var(--transition);
+  cursor: pointer;
+}
+
+button.btn-primary,
+.btn-primary {
+  color: var(--surface);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  width: 100%;
   position: relative;
   overflow: hidden;
 }
 
-button#submitBtn::after,
-button#verifyBtn::after,
-button#claimBtn::after,
+button.btn-secondary,
+.btn-secondary,
+.link-button {
+  color: var(--ink);
+  background: var(--border-soft);
+  border: 1px solid var(--border);
+}
+
+button.btn-primary::after,
 .btn-primary::after {
   content: '';
   position: absolute;
@@ -287,65 +320,175 @@ button#claimBtn::after,
   z-index: 0;
 }
 
-button#submitBtn:hover::after,
-button#verifyBtn:hover::after,
-button#claimBtn:hover::after,
+button.btn-primary:hover::after,
 .btn-primary:hover::after {
   transform: translateX(0);
 }
 
-button#submitBtn span,
-button#verifyBtn span,
-button#claimBtn span,
+button.btn-primary span,
 .btn-primary span {
   position: relative;
   z-index: 1;
 }
 
-button#submitBtn:hover,
-button#verifyBtn:hover,
-button#claimBtn:hover,
-.btn-primary:hover {
+button.btn-primary:hover,
+.btn-primary:hover,
+button.btn-secondary:hover,
+.btn-secondary:hover,
+.link-button:hover {
   border-color: var(--accent);
   box-shadow: var(--shadow-hover);
   transform: translateY(-1px);
 }
 
-button#submitBtn:active,
-button#verifyBtn:active,
-button#claimBtn:active,
-.btn-primary:active {
+button.btn-primary:active,
+.btn-primary:active,
+button.btn-secondary:active,
+.btn-secondary:active,
+.link-button:active {
   transform: translateY(0);
 }
 
 /* ─── Secondary link button ─── */
 .link-button {
-  display: inline-block;
+  display: inline-flex;
+  justify-content: center;
   width: 100%;
-  text-align: center;
   text-decoration: none;
   font-family: 'DM Mono', monospace;
-  font-size: 0.78rem;
-  font-weight: 400;
-  letter-spacing: 0.07em;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--surface);
-  background: var(--ink);
-  border: 1px solid var(--ink);
+  padding: 0 22px;
+  min-height: 48px;
   border-radius: var(--radius-sm);
-  padding: 13px 24px;
-  transition:
-    background var(--transition),
-    transform var(--transition),
-    box-shadow var(--transition),
-    border-color var(--transition);
+  color: var(--ink);
+  background: var(--border-soft);
+  border: 1px solid var(--border);
 }
 
 .link-button:hover {
-  background: var(--accent);
-  border-color: var(--accent);
-  box-shadow: var(--shadow-hover);
-  transform: translateY(-1px);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.tab-btn {
+  flex: 1 1 140px;
+  border-radius: 999px;
+  padding: 10px 18px;
+  border: 1px solid var(--border);
+  background: var(--border-soft);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.tab-btn.active {
+  background: var(--ink);
+  color: var(--surface);
+  border-color: var(--ink);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ─── Table styles ─── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 14px;
+  font-size: 0.95rem;
+}
+
+thead th {
+  background: #f7f3ee;
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 14px 12px;
+  text-align: left;
+}
+
+tbody td {
+  border-top: 1px solid var(--border);
+  padding: 13px 12px;
+}
+
+tr:hover {
+  background: rgba(192, 112, 74, 0.06);
+}
+
+.action-button {
+  font-size: 0.82rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #34221b;
+  color: #fff;
+  cursor: pointer;
+}
+
+.action-button.danger {
+  background: #8b3a3a;
+}
+
+/* ─── Dashboard & summary sections ─── */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dashboard-card {
+  background: var(--border-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+}
+
+.dashboard-card h4 {
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.dashboard-card p {
+  font-size: 1.3rem;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* ─── Card action row */
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* ─── Corrections for input types */
+input[type="text"],
+input[type="tel"],
+input[type="password"],
+select {
+  width: 100%;
 }
 
 /* ─── Result / meta grid ─── */

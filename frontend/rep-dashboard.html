@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rep Dashboard - Nestlé Connect</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+
+  <div class="page-wrapper">
+
+    <div class="brand">
+      <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" class="brand-logo" />
+      <span class="brand-name">Nestlé Connect</span>
+      <span class="brand-divider">·</span>
+      <span class="brand-sub">Rep Portal</span>
+    </div>
+
+    <div class="card">
+      <div class="corner-mark">R</div>
+
+      <div class="card-header">
+        <h1 class="card-title">Rep <span>Dashboard</span></h1>
+        <p>View your shops, register new locations, and monitor your performance.</p>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="card-actions">
+        <button id="logoutBtn" class="btn-secondary">Logout</button>
+        <button id="registerShopBtn" class="btn-primary"><span>Register New Shop</span></button>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="dashboard-card">
+          <h4>My Shops</h4>
+          <p id="repShopCount">—</p>
+        </div>
+        <div class="dashboard-card">
+          <h4>Last Update</h4>
+          <p id="lastUpdated">—</p>
+        </div>
+      </div>
+
+      <div id="shopsList">
+        <p>Loading your shops...</p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    const registerShopBtn = document.getElementById("registerShopBtn");
+    const shopsList = document.getElementById("shopsList");
+    const repShopCount = document.getElementById("repShopCount");
+    const lastUpdated = document.getElementById("lastUpdated");
+
+    function checkAuth() {
+      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!token || !user || user.role !== "rep") {
+        window.location.href = "login.html";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "login.html";
+    }
+
+    async function loadShops() {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch(`${API_BASE}/api/shops`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        const shops = await response.json();
+        if (response.ok) {
+          displayShops(shops);
+          repShopCount.textContent = shops.length;
+          lastUpdated.textContent = new Date().toLocaleDateString();
+        } else {
+          shopsList.innerHTML = "<p>Error loading shops.</p>";
+        }
+      } catch (error) {
+        shopsList.innerHTML = "<p>Error loading shops.</p>";
+      }
+    }
+
+    function displayShops(shops) {
+      if (shops.length === 0) {
+        shopsList.innerHTML = "<p>No shops registered yet.</p>";
+        return;
+      }
+      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>Created At</th></tr></thead><tbody>";
+      shops.forEach(shop => {
+        html += `<tr>
+          <td>${shop.shop_id}</td>
+          <td>${shop.shop_name}</td>
+          <td>${shop.owner_mobile}</td>
+          <td>${new Date(shop.created_at).toLocaleDateString()}</td>
+        </tr>`;
+      });
+      html += "</tbody></table>";
+      shopsList.innerHTML = html;
+    }
+
+    logoutBtn.addEventListener("click", logout);
+    registerShopBtn.addEventListener("click", () => {
+      window.location.href = "shop-owner-registration.html";
+    });
+
+    checkAuth();
+    loadShops();
+  </script>
+
+</body>
+</html>

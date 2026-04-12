@@ -1,6 +1,15 @@
 DROP TABLE IF EXISTS redemptions;
 DROP TABLE IF EXISTS vouchers;
 DROP TABLE IF EXISTS shops;
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'rep')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE shops (
     id SERIAL PRIMARY KEY,
@@ -8,6 +17,7 @@ CREATE TABLE shops (
     shop_name VARCHAR(100) NOT NULL,
     owner_mobile VARCHAR(15) NOT NULL,
     qr_slug VARCHAR(50) UNIQUE NOT NULL,
+    rep_id INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -23,7 +23,14 @@ const getShopBySlug = async (req, res) => {
 
 const getAllShops = async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM shops ORDER BY created_at DESC");
+    let query = "SELECT * FROM shops";
+    let params = [];
+    if (req.user.role === 'rep') {
+      query += " WHERE rep_id = $1";
+      params = [req.user.id];
+    }
+    query += " ORDER BY created_at DESC";
+    const result = await pool.query(query, params);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("getAllShops error:", error);
@@ -59,9 +66,10 @@ const createShop = async (req, res) => {
     }
 
     // Insert
+    const repId = req.user.role === 'rep' ? req.user.id : null;
     await pool.query(
-      "INSERT INTO shops (shop_id, shop_name, owner_mobile, qr_slug) VALUES ($1, $2, $3, $4)",
-      [shop_id, shop_name, owner_mobile, uniqueSlug]
+      "INSERT INTO shops (shop_id, shop_name, owner_mobile, qr_slug, rep_id) VALUES ($1, $2, $3, $4, $5)",
+      [shop_id, shop_name, owner_mobile, uniqueSlug, repId]
     );
 
     // Generate QR
@@ -79,4 +87,18 @@ const createShop = async (req, res) => {
   }
 };
 
-module.exports = { getShopBySlug, getAllShops, createShop };
+const deleteShop = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM shops WHERE id = $1', [id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Shop not found' });
+    }
+    res.status(200).json({ message: 'Shop deleted successfully' });
+  } catch (error) {
+    console.error('deleteShop error:', error);
+    res.status(500).json({ message: 'Server error while deleting shop' });
+  }
+};
+
+module.exports = { getShopBySlug, getAllShops, createShop, deleteShop };

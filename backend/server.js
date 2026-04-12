@@ -8,6 +8,10 @@ const shopRoutes = require("./routes/shops");
 const redemptionRoutes = require("./routes/redemptions");
 const dashboardRoutes = require("./routes/dashboard");
 const smsRoutes = require("./routes/sms");
+const authRoutes = require("./routes/auth");
+const userRoutes = require("./routes/users");
+const pool = require("./config/db");
+const bcrypt = require("bcrypt");
 
 const app = express();
 
@@ -26,6 +30,8 @@ app.use("/api/shops", shopRoutes);
 app.use("/api/redemptions", redemptionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/sms", smsRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
 /* =========================
    FRONTEND STATIC FILES
@@ -45,10 +51,47 @@ app.get("/app", (req, res) => {
 });
 
 /* =========================
+   DATABASE INITIALIZATION
+========================= */
+async function initDatabase() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'rep')),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await pool.query(`
+      ALTER TABLE shops
+      ADD COLUMN IF NOT EXISTS rep_id INTEGER REFERENCES users(id)
+    `);
+
+    const existingAdmin = await pool.query("SELECT id FROM users WHERE username = 'admin'");
+    if (existingAdmin.rows.length === 0) {
+      const passwordHash = await bcrypt.hash('password', 10);
+      await pool.query(
+        "INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3)",
+        ['admin', passwordHash, 'admin']
+      );
+      console.log('Created default admin user: admin / password');
+    }
+  } catch (error) {
+    console.error('Database initialization failed:', error);
+    process.exit(1);
+  }
+}
+
+/* =========================
    SERVER START
 ========================= */
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+initDatabase().then(() => {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 });

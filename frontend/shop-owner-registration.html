@@ -22,7 +22,7 @@
 
       <div class="card-header">
         <h1 class="card-title">Shop Owner <span>Registration</span></h1>
-        <p>Enter the shop details to register a new shop owner.</p>
+        <p>Register a new shop and generate its verification QR instantly.</p>
       </div>
 
       <hr class="divider" />
@@ -30,38 +30,32 @@
       <form id="registrationForm">
         <div class="form-group">
           <label for="shopName">Shop Name</label>
-          <input
-            type="text"
-            id="shopName"
-            placeholder="Enter shop name"
-            required
-          />
+          <input type="text" id="shopName" placeholder="Enter shop name" required />
         </div>
 
         <div class="form-group">
           <label for="ownerMobile">Owner Mobile</label>
-          <input
-            type="tel"
-            id="ownerMobile"
-            placeholder="Enter owner mobile number"
-            required
-          />
+          <input type="tel" id="ownerMobile" placeholder="Enter owner mobile number" required />
         </div>
 
-        <button type="submit" id="registerBtn"><span>Register Shop</span></button>
+        <button type="submit" id="registerBtn" class="btn-primary"><span>Register Shop</span></button>
       </form>
 
       <hr class="divider" />
 
       <div id="responseMsg">Fill in the details and click register.</div>
 
-      <div id="qrSection" style="display: none;">
-        <h3>Shop Registered Successfully!</h3>
-        <p><strong>Shop ID:</strong> <span id="shopId"></span></p>
-        <p><strong>Shop Name:</strong> <span id="shopNameDisplay"></span></p>
-        <p><strong>Owner Mobile:</strong> <span id="ownerMobileDisplay"></span></p>
-        <p><strong>QR Slug:</strong> <span id="qrSlug"></span></p>
-        <img id="qrCode" src="" alt="QR Code" />
+      <div id="qrSection" style="display: none;" class="dashboard-card" >
+        <h3>Registration Complete</h3>
+        <div class="result-grid">
+          <div class="result-box"><span class="result-label">Shop ID</span><span class="result-value" id="shopId"></span></div>
+          <div class="result-box"><span class="result-label">Shop Name</span><span class="result-value" id="shopNameDisplay"></span></div>
+          <div class="result-box"><span class="result-label">Owner Mobile</span><span class="result-value" id="ownerMobileDisplay"></span></div>
+          <div class="result-box"><span class="result-label">QR Slug</span><span class="result-value" id="qrSlug"></span></div>
+        </div>
+        <div style="margin-top: 20px; text-align:center;">
+          <img id="qrCode" src="" alt="QR Code" style="max-width: 260px; width: 100%; border-radius: 16px; border: 1px solid var(--border); padding: 10px; background: var(--surface);" />
+        </div>
       </div>
 
     </div>
@@ -70,6 +64,14 @@
 
   <script>
     const API_BASE = window.location.origin;
+
+    function checkAuth() {
+      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!token || !user || user.role !== "rep") {
+        window.location.href = "login.html";
+      }
+    }
 
     const form = document.getElementById("registrationForm");
     const registerBtn = document.getElementById("registerBtn");
@@ -108,10 +110,12 @@
       setMessage("Registering shop...");
 
       try {
+        const token = localStorage.getItem("token");
         const response = await fetch(`${API_BASE}/api/shops`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify({
             shop_name: shopName,
@@ -123,7 +127,6 @@
 
         if (response.ok) {
           setMessage(data.message, "success");
-          // Display QR and details
           document.getElementById("shopId").textContent = data.shop.shop_id;
           document.getElementById("shopNameDisplay").textContent = data.shop.shop_name;
           document.getElementById("ownerMobileDisplay").textContent = data.shop.owner_mobile;
@@ -140,6 +143,8 @@
         setButtonState(registerBtn, false, "Register Shop");
       }
     });
+
+    checkAuth();
   </script>
 
 </body>

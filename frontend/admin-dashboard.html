@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Nestlé Connect</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+
+  <div class="page-wrapper">
+
+    <div class="brand">
+      <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" class="brand-logo" />
+      <span class="brand-name">Nestlé Connect</span>
+      <span class="brand-divider">·</span>
+      <span class="brand-sub">Admin Portal</span>
+    </div>
+
+    <div class="card">
+      <div class="corner-mark">A</div>
+
+      <div class="card-header">
+        <h1 class="card-title">Admin <span>Dashboard</span></h1>
+        <p>Manage reps and shops, review scan activity, and keep your network running smoothly.</p>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="card-actions">
+        <button id="logoutBtn" class="btn-secondary">Logout</button>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="dashboard-card">
+          <h4>Total Users</h4>
+          <p id="totalUsers">—</p>
+        </div>
+        <div class="dashboard-card">
+          <h4>Total Shops</h4>
+          <p id="totalShops">—</p>
+        </div>
+        <div class="dashboard-card">
+          <h4>Total QR Scans</h4>
+          <p id="totalScans">—</p>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="reps">Manage Reps</button>
+        <button class="tab-btn" data-tab="shops">Manage Shops</button>
+        <button class="tab-btn" data-tab="stats">Statistics</button>
+      </div>
+
+      <div id="repsTab" class="tab-content">
+        <h3>Add New Rep</h3>
+        <form id="addRepForm">
+          <div class="form-group">
+            <label for="repUsername">Username</label>
+            <input type="text" id="repUsername" placeholder="rep username" required />
+          </div>
+          <div class="form-group">
+            <label for="repPassword">Password</label>
+            <input type="password" id="repPassword" placeholder="secure password" required />
+          </div>
+          <button type="submit" class="btn-primary"><span>Add Rep</span></button>
+        </form>
+
+        <hr class="divider" />
+        <h3>Existing Users</h3>
+        <div id="repsList"><p>Loading reps...</p></div>
+      </div>
+
+      <div id="shopsTab" class="tab-content" style="display:none;">
+        <h3>Add New Shop</h3>
+        <form id="addShopForm">
+          <div class="form-group">
+            <label for="shopName">Shop Name</label>
+            <input type="text" id="shopName" placeholder="shop name" required />
+          </div>
+          <div class="form-group">
+            <label for="ownerMobile">Owner Mobile</label>
+            <input type="tel" id="ownerMobile" placeholder="owner mobile" required />
+          </div>
+          <button type="submit" class="btn-primary"><span>Add Shop</span></button>
+        </form>
+
+        <hr class="divider" />
+        <h3>Registered Shops</h3>
+        <div id="shopsList"><p>Loading shops...</p></div>
+      </div>
+
+      <div id="statsTab" class="tab-content" style="display:none;">
+        <h3>Scan Activity</h3>
+        <div id="statsList"><p>Loading statistics...</p></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const addRepForm = document.getElementById('addRepForm');
+    const addShopForm = document.getElementById('addShopForm');
+    const repsList = document.getElementById('repsList');
+    const shopsList = document.getElementById('shopsList');
+    const statsList = document.getElementById('statsList');
+    const totalUsers = document.getElementById('totalUsers');
+    const totalShops = document.getElementById('totalShops');
+    const totalScans = document.getElementById('totalScans');
+
+    function checkAuth() {
+      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!token || !user || user.role !== "admin") {
+        window.location.href = "login.html";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "login.html";
+    }
+
+    function switchTab(tab) {
+      tabBtns.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(content => content.style.display = 'none');
+      document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+      document.getElementById(`${tab}Tab`).style.display = 'block';
+      if (tab === 'reps') loadReps();
+      if (tab === 'shops') loadShops();
+      if (tab === 'stats') loadStats();
+    }
+
+    function updateSummary(users, shops, scans) {
+      totalUsers.textContent = users;
+      totalShops.textContent = shops;
+      totalScans.textContent = scans;
+    }
+
+    async function loadReps() {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch(`${API_BASE}/api/users`, {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        const reps = await response.json();
+        displayReps(reps);
+        updateSummary(reps.length, shopsList.dataset.count || 0, totalScans.textContent || 0);
+      } catch (error) {
+        repsList.innerHTML = "<p>Error loading reps.</p>";
+      }
+    }
+
+    function displayReps(reps) {
+      let html = "<table><thead><tr><th>Username</th><th>Role</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
+      reps.forEach(rep => {
+        html += `<tr>
+          <td>${rep.username}</td>
+          <td>${rep.role}</td>
+          <td>${new Date(rep.created_at).toLocaleDateString()}</td>
+          <td><button class="action-button danger" onclick="deleteRep(${rep.id})">Delete</button></td>
+        </tr>`;
+      });
+      html += "</tbody></table>";
+      repsList.innerHTML = html;
+    }
+
+    async function deleteRep(id) {
+      if (!confirm('Delete this rep?')) return;
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch(`${API_BASE}/api/users/${id}`, {
+          method: 'DELETE',
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        if (response.ok) {
+          loadReps();
+        } else {
+          alert('Error deleting rep');
+        }
+      } catch (error) {
+        alert('Error deleting rep');
+      }
+    }
+
+    async function loadShops() {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch(`${API_BASE}/api/shops`, {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        const shops = await response.json();
+        displayShops(shops);
+        shopsList.dataset.count = shops.length;
+        updateSummary(document.querySelectorAll('#repsList table tbody tr').length, shops.length, totalScans.textContent || 0);
+      } catch (error) {
+        shopsList.innerHTML = "<p>Error loading shops.</p>";
+      }
+    }
+
+    function displayShops(shops) {
+      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
+      shops.forEach(shop => {
+        html += `<tr>
+          <td>${shop.shop_id}</td>
+          <td>${shop.shop_name}</td>
+          <td>${shop.owner_mobile}</td>
+          <td>${new Date(shop.created_at).toLocaleDateString()}</td>
+          <td><button class="action-button danger" onclick="deleteShop(${shop.id})">Delete</button></td>
+        </tr>`;
+      });
+      html += "</tbody></table>";
+      shopsList.innerHTML = html;
+    }
+
+    async function deleteShop(id) {
+      if (!confirm('Delete this shop?')) return;
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch(`${API_BASE}/api/shops/${id}`, {
+          method: 'DELETE',
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        if (response.ok) {
+          loadShops();
+        } else {
+          alert('Error deleting shop');
+        }
+      } catch (error) {
+        alert('Error deleting shop');
+      }
+    }
+
+    async function loadStats() {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch(`${API_BASE}/api/dashboard/admin`, {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        const stats = await response.json();
+        displayStats(stats);
+        updateSummary(document.querySelectorAll('#repsList table tbody tr').length, shopsList.dataset.count || 0, stats.reduce((sum, item) => sum + Number(item.scan_count), 0));
+      } catch (error) {
+        statsList.innerHTML = "<p>Error loading stats.</p>";
+      }
+    }
+
+    function displayStats(stats) {
+      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>QR Scans</th><th>Created At</th></tr></thead><tbody>";
+      stats.forEach(stat => {
+        html += `<tr>
+          <td>${stat.shop_id}</td>
+          <td>${stat.shop_name}</td>
+          <td>${stat.owner_mobile}</td>
+          <td>${stat.scan_count}</td>
+          <td>${new Date(stat.created_at).toLocaleDateString()}</td>
+        </tr>`;
+      });
+      html += "</tbody></table>";
+      statsList.innerHTML = html;
+    }
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    addRepForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('repUsername').value.trim();
+      const password = document.getElementById('repPassword').value.trim();
+      const token = localStorage.getItem("token");
+      if (!username || !password) return;
+      try {
+        const response = await fetch(`${API_BASE}/api/users`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({ username, password, role: 'rep' }),
+        });
+        if (response.ok) {
+          addRepForm.reset();
+          loadReps();
+        } else {
+          alert('Error adding rep');
+        }
+      } catch (error) {
+        alert('Error adding rep');
+      }
+    });
+
+    addShopForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const shop_name = document.getElementById('shopName').value.trim();
+      const owner_mobile = document.getElementById('ownerMobile').value.trim();
+      const token = localStorage.getItem("token");
+      if (!shop_name || !owner_mobile) return;
+      try {
+        const response = await fetch(`${API_BASE}/api/shops`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({ shop_name, owner_mobile }),
+        });
+        if (response.ok) {
+          addShopForm.reset();
+          loadShops();
+        } else {
+          alert('Error adding shop');
+        }
+      } catch (error) {
+        alert('Error adding shop');
+      }
+    });
+
+    logoutBtn.addEventListener("click", logout);
+
+    checkAuth();
+    switchTab('reps');
+  </script>
+
+</body>
+</html>
