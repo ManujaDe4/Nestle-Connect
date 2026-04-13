@@ -49,6 +49,7 @@
       <div class="tabs">
         <button class="tab-btn active" data-tab="reps">Manage Reps</button>
         <button class="tab-btn" data-tab="shops">Manage Shops</button>
+        <button class="tab-btn" data-tab="log">Registration Log</button>
         <button class="tab-btn" data-tab="stats">Statistics</button>
       </div>
 
@@ -90,6 +91,12 @@
         <div id="shopsList"><p>Loading shops...</p></div>
       </div>
 
+      <div id="logTab" class="tab-content" style="display:none;">
+        <h3>Field Representative Activity Log</h3>
+        <p style="color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 20px;">Track which Delivery Partner registered which shop and when. This helps monitor campaign rollout progress across regions.</p>
+        <div id="logList"><p>Loading registration log...</p></div>
+      </div>
+
       <div id="statsTab" class="tab-content" style="display:none;">
         <h3>Scan Activity</h3>
         <div id="statsList"><p>Loading statistics...</p></div>
@@ -109,6 +116,7 @@
     const addShopForm = document.getElementById('addShopForm');
     const repsList = document.getElementById('repsList');
     const shopsList = document.getElementById('shopsList');
+    const logList = document.getElementById('logList');
     const statsList = document.getElementById('statsList');
     const totalUsers = document.getElementById('totalUsers');
     const totalShops = document.getElementById('totalShops');
@@ -135,6 +143,7 @@
       document.getElementById(`${tab}Tab`).style.display = 'block';
       if (tab === 'reps') loadReps();
       if (tab === 'shops') loadShops();
+      if (tab === 'log') loadRegistrationLog();
       if (tab === 'stats') loadStats();
     }
 
@@ -236,6 +245,41 @@
       } catch (error) {
         alert('Error deleting shop');
       }
+    }
+
+    async function loadRegistrationLog() {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch(`${API_BASE}/api/shops/log/registrations`, {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        const log = await response.json();
+        displayRegistrationLog(log);
+      } catch (error) {
+        logList.innerHTML = "<p>Error loading registration log.</p>";
+      }
+    }
+
+    function displayRegistrationLog(log) {
+      if (log.length === 0) {
+        logList.innerHTML = "<p>No registrations yet.</p>";
+        return;
+      }
+      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>Registered By</th><th>QR Linked</th><th>Created At</th></tr></thead><tbody>";
+      log.forEach(entry => {
+        const repName = entry.rep_name || 'Admin';
+        const qrLinked = entry.qr_identifier ? '✓ Yes' : '✗ No';
+        html += `<tr>
+          <td>${entry.shop_id}</td>
+          <td>${entry.shop_name}</td>
+          <td>${entry.owner_mobile}</td>
+          <td>${repName}</td>
+          <td>${qrLinked}</td>
+          <td>${new Date(entry.created_at).toLocaleDateString()} ${new Date(entry.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+        </tr>`;
+      });
+      html += "</tbody></table>";
+      logList.innerHTML = html;
     }
 
     async function loadStats() {

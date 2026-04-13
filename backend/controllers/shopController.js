@@ -65,11 +65,13 @@ const createShop = async (req, res) => {
       counter++;
     }
 
-    // Insert
+    // Track which rep created this shop
+    const createdByRepId = req.user.role === 'rep' ? req.user.id : null;
     const repId = req.user.role === 'rep' ? req.user.id : null;
+    
     await pool.query(
-      "INSERT INTO shops (shop_id, shop_name, owner_mobile, qr_slug, rep_id) VALUES ($1, $2, $3, $4, $5)",
-      [shop_id, shop_name, owner_mobile, uniqueSlug, repId]
+      "INSERT INTO shops (shop_id, shop_name, owner_mobile, qr_slug, rep_id, created_by_rep_id) VALUES ($1, $2, $3, $4, $5, $6)",
+      [shop_id, shop_name, owner_mobile, uniqueSlug, repId, createdByRepId]
     );
 
     // Generate QR
@@ -101,4 +103,77 @@ const deleteShop = async (req, res) => {
   }
 };
 
-module.exports = { getShopBySlug, getAllShops, createShop, deleteShop };
+const mapQRCode = async (req, res) => {
+  try {
+    const { shop_id, qr_identifier } = req.body;
+
+    if (!shop_id || !qr_identifier) {
+      return res.status(400).json({ message: "shop_id and qr_identifier are required" });
+    }
+
+    // Check if qr_identifier already exists
+    const qrCheck = await pool.query(
+      "SELECT id, shop_name FROM shops WHERE qr_identifier = $1",
+      [qr_identifier]
+    );
+
+    if (qrCheck.rows.length > 0) {
+      return res.status(400).json({ 
+        message: `QR code is already linked to: ${qrCheck.rows[0].shop_name}` 
+      });
+    }
+
+    // Get shop info
+    const shopResult = await pool.query(
+      "SELECT id, shop_name FROM shops WHERE id = $1",
+      [shop_id]
+    );
+
+    if (shopResult.rows.length === 0) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    // Update shop with qr_identifier
+    await pool.query(
+      "UPDATE shops SET qr_identifier = $1 WHERE id = $2",
+      [qr_identifier, shop_id]
+    );
+
+    res.status(200).json({
+      message: "QR Code Successfully Linked",
+      shop: shopResult.rows[0],
+      qr_identifier
+    });
+  } catch (error) {
+    console.error("mapQRCode error:", error);
+    res.status(500).json({ message: "Server error while mapping QR code" });
+  }
+};
+
+const getRegistrationLog = async (req, res) => {
+  try {
+    // Get all shops with their rep creator details
+    const result = await pool.query(`
+      SELECT 
+        s.id,
+        s.shop_id,
+        s.shop_name,
+        s.owner_mobile,
+        s.qr_slug,
+        s.qr_identifier,
+        s.created_at,
+        u.username as rep_name,
+        u.id as rep_id
+      FROM shops s
+      LEFT JOIN users u ON s.created_by_rep_id = u.id
+      ORDER BY s.created_at DESC
+    `);
+
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("getRegistrationLog error:", error);
+    res.status(500).json({ message: "Server error while fetching registration log" });
+  }
+};
+
+module.exports = { getShopBySlug, getAllShops, createShop, deleteShop, mapQRCode, getRegistrationLog };

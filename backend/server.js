@@ -70,6 +70,16 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS rep_id INTEGER REFERENCES users(id)
     `);
 
+    await pool.query(`
+      ALTER TABLE shops
+      ADD COLUMN IF NOT EXISTS created_by_rep_id INTEGER REFERENCES users(id)
+    `);
+
+    await pool.query(`
+      ALTER TABLE shops
+      ADD COLUMN IF NOT EXISTS qr_identifier VARCHAR(100) UNIQUE
+    `);
+
     const existingAdmin = await pool.query("SELECT id FROM users WHERE username = 'admin'");
     if (existingAdmin.rows.length === 0) {
       const passwordHash = await bcrypt.hash('password', 10);

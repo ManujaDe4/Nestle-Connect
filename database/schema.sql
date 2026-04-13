@@ -18,6 +18,8 @@ CREATE TABLE shops (
     owner_mobile VARCHAR(15) NOT NULL,
     qr_slug VARCHAR(50) UNIQUE NOT NULL,
     rep_id INTEGER REFERENCES users(id),
+    created_by_rep_id INTEGER REFERENCES users(id),
+    qr_identifier VARCHAR(100) UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

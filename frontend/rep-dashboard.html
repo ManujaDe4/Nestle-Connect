@@ -29,6 +29,7 @@
 
       <div class="card-actions">
         <button id="logoutBtn" class="btn-secondary">Logout</button>
+        <button id="mapQRBtn" class="btn-secondary"><span>Link QR Code</span></button>
         <button id="registerShopBtn" class="btn-primary"><span>Register New Shop</span></button>
       </div>
 
@@ -56,6 +57,7 @@
 
     const logoutBtn = document.getElementById("logoutBtn");
     const registerShopBtn = document.getElementById("registerShopBtn");
+    const mapQRBtn = document.getElementById("mapQRBtn");
     const shopsList = document.getElementById("shopsList");
     const repShopCount = document.getElementById("repShopCount");
     const lastUpdated = document.getElementById("lastUpdated");
@@ -116,6 +118,9 @@
     logoutBtn.addEventListener("click", logout);
     registerShopBtn.addEventListener("click", () => {
       window.location.href = "shop-owner-registration.html";
+    });
+    mapQRBtn.addEventListener("click", () => {
+      window.location.href = "qr-mapping.html";
     });
 
     checkAuth();
