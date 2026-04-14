@@ -10,6 +10,7 @@ const dashboardRoutes = require("./routes/dashboard");
 const smsRoutes = require("./routes/sms");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
+const activityRoutes = require("./routes/activity");
 const pool = require("./config/db");
 const bcrypt = require("bcrypt");
 
@@ -32,6 +33,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/sms", smsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/activity", activityRoutes);
 
 /* =========================
    FRONTEND STATIC FILES
@@ -78,6 +80,17 @@ async function initDatabase() {
     await pool.query(`
       ALTER TABLE shops
       ADD COLUMN IF NOT EXISTS qr_identifier VARCHAR(100) UNIQUE
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS activity_logs (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        shop_id INTEGER REFERENCES shops(id),
+        action VARCHAR(50) NOT NULL,
+        detail TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
     `);
 
     const existingAdmin = await pool.query("SELECT id FROM users WHERE username = 'admin'");

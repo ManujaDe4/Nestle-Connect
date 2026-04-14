@@ -50,6 +50,7 @@
         <button class="tab-btn active" data-tab="reps">Manage Reps</button>
         <button class="tab-btn" data-tab="shops">Manage Shops</button>
         <button class="tab-btn" data-tab="log">Registration Log</button>
+        <button class="tab-btn" data-tab="activity">Activity Trail</button>
         <button class="tab-btn" data-tab="stats">Statistics</button>
       </div>
 
@@ -97,6 +98,12 @@
         <div id="logList"><p>Loading registration log...</p></div>
       </div>
 
+      <div id="activityTab" class="tab-content" style="display:none;">
+        <h3>Audit Trail</h3>
+        <p style="color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 20px;">See the full action trail for reps and admins, including logins, shop registration, and QR mapping.</p>
+        <div id="activityList"><p>Loading activity trail...</p></div>
+      </div>
+
       <div id="statsTab" class="tab-content" style="display:none;">
         <h3>Scan Activity</h3>
         <div id="statsList"><p>Loading statistics...</p></div>
@@ -117,6 +124,7 @@
     const repsList = document.getElementById('repsList');
     const shopsList = document.getElementById('shopsList');
     const logList = document.getElementById('logList');
+    const activityList = document.getElementById('activityList');
     const statsList = document.getElementById('statsList');
     const totalUsers = document.getElementById('totalUsers');
     const totalShops = document.getElementById('totalShops');
@@ -144,6 +152,7 @@
       if (tab === 'reps') loadReps();
       if (tab === 'shops') loadShops();
       if (tab === 'log') loadRegistrationLog();
+      if (tab === 'activity') loadActivityLog();
       if (tab === 'stats') loadStats();
     }
 
@@ -280,6 +289,40 @@
       });
       html += "</tbody></table>";
       logList.innerHTML = html;
+    }
+
+    async function loadActivityLog() {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch(`${API_BASE}/api/activity`, {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        const activity = await response.json();
+        displayActivityLog(activity);
+      } catch (error) {
+        activityList.innerHTML = "<p>Error loading activity trail.</p>";
+      }
+    }
+
+    function displayActivityLog(activity) {
+      if (activity.length === 0) {
+        activityList.innerHTML = "<p>No activity recorded yet.</p>";
+        return;
+      }
+
+      let html = "<table><thead><tr><th>User</th><th>Action</th><th>Shop</th><th>Details</th><th>When</th></tr></thead><tbody>";
+      activity.forEach(entry => {
+        const shopLabel = entry.shop_id ? `${entry.shop_id} - ${entry.shop_name}` : '—';
+        html += `<tr>
+          <td>${entry.performed_by || 'Unknown'}</td>
+          <td>${entry.action}</td>
+          <td>${shopLabel}</td>
+          <td>${entry.detail || '—'}</td>
+          <td>${new Date(entry.created_at).toLocaleString()}</td>
+        </tr>`;
+      });
+      html += "</tbody></table>";
+      activityList.innerHTML = html;
     }
 
     async function loadStats() {

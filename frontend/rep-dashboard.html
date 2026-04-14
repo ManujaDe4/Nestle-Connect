@@ -30,7 +30,6 @@
       <div class="card-actions">
         <button id="logoutBtn" class="btn-secondary">Logout</button>
         <button id="mapQRBtn" class="btn-secondary"><span>Link QR Code</span></button>
-        <button id="registerShopBtn" class="btn-primary"><span>Register New Shop</span></button>
       </div>
 
       <div class="dashboard-grid">
@@ -44,8 +43,51 @@
         </div>
       </div>
 
-      <div id="shopsList">
-        <p>Loading your shops...</p>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="shops">My Shops</button>
+        <button class="tab-btn" data-tab="register">Register Shop</button>
+      </div>
+
+      <div id="shopsTab" class="tab-content active">
+        <div id="shopsList">
+          <p>Loading your shops...</p>
+        </div>
+      </div>
+
+      <div id="registerTab" class="tab-content">
+        <h3 class="section-title">Register New Shop</h3>
+        <p>Register a new shop and generate its verification QR instantly.</p>
+
+        <form id="registrationForm">
+          <div class="form-group">
+            <label for="shopName">Shop Name</label>
+            <input type="text" id="shopName" placeholder="Enter shop name" required />
+          </div>
+
+          <div class="form-group">
+            <label for="ownerMobile">Owner Mobile</label>
+            <input type="tel" id="ownerMobile" placeholder="Enter owner mobile number" required />
+          </div>
+
+          <button type="submit" id="registerBtn" class="btn-primary"><span>Register Shop</span></button>
+        </form>
+
+        <hr class="divider" />
+
+        <div id="responseMsg">Fill in the details and click register.</div>
+
+        <div id="qrSection" style="display: none;" class="dashboard-card" >
+          <h3>Registration Complete</h3>
+          <div class="result-grid">
+            <div class="result-box"><span class="result-label">Shop ID</span><span class="result-value" id="shopId"></span></div>
+            <div class="result-box"><span class="result-label">Shop Name</span><span class="result-value" id="shopNameDisplay"></span></div>
+            <div class="result-box"><span class="result-label">Owner Mobile</span><span class="result-value" id="ownerMobileDisplay"></span></div>
+            <div class="result-box"><span class="result-label">QR Slug</span><span class="result-value" id="qrSlug"></span></div>
+          </div>
+          <div style="margin-top: 20px; text-align:center;">
+            <img id="qrCode" src="" alt="QR Code" style="max-width: 260px; width: 100%; border-radius: 16px; border: 1px solid var(--border); padding: 10px; background: var(--surface);" />
+          </div>
+        </div>
       </div>
 
     </div>
@@ -56,11 +98,16 @@
     const API_BASE = window.location.origin;
 
     const logoutBtn = document.getElementById("logoutBtn");
-    const registerShopBtn = document.getElementById("registerShopBtn");
     const mapQRBtn = document.getElementById("mapQRBtn");
     const shopsList = document.getElementById("shopsList");
     const repShopCount = document.getElementById("repShopCount");
     const lastUpdated = document.getElementById("lastUpdated");
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const form = document.getElementById("registrationForm");
+    const registerBtn = document.getElementById("registerBtn");
+    const responseMsg = document.getElementById("responseMsg");
+    const qrSection = document.getElementById("qrSection");
 
     function checkAuth() {
       const token = localStorage.getItem("token");
@@ -74,6 +121,16 @@
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "login.html";
+    }
+
+    function switchTab(tab) {
+      tabBtns.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('active'));
+      document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+      document.getElementById(`${tab}Tab`).classList.add('active');
+      if (tab === 'shops') {
+        loadShops();
+      }
     }
 
     async function loadShops() {
@@ -115,12 +172,83 @@
       shopsList.innerHTML = html;
     }
 
+    function setMessage(message, type = "") {
+      responseMsg.className = "";
+      responseMsg.innerHTML = message;
+
+      if (type === "success") {
+        responseMsg.classList.add("state-success");
+      } else if (type === "error") {
+        responseMsg.classList.add("state-error");
+      }
+    }
+
+    function setButtonState(button, disabled, text) {
+      button.disabled = disabled;
+      const span = button.querySelector("span");
+      if (span && text) span.innerText = text;
+    }
+
     logoutBtn.addEventListener("click", logout);
-    registerShopBtn.addEventListener("click", () => {
-      window.location.href = "shop-owner-registration.html";
-    });
     mapQRBtn.addEventListener("click", () => {
       window.location.href = "qr-mapping.html";
+    });
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        switchTab(btn.dataset.tab);
+      });
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const shopName = document.getElementById("shopName").value.trim();
+      const ownerMobile = document.getElementById("ownerMobile").value.trim();
+
+      if (!shopName || !ownerMobile) {
+        setMessage("Please fill in all fields.", "error");
+        return;
+      }
+
+      setButtonState(registerBtn, true, "Registering...");
+      setMessage("Registering shop...");
+
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE}/api/shops`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            shop_name: shopName,
+            owner_mobile: ownerMobile,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setMessage(data.message, "success");
+          document.getElementById("shopId").textContent = data.shop.shop_id;
+          document.getElementById("shopNameDisplay").textContent = data.shop.shop_name;
+          document.getElementById("ownerMobileDisplay").textContent = data.shop.owner_mobile;
+          document.getElementById("qrSlug").textContent = data.shop.qr_slug;
+          document.getElementById("qrCode").src = data.qrCode;
+          qrSection.style.display = "block";
+          // Refresh shops list after registration
+          loadShops();
+        } else {
+          setMessage(data.message || "Registration failed.", "error");
+        }
+      } catch (error) {
+        console.error("Registration error:", error);
+        setMessage("An error occurred during registration.", "error");
+      } finally {
+        setButtonState(registerBtn, false, "Register Shop");
+      }
     });
 
     checkAuth();

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const pool = require('../config/db');
+const { logActivity } = require('../controllers/activityController');
 
 const authenticate = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -31,6 +32,11 @@ const login = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
+    await logActivity({
+      userId: user.id,
+      action: 'login',
+      detail: `User ${user.username} logged in as ${user.role}`
+    });
     res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

@@ -23,6 +23,15 @@ CREATE TABLE shops (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE activity_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    shop_id INTEGER REFERENCES shops(id),
+    action VARCHAR(50) NOT NULL,
+    detail TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE vouchers (
     id SERIAL PRIMARY KEY,
     claim_id VARCHAR(30) UNIQUE NOT NULL,
