@@ -32,6 +32,18 @@ CREATE TABLE activity_logs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE campaigns (
+    id SERIAL PRIMARY KEY,
+    campaign_id VARCHAR(20) UNIQUE NOT NULL,
+    campaign_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL,
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('draft', 'active', 'expired', 'disabled')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE vouchers (
     id SERIAL PRIMARY KEY,
     claim_id VARCHAR(30) UNIQUE NOT NULL,
@@ -39,9 +51,11 @@ CREATE TABLE vouchers (
     ad_id VARCHAR(20) NOT NULL,
     customer_mobile VARCHAR(15) NOT NULL,
     voucher_code VARCHAR(10) NOT NULL,
-    claim_status VARCHAR(20) DEFAULT 'claimed',
+    claim_status VARCHAR(20) DEFAULT 'claimed' CHECK (claim_status IN ('claimed', 'redeemed', 'expired', 'disabled')),
+    expiry_status VARCHAR(20) DEFAULT 'active' CHECK (expiry_status IN ('active', 'expired')),
     sms_sent BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(campaign_id) REFERENCES campaigns(campaign_id) ON DELETE CASCADE
 );
 
 CREATE TABLE redemptions (

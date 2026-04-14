@@ -11,6 +11,8 @@ const smsRoutes = require("./routes/sms");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 const activityRoutes = require("./routes/activity");
+const campaignRoutes = require("./routes/campaigns");
+const { checkAndExpireCampaigns } = require("./controllers/campaignController");
 const pool = require("./config/db");
 const bcrypt = require("bcrypt");
 
@@ -34,6 +36,7 @@ app.use("/api/sms", smsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/activity", activityRoutes);
+app.use("/api/campaigns", campaignRoutes);
 
 /* =========================
    FRONTEND STATIC FILES
@@ -109,12 +112,24 @@ async function initDatabase() {
 }
 
 /* =========================
+   SCHEDULED JOBS
+========================= */
+// Auto-expire campaigns every 5 minutes
+setInterval(() => {
+  checkAndExpireCampaigns();
+}, 5 * 60 * 1000);
+
+/* =========================
    SERVER START
 ========================= */
 const PORT = process.env.PORT || 5000;
 
 initDatabase().then(() => {
+  // Run expiry check immediately on startup
+  checkAndExpireCampaigns();
+  
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
+    console.log('✓ Campaign expiry job scheduled (checks every 5 minutes)');
   });
 });

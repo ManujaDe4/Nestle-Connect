@@ -13,6 +13,32 @@ const claimVoucher = async (req, res) => {
 
     customer_mobile = normalizeMobile(customer_mobile);
 
+    // Check if campaign exists and is not expired
+    const campaignCheck = await pool.query(
+      `SELECT * FROM campaigns WHERE campaign_id = $1`,
+      [campaign_id]
+    );
+
+    if (campaignCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Campaign not found" });
+    }
+
+    const campaign = campaignCheck.rows[0];
+    
+    // Check if campaign has expired
+    if (campaign.status === 'expired' || new Date(campaign.end_date) <= new Date()) {
+      return res.status(410).json({ 
+        message: "This campaign has expired and is no longer accepting voucher claims" 
+      });
+    }
+
+    // Check if campaign is active
+    if (campaign.status !== 'active') {
+      return res.status(400).json({ 
+        message: `Campaign is ${campaign.status} and not accepting claims` 
+      });
+    }
+
     const existingVoucherQuery = `
       SELECT * FROM vouchers
       WHERE customer_mobile = $1 AND ad_id = $2
@@ -37,8 +63,8 @@ const claimVoucher = async (req, res) => {
 
     const insertQuery = `
       INSERT INTO vouchers
-      (claim_id, campaign_id, ad_id, customer_mobile, voucher_code, claim_status, sms_sent)
-      VALUES ($1, $2, $3, $4, $5, 'claimed', true)
+      (claim_id, campaign_id, ad_id, customer_mobile, voucher_code, claim_status, expiry_status, sms_sent)
+      VALUES ($1, $2, $3, $4, $5, 'claimed', 'active', true)
       RETURNING *;
     `;
 

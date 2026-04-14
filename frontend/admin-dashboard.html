@@ -51,6 +51,7 @@
         <button class="tab-btn" data-tab="shops">Manage Shops</button>
         <button class="tab-btn" data-tab="log">Registration Log</button>
         <button class="tab-btn" data-tab="activity">Activity Trail</button>
+        <button class="tab-btn" data-tab="campaigns">Campaigns</button>
         <button class="tab-btn" data-tab="stats">Statistics</button>
       </div>
 
@@ -109,6 +110,40 @@
         <div id="statsList"><p>Loading statistics...</p></div>
       </div>
 
+      <div id="campaignsTab" class="tab-content" style="display:none;">
+        <h3>Campaign Management</h3>
+        <p style="color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 20px;">Create and manage campaigns. Vouchers are automatically disabled when campaigns expire.</p>
+
+        <h4>Create New Campaign</h4>
+        <form id="createCampaignForm">
+          <div class="form-group">
+            <label for="campaignId">Campaign ID</label>
+            <input type="text" id="campaignId" placeholder="e.g., CMP001" required />
+          </div>
+          <div class="form-group">
+            <label for="campaignName">Campaign Name</label>
+            <input type="text" id="campaignName" placeholder="e.g., Summer Offer 2026" required />
+          </div>
+          <div class="form-group">
+            <label for="campaignDesc">Description</label>
+            <textarea id="campaignDesc" placeholder="Campaign details" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="startDate">Start Date</label>
+            <input type="datetime-local" id="startDate" required />
+          </div>
+          <div class="form-group">
+            <label for="endDate">End Date</label>
+            <input type="datetime-local" id="endDate" required />
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%;"><span>Create Campaign</span></button>
+        </form>
+
+        <hr class="divider" />
+        <h3>Active Campaigns</h3>
+        <div id="campaignsList"><p>Loading campaigns...</p></div>
+      </div>
+
     </div>
 
   </div>
@@ -121,8 +156,10 @@
     const tabContents = document.querySelectorAll('.tab-content');
     const addRepForm = document.getElementById('addRepForm');
     const addShopForm = document.getElementById('addShopForm');
+    const createCampaignForm = document.getElementById('createCampaignForm');
     const repsList = document.getElementById('repsList');
     const shopsList = document.getElementById('shopsList');
+    const campaignsList = document.getElementById('campaignsList');
     const logList = document.getElementById('logList');
     const activityList = document.getElementById('activityList');
     const statsList = document.getElementById('statsList');
@@ -153,6 +190,7 @@
       if (tab === 'shops') loadShops();
       if (tab === 'log') loadRegistrationLog();
       if (tab === 'activity') loadActivityLog();
+      if (tab === 'campaigns') loadCampaigns();
       if (tab === 'stats') loadStats();
     }
 
@@ -412,7 +450,113 @@
 
     logoutBtn.addEventListener("click", logout);
 
+    // Campaign Management Functions
+    async function loadCampaigns() {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch(`${API_BASE}/api/campaigns`, {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        const campaigns = await response.json();
+        displayCampaigns(campaigns);
+      } catch (error) {
+        campaignsList.innerHTML = "<p>Error loading campaigns.</p>";
+      }
+    }
+
+    function displayCampaigns(campaigns) {
+      if (campaigns.length === 0) {
+        campaignsList.innerHTML = "<p>No campaigns created yet.</p>";
+        return;
+      }
+
+      let html = "<table><thead><tr><th>Campaign ID</th><th>Campaign Name</th><th>Start Date</th><th>End Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>";
+      campaigns.forEach(campaign => {
+        const startDate = new Date(campaign.start_date).toLocaleDateString();
+        const endDate = new Date(campaign.end_date).toLocaleDateString();
+        const statusBadge = `<span style="padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; 
+          ${campaign.status === 'active' ? 'background: #d1fae5; color: #166534;' : 'background: #fee2e2; color: #b91c1c;'}">${campaign.status}</span>`;
+        
+        html += `<tr>
+          <td>${campaign.campaign_id}</td>
+          <td>${campaign.campaign_name}</td>
+          <td>${startDate}</td>
+          <td>${endDate}</td>
+          <td>${statusBadge}</td>
+          <td><button class="action-button" onclick="viewCampaignStats('${campaign.campaign_id}')">View Stats</button>
+              ${campaign.status === 'active' ? `<button class="action-button danger" onclick="expireCampaignNow('${campaign.campaign_id}')">End Now</button>` : ''}</td>
+        </tr>`;
+      });
+      html += "</tbody></table>";
+      campaignsList.innerHTML = html;
+    }
+
+    async function expireCampaignNow(campaignId) {
+      if (!confirm(`Manually end campaign ${campaignId} and disable all vouchers?`)) return;
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch(`${API_BASE}/api/campaigns/expire`, {
+          method: 'POST',
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ campaign_id: campaignId })
+        });
+        if (response.ok) {
+          alert('Campaign ended successfully');
+          loadCampaigns();
+        } else {
+          alert('Error ending campaign');
+        }
+      } catch (error) {
+        alert('Error ending campaign');
+      }
+    }
+
+    async function viewCampaignStats(campaignId) {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch(`${API_BASE}/api/campaigns/${campaignId}/stats`, {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+        const stats = await response.json();
+        alert(`Campaign Stats for ${campaignId}\nTotal Vouchers: ${stats.total_vouchers}\nRedeemed: ${stats.redeemed_count}\nExpired: ${stats.expired_count}\nClaimed: ${stats.claimed_count}`);
+      } catch (error) {
+        alert('Error loading campaign stats');
+      }
+    }
+
+    createCampaignForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const token = localStorage.getItem("token");
+      const campaignData = {
+        campaign_id: document.getElementById("campaignId").value,
+        campaign_name: document.getElementById("campaignName").value,
+        description: document.getElementById("campaignDesc").value,
+        start_date: document.getElementById("startDate").value,
+        end_date: document.getElementById("endDate").value
+      };
+
+      try {
+        const response = await fetch(`${API_BASE}/api/campaigns`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify(campaignData)
+        });
+
+        if (response.ok) {
+          alert("Campaign created successfully");
+          createCampaignForm.reset();
+          loadCampaigns();
+        } else {
+          const error = await response.json();
+          alert(error.message || "Error creating campaign");
+        }
+      } catch (error) {
+        alert("Error creating campaign");
+      }
+    });
+
     checkAuth();
+
     switchTab('reps');
   </script>
 
