@@ -97,6 +97,11 @@
     const toast = document.getElementById("toast");
     const toastMessage = document.getElementById("toastMessage");
 
+    // Get campaign and ad info from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const campaignId = urlParams.get('campaign_id') || 'CMP001';
+    const adId = urlParams.get('ad_id') || 'AD001';
+
     function setMessage(message, type = "") {
       responseMsg.className = "";
       responseMsg.innerHTML = message;
@@ -163,8 +168,8 @@
           },
           body: JSON.stringify({
             customer_mobile: customerMobile,
-            campaign_id: "CMP001",
-            ad_id: "AD001"
+            campaign_id: campaignId,
+            ad_id: adId
           })
         });
 
