@@ -73,6 +73,7 @@
     const API_BASE = "https://nestle-connect.onrender.com";
 
     let shopSlug = "";
+    let hasActiveCampaigns = false;
 
     const shopEl = document.getElementById("shopName");
     const voucherInput = document.getElementById("voucherCode");
@@ -107,6 +108,7 @@
 
       if (!shopSlug) {
         shopEl.innerText = "No shop selected.";
+        disableVoucherEntry("No shop selected in QR code.");
         return;
       }
 
@@ -116,15 +118,61 @@
 
         if (!res.ok) {
           shopEl.innerText = data.message || "Shop not found.";
+          disableVoucherEntry("Invalid shop QR code.");
           return;
         }
 
         shopEl.innerText = data.shop_name;
         shopEl.classList.add("loaded");
+
+        // Check for active campaigns
+        await checkActiveCampaigns();
       } catch (err) {
         console.error(err);
         shopEl.innerText = "Error loading shop details.";
+        disableVoucherEntry("Error loading shop information.");
       }
+    }hasActiveCampaigns) {
+        setMessage("No active campaigns available. Cannot process voucher.", "error");
+        return;
+      }
+
+      if (!
+
+    async function checkActiveCampaigns() {
+      try {
+        const res = await fetch(`${API_BASE}/api/campaigns/active`);
+        const campaigns = await res.json();
+
+        if (!res.ok || campaigns.length === 0) {
+          hasActiveCampaigns = false;
+          disableVoucherEntry("No active campaigns available at this time. Please check back later.");
+          return;
+        }
+
+        hasActiveCampaigns = true;
+        enableVoucherEntry();
+      } catch (err) {
+        console.error("Error checking campaigns:", err);
+        hasActiveCampaigns = false;
+        disableVoucherEntry("Unable to verify campaign status. Please try again later.");
+      }
+    }
+
+    function disableVoucherEntry(message) {
+      voucherInput.disabled = true;
+      voucherInput.placeholder = "Not available";
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = "<span>Not Available</span>";
+      setMessage(message, "error");
+    }
+
+    function enableVoucherEntry() {
+      voucherInput.disabled = false;
+      voucherInput.placeholder = "Enter voucher code";
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = "<span>Send OTP</span>";
+      setMessage("Awaiting voucher submission…");
     }
 
     async function startRedemption() {
