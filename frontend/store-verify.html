@@ -132,12 +132,7 @@
         shopEl.innerText = "Error loading shop details.";
         disableVoucherEntry("Error loading shop information.");
       }
-    }hasActiveCampaigns) {
-        setMessage("No active campaigns available. Cannot process voucher.", "error");
-        return;
-      }
-
-      if (!
+    }
 
     async function checkActiveCampaigns() {
       try {
@@ -176,6 +171,11 @@
     }
 
     async function startRedemption() {
+      if (!hasActiveCampaigns) {
+        setMessage("No active campaigns available. Cannot process voucher.", "error");
+        return;
+      }
+
       const voucherCode = voucherInput.value.trim();
       successSection.style.display = "none";
 
