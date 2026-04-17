@@ -85,7 +85,8 @@
   </div>
 
   <script>
-    const API_BASE = "https://nestle-connect.onrender.com";
+    // Use localhost for development, production URL for deployed version
+    const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://nestle-connect.onrender.com';
 
     const claimBtn = document.getElementById("claimBtn");
     const mobileInput = document.getElementById("mobileNumber");
