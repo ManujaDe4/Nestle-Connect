@@ -526,7 +526,7 @@
           headers: { "Authorization": `Bearer ${token}` },
         });
         const stats = await response.json();
-        alert(`Campaign Stats for ${campaignId}\nTotal Vouchers: ${stats.total_vouchers}\nRedeemed: ${stats.redeemed_count}\nExpired: ${stats.expired_count}\nClaimed: ${stats.claimed_count}`);
+        alert(`Campaign Stats for ${campaignId}\nTotal Claimed (Vouchers): ${stats.total_vouchers}\nPending Redemption: ${stats.claimed_count}\nRedeemed: ${stats.redeemed_count}\nExpired: ${stats.expired_count}`);
       } catch (error) {
         alert('Error loading campaign stats');
       }

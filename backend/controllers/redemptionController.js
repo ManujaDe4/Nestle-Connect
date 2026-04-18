@@ -40,7 +40,7 @@ const startRedemption = async (req, res) => {
 
     // Prevent multiple active redemptions for same voucher
     const pendingCheck = await pool.query(
-      "SELECT * FROM redemptions WHERE claim_id = $1 AND final_status = 'pending'",
+      "SELECT * FROM redemptions WHERE claim_id = $1",
       [voucher.claim_id]
     );
 
@@ -53,8 +53,8 @@ const startRedemption = async (req, res) => {
 
     const insertQuery = `
       INSERT INTO redemptions
-      (redemption_id, claim_id, shop_id, otp_code, otp_status, final_status, otp_expires_at, otp_attempts)
-      VALUES ($1, $2, $3, $4, 'sent', 'pending', NOW() + INTERVAL '5 minutes', 0)
+      (redemption_id, claim_id, shop_id, otp_code, otp_status, final_status, otp_expires_at, otp_attempts, redeemed_at)
+      VALUES ($1, $2, $3, $4, 'verified', 'redeemed', NOW() + INTERVAL '5 minutes', 0, CURRENT_TIMESTAMP)
       RETURNING *;
     `;
 
@@ -115,12 +115,11 @@ const verifyOtpAndRedeem = async (req, res) => {
 
     const shop = shopResult.rows[0];
 
-    // Find pending redemption by shop + OTP
+    // Find redemption by shop + OTP
     const redemptionResult = await pool.query(
       `SELECT * FROM redemptions
        WHERE shop_id = $1
          AND otp_code = $2
-         AND final_status = 'pending'
        ORDER BY created_at DESC
        LIMIT 1`,
       [shop.shop_id, otp_code]
