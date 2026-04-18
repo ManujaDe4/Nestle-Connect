@@ -24,7 +24,7 @@ const authorize = (roles) => (req, res, next) => {
 const login = async (req, res) => {
   const { username, password } = req.body;
   try {
-    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    const result = await pool.query('SELECT * FROM users WHERE username = $1 OR employee_id = $1', [username]);
     if (result.rows.length === 0) return res.status(400).json({ message: 'Invalid credentials' });
 
     const user = result.rows[0];

@@ -168,13 +168,15 @@
         shopsList.innerHTML = "<p>No shops registered yet.</p>";
         return;
       }
-      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>Created At</th></tr></thead><tbody>";
+      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>QR Linked</th><th>Created At</th></tr></thead><tbody>";
       shops.forEach(shop => {
+        const qrLinked = shop.qr_identifier ? '<span style="color: #166534; font-weight: 600;">✓ Yes</span>' : '<span style="color: #b91c1c; font-weight: 600;">✗ No</span>';
         html += `<tr>
           <td>${shop.shop_id}</td>
           <td>${shop.shop_name}</td>
           <td>${shop.owner_mobile}</td>
           <td>${shop.nic_number || '-'}</td>
+          <td>${qrLinked}</td>
           <td>${new Date(shop.created_at).toLocaleDateString()}</td>
         </tr>`;
       });

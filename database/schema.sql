@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS users;
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
+    employee_id VARCHAR(50) UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'rep')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -61,8 +61,12 @@
         <h3>Add New Rep</h3>
         <form id="addRepForm">
           <div class="form-group">
-            <label for="repUsername">Username</label>
-            <input type="text" id="repUsername" placeholder="rep username" required />
+            <label for="repId">Rep ID</label>
+            <input type="text" id="repId" placeholder="e.g. REP001" required />
+          </div>
+          <div class="form-group">
+            <label for="repUsername">Name</label>
+            <input type="text" id="repUsername" placeholder="rep name" required />
           </div>
           <div class="form-group">
             <label for="repPassword">Password</label>
@@ -236,9 +240,10 @@
     }
 
     function displayReps(reps) {
-      let html = "<table><thead><tr><th>Username</th><th>Role</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
+      let html = "<table><thead><tr><th>Rep ID</th><th>Name</th><th>Role</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
       reps.forEach(rep => {
         html += `<tr>
+          <td>${rep.employee_id || '-'}</td>
           <td>${rep.username}</td>
           <td>${rep.role}</td>
           <td>${new Date(rep.created_at).toLocaleDateString()}</td>
@@ -422,10 +427,11 @@
 
     addRepForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const employee_id = document.getElementById('repId').value.trim();
       const username = document.getElementById('repUsername').value.trim();
       const password = document.getElementById('repPassword').value.trim();
       const token = localStorage.getItem("token");
-      if (!username || !password) return;
+      if (!username || !password || !employee_id) return;
       try {
         const response = await fetch(`${API_BASE}/api/users`, {
           method: 'POST',
@@ -433,7 +439,7 @@
             'Content-Type': 'application/json',
             "Authorization": `Bearer ${token}`,
           },
-          body: JSON.stringify({ username, password, role: 'rep' }),
+          body: JSON.stringify({ username, password, role: 'rep', employee_id }),
         });
         if (response.ok) {
           addRepForm.reset();
