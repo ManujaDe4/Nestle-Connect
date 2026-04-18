@@ -71,7 +71,7 @@ const getAdminDashboard = async (req, res) => {
       SELECT s.*, COUNT(r.id) AS scan_count
       FROM shops s
       LEFT JOIN redemptions r ON s.shop_id = r.shop_id
-      GROUP BY s.id, s.shop_id, s.shop_name, s.owner_mobile, s.qr_slug, s.rep_id, s.created_at
+      GROUP BY s.id
       ORDER BY s.created_at DESC
     `);
     res.status(200).json(shopsResult.rows);

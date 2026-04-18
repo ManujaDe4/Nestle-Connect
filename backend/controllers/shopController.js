@@ -42,10 +42,10 @@ const getAllShops = async (req, res) => {
 
 const createShop = async (req, res) => {
   try {
-    const { shop_name, owner_mobile } = req.body;
+    const { shop_name, owner_mobile, nic_number } = req.body;
 
-    if (!shop_name || !owner_mobile) {
-      return res.status(400).json({ message: "Shop name and owner mobile are required" });
+    if (!shop_name || !owner_mobile || !nic_number) {
+      return res.status(400).json({ message: "Shop name, owner mobile, and NIC number are required" });
     }
 
     // Generate shop_id
@@ -72,8 +72,8 @@ const createShop = async (req, res) => {
     const repId = req.user.role === 'rep' ? req.user.id : null;
     
     const insertResult = await pool.query(
-      "INSERT INTO shops (shop_id, shop_name, owner_mobile, qr_slug, rep_id, created_by_rep_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-      [shop_id, shop_name, owner_mobile, uniqueSlug, repId, createdByRepId]
+      "INSERT INTO shops (shop_id, shop_name, owner_mobile, nic_number, qr_slug, rep_id, created_by_rep_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+      [shop_id, shop_name, owner_mobile, nic_number, uniqueSlug, repId, createdByRepId]
     );
 
     const shopRowId = insertResult.rows[0].id;
@@ -81,7 +81,7 @@ const createShop = async (req, res) => {
       userId: req.user.id,
       shopId: shopRowId,
       action: 'shop_registered',
-      detail: `Registered shop ${shop_id} (${shop_name}) with owner ${owner_mobile}`
+      detail: `Registered shop ${shop_id} (${shop_name}) with owner ${owner_mobile} (NIC: ${nic_number})`
     });
 
     // Send SMS to the shop owner
@@ -97,7 +97,7 @@ const createShop = async (req, res) => {
 
     res.status(201).json({
       message: "Shop registered successfully",
-      shop: { shop_id, shop_name, owner_mobile, qr_slug: uniqueSlug },
+      shop: { shop_id, shop_name, owner_mobile, nic_number, qr_slug: uniqueSlug },
       qrCode: qrCodeDataURL
     });
   } catch (error) {
@@ -183,6 +183,7 @@ const getRegistrationLog = async (req, res) => {
         s.shop_id,
         s.shop_name,
         s.owner_mobile,
+        s.nic_number,
         s.qr_slug,
         s.qr_identifier,
         s.created_at,

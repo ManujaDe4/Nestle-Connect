@@ -38,6 +38,11 @@
           <input type="tel" id="ownerMobile" placeholder="Enter owner mobile number" required />
         </div>
 
+        <div class="form-group">
+          <label for="nicNumber">NIC Number</label>
+          <input type="text" id="nicNumber" placeholder="Enter owner NIC number" required />
+        </div>
+
         <button type="submit" id="registerBtn" class="btn-primary"><span>Register Shop</span></button>
       </form>
 
@@ -51,10 +56,13 @@
           <div class="result-box"><span class="result-label">Shop ID</span><span class="result-value" id="shopId"></span></div>
           <div class="result-box"><span class="result-label">Shop Name</span><span class="result-value" id="shopNameDisplay"></span></div>
           <div class="result-box"><span class="result-label">Owner Mobile</span><span class="result-value" id="ownerMobileDisplay"></span></div>
+          <div class="result-box"><span class="result-label">NIC Number</span><span class="result-value" id="nicNumberDisplay"></span></div>
           <div class="result-box"><span class="result-label">QR Slug</span><span class="result-value" id="qrSlug"></span></div>
         </div>
         <div style="margin-top: 20px; text-align:center;">
           <img id="qrCode" src="" alt="QR Code" style="max-width: 260px; width: 100%; border-radius: 16px; border: 1px solid var(--border); padding: 10px; background: var(--surface);" />
+          <br>
+          <button id="downloadQrBtn" type="button" class="btn-secondary" style="margin-top: 15px;">Download QR Code</button>
         </div>
       </div>
 
@@ -77,6 +85,7 @@
     const registerBtn = document.getElementById("registerBtn");
     const responseMsg = document.getElementById("responseMsg");
     const qrSection = document.getElementById("qrSection");
+    const downloadQrBtn = document.getElementById("downloadQrBtn");
 
     function setMessage(message, type = "") {
       responseMsg.className = "";
@@ -100,10 +109,9 @@
 
       const shopName = document.getElementById("shopName").value.trim();
       const ownerMobile = document.getElementById("ownerMobile").value.trim();
+      const nicNumber = document.getElementById("nicNumber").value.trim();
 
-      // THE UPDATE: Trigger a browser alert popup if fields are empty
-      if (!shopName || !ownerMobile) {
-        alert("Action Required: Please fill in all mandatory fields before registering the shop.");
+      if (!shopName || !ownerMobile || !nicNumber) {
         setMessage("Please fill in all fields.", "error");
         return;
       }
@@ -122,6 +130,7 @@
           body: JSON.stringify({
             shop_name: shopName,
             owner_mobile: ownerMobile,
+            nic_number: nicNumber,
           }),
         });
 
@@ -132,6 +141,7 @@
           document.getElementById("shopId").textContent = data.shop.shop_id;
           document.getElementById("shopNameDisplay").textContent = data.shop.shop_name;
           document.getElementById("ownerMobileDisplay").textContent = data.shop.owner_mobile;
+          document.getElementById("nicNumberDisplay").textContent = data.shop.nic_number;
           document.getElementById("qrSlug").textContent = data.shop.qr_slug;
           document.getElementById("qrCode").src = data.qrCode;
           qrSection.style.display = "block";
@@ -144,6 +154,17 @@
       } finally {
         setButtonState(registerBtn, false, "Register Shop");
       }
+    });
+
+    downloadQrBtn.addEventListener("click", () => {
+      const qrImage = document.getElementById("qrCode");
+      const shopName = document.getElementById("shopNameDisplay").textContent || "Shop";
+      const link = document.createElement("a");
+      link.href = qrImage.src;
+      link.download = `${shopName.replace(/\s+/g, '-')}-QR.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     });
 
     checkAuth();

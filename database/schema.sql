@@ -16,6 +16,7 @@ CREATE TABLE shops (
     shop_id VARCHAR(20) UNIQUE NOT NULL,
     shop_name VARCHAR(100) NOT NULL,
     owner_mobile VARCHAR(15) NOT NULL,
+    nic_number VARCHAR(20),
     qr_slug VARCHAR(50) UNIQUE NOT NULL,
     rep_id INTEGER REFERENCES users(id),
     created_by_rep_id INTEGER REFERENCES users(id),
