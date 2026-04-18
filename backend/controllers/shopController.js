@@ -1,6 +1,7 @@
 const pool = require("../config/db");
 const QRCode = require("qrcode");
 const { logActivity } = require("../controllers/activityController");
+const sendSMS = require("../services/sms");
 
 const getShopBySlug = async (req, res) => {
   try {
@@ -81,6 +82,13 @@ const createShop = async (req, res) => {
       shopId: shopRowId,
       action: 'shop_registered',
       detail: `Registered shop ${shop_id} (${shop_name}) with owner ${owner_mobile}`
+    });
+
+    // Send SMS to the shop owner
+    const message = `Welcome to Nestle Connect! Your shop ${shop_name} (ID: ${shop_id}) has been successfully verified from Nestle.`;
+    // Try to send SMS async and log errors if it fails, without crashing the request
+    sendSMS(owner_mobile, message, "shop_registration", shopRowId).catch(err => {
+      console.error("Failed to send welcome SMS to shop owner:", err);
     });
 
     // Generate QR
