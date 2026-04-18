@@ -61,6 +61,8 @@
         </div>
         <div style="margin-top: 20px; text-align:center;">
           <img id="qrCode" src="" alt="QR Code" style="max-width: 260px; width: 100%; border-radius: 16px; border: 1px solid var(--border); padding: 10px; background: var(--surface);" />
+          <br>
+          <button id="downloadQrBtn" type="button" class="btn-secondary" style="margin-top: 15px;">Download QR Code</button>
         </div>
       </div>
 
@@ -83,6 +85,7 @@
     const registerBtn = document.getElementById("registerBtn");
     const responseMsg = document.getElementById("responseMsg");
     const qrSection = document.getElementById("qrSection");
+    const downloadQrBtn = document.getElementById("downloadQrBtn");
 
     function setMessage(message, type = "") {
       responseMsg.className = "";
@@ -151,6 +154,17 @@
       } finally {
         setButtonState(registerBtn, false, "Register Shop");
       }
+    });
+
+    downloadQrBtn.addEventListener("click", () => {
+      const qrImage = document.getElementById("qrCode");
+      const shopName = document.getElementById("shopNameDisplay").textContent || "Shop";
+      const link = document.createElement("a");
+      link.href = qrImage.src;
+      link.download = `${shopName.replace(/\s+/g, '-')}-QR.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     });
 
     checkAuth();
