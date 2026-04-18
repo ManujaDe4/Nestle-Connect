@@ -62,12 +62,16 @@
   <script>
     // Get campaign and ad info from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    const campaignId = urlParams.get('campaign_id') || 'CMP001';
+    const campaignId = urlParams.get('campaign_id');
     const adId = urlParams.get('ad_id') || 'AD001';
 
     // Update the link to pass parameters
     const claimLink = document.getElementById('claimLink');
-    claimLink.href = `claim-offer.html?campaign_id=${encodeURIComponent(campaignId)}&ad_id=${encodeURIComponent(adId)}`;
+    if (campaignId) {
+      claimLink.href = `claim-offer.html?campaign_id=${encodeURIComponent(campaignId)}&ad_id=${encodeURIComponent(adId)}`;
+    } else {
+      claimLink.href = `claim-offer.html?ad_id=${encodeURIComponent(adId)}`;
+    }
   </script>
 
 </body>

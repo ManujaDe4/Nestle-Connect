@@ -97,8 +97,25 @@
 
     // Get campaign and ad info from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    const campaignId = urlParams.get('campaign_id') || 'CMP001';
+    let campaignId = urlParams.get('campaign_id');
     const adId = urlParams.get('ad_id') || 'AD001';
+
+    // Fetch active campaign on load so we use the correct one
+    if (!campaignId) {
+      fetch(`${API_BASE}/api/campaigns/active`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            campaignId = data[0].campaign_id;
+          } else {
+            campaignId = 'CMP001'; // Fallback
+          }
+        })
+        .catch(err => {
+          console.error("Error fetching active campaign:", err);
+          campaignId = 'CMP001';
+        });
+    }
 
     function setMessage(message, type = "") {
       responseMsg.className = "";
@@ -166,7 +183,7 @@
           },
           body: JSON.stringify({
             customer_mobile: customerMobile,
-            campaign_id: campaignId,
+            campaign_id: campaignId || 'CMP001',
             ad_id: adId
           })
         });
