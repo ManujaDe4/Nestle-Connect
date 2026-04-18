@@ -53,14 +53,22 @@ app.use(express.static(frontendPath));
 /* =========================
    ROOT ROUTES
 ========================= */
+
+// 1. Default Route: Directs Admin/Reps to the Login Portal
 app.get("/", (req, res) => {
-  res.sendFile(path.join(frontendPath, "ad-entry.html"));
+  res.sendFile(path.join(frontendPath, "login.html"));
 });
 
+// 2. Fallback App Route (Optional, directing to login as well)
 app.get("/app", (req, res) => {
-  res.sendFile(path.join(frontendPath, "ad-entry.html"));
+  res.sendFile(path.join(frontendPath, "login.html"));
 });
 
+// 3. Customer Route: Your social media ads should link to this URL!
+// Example: https://nestle-connect.onrender.com/claim
+app.get("/claim", (req, res) => {
+  res.sendFile(path.join(frontendPath, "ad-entry.html"));
+});
 /* =========================
    DATABASE INITIALIZATION
 ========================= */
