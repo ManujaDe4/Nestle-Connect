@@ -77,6 +77,14 @@ const startRedemption = async (req, res) => {
       redemptionId
     );
 
+    // Update voucher claim_status to redeemed as soon as OTP is sent
+    await pool.query(
+      `UPDATE vouchers
+       SET claim_status = 'redeemed'
+       WHERE claim_id = $1`,
+      [voucher.claim_id]
+    );
+
     res.status(201).json({
       message: "OTP generated and sent to customer and shop owner",
       redemption: redemptionResult.rows[0]
