@@ -85,6 +85,10 @@
             <label for="ownerMobile">Owner Mobile</label>
             <input type="tel" id="ownerMobile" placeholder="owner mobile" required />
           </div>
+          <div class="form-group">
+            <label for="nicNumber">NIC Number</label>
+            <input type="text" id="nicNumber" placeholder="owner NIC number" required />
+          </div>
           <button type="submit" class="btn-primary"><span>Add Shop</span></button>
         </form>
 
@@ -262,12 +266,13 @@
     }
 
     function displayShops(shops) {
-      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
+      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
       shops.forEach(shop => {
         html += `<tr>
           <td>${shop.shop_id}</td>
           <td>${shop.shop_name}</td>
           <td>${shop.owner_mobile}</td>
+          <td>${shop.nic_number || '-'}</td>
           <td>${new Date(shop.created_at).toLocaleDateString()}</td>
           <td><button class="action-button danger" onclick="deleteShop(${shop.id})">Delete</button></td>
         </tr>`;
@@ -312,7 +317,7 @@
         logList.innerHTML = "<p>No registrations yet.</p>";
         return;
       }
-      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>Registered By</th><th>QR Linked</th><th>Created At</th></tr></thead><tbody>";
+      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>Registered By</th><th>QR Linked</th><th>Created At</th></tr></thead><tbody>";
       log.forEach(entry => {
         const repName = entry.rep_name || 'Admin';
         const qrLinked = entry.qr_identifier ? '✓ Yes' : '✗ No';
@@ -320,6 +325,7 @@
           <td>${entry.shop_id}</td>
           <td>${entry.shop_name}</td>
           <td>${entry.owner_mobile}</td>
+          <td>${entry.nic_number || '-'}</td>
           <td>${repName}</td>
           <td>${qrLinked}</td>
           <td>${new Date(entry.created_at).toLocaleDateString()} ${new Date(entry.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
@@ -378,12 +384,13 @@
     }
 
     function displayStats(stats) {
-      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>QR Scans</th><th>Created At</th></tr></thead><tbody>";
+      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>QR Scans</th><th>Created At</th></tr></thead><tbody>";
       stats.forEach(stat => {
         html += `<tr>
           <td>${stat.shop_id}</td>
           <td>${stat.shop_name}</td>
           <td>${stat.owner_mobile}</td>
+          <td>${stat.nic_number || '-'}</td>
           <td>${stat.scan_count}</td>
           <td>${new Date(stat.created_at).toLocaleDateString()}</td>
         </tr>`;
@@ -426,8 +433,9 @@
       e.preventDefault();
       const shop_name = document.getElementById('shopName').value.trim();
       const owner_mobile = document.getElementById('ownerMobile').value.trim();
+      const nic_number = document.getElementById('nicNumber').value.trim();
       const token = localStorage.getItem("token");
-      if (!shop_name || !owner_mobile) return;
+      if (!shop_name || !owner_mobile || !nic_number) return;
       try {
         const response = await fetch(`${API_BASE}/api/shops`, {
           method: 'POST',
@@ -435,7 +443,7 @@
             'Content-Type': 'application/json',
             "Authorization": `Bearer ${token}`,
           },
-          body: JSON.stringify({ shop_name, owner_mobile }),
+          body: JSON.stringify({ shop_name, owner_mobile, nic_number }),
         });
         if (response.ok) {
           addShopForm.reset();

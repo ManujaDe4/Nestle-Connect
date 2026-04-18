@@ -69,6 +69,11 @@
             <input type="tel" id="ownerMobile" placeholder="Enter owner mobile number" required />
           </div>
 
+          <div class="form-group">
+            <label for="nicNumber">NIC Number</label>
+            <input type="text" id="nicNumber" placeholder="Enter owner NIC number" required />
+          </div>
+
           <button type="submit" id="registerBtn" class="btn-primary"><span>Register Shop</span></button>
         </form>
 
@@ -82,6 +87,7 @@
             <div class="result-box"><span class="result-label">Shop ID</span><span class="result-value" id="shopId"></span></div>
             <div class="result-box"><span class="result-label">Shop Name</span><span class="result-value" id="shopNameDisplay"></span></div>
             <div class="result-box"><span class="result-label">Owner Mobile</span><span class="result-value" id="ownerMobileDisplay"></span></div>
+            <div class="result-box"><span class="result-label">NIC Number</span><span class="result-value" id="nicNumberDisplay"></span></div>
             <div class="result-box"><span class="result-label">QR Slug</span><span class="result-value" id="qrSlug"></span></div>
           </div>
           <div style="margin-top: 20px; text-align:center;">
@@ -159,12 +165,13 @@
         shopsList.innerHTML = "<p>No shops registered yet.</p>";
         return;
       }
-      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>Created At</th></tr></thead><tbody>";
+      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>Created At</th></tr></thead><tbody>";
       shops.forEach(shop => {
         html += `<tr>
           <td>${shop.shop_id}</td>
           <td>${shop.shop_name}</td>
           <td>${shop.owner_mobile}</td>
+          <td>${shop.nic_number || '-'}</td>
           <td>${new Date(shop.created_at).toLocaleDateString()}</td>
         </tr>`;
       });
@@ -205,8 +212,9 @@
 
       const shopName = document.getElementById("shopName").value.trim();
       const ownerMobile = document.getElementById("ownerMobile").value.trim();
+      const nicNumber = document.getElementById("nicNumber").value.trim();
 
-      if (!shopName || !ownerMobile) {
+      if (!shopName || !ownerMobile || !nicNumber) {
         setMessage("Please fill in all fields.", "error");
         return;
       }
@@ -225,6 +233,7 @@
           body: JSON.stringify({
             shop_name: shopName,
             owner_mobile: ownerMobile,
+            nic_number: nicNumber,
           }),
         });
 
@@ -235,6 +244,7 @@
           document.getElementById("shopId").textContent = data.shop.shop_id;
           document.getElementById("shopNameDisplay").textContent = data.shop.shop_name;
           document.getElementById("ownerMobileDisplay").textContent = data.shop.owner_mobile;
+          document.getElementById("nicNumberDisplay").textContent = data.shop.nic_number;
           document.getElementById("qrSlug").textContent = data.shop.qr_slug;
           document.getElementById("qrCode").src = data.qrCode;
           qrSection.style.display = "block";
