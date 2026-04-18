@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard - Nestlé Connect</title>
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
+
 <body>
 
   <div class="page-wrapper">
@@ -71,7 +73,9 @@
 
         <hr class="divider" />
         <h3>Existing Users</h3>
-        <div id="repsList"><p>Loading reps...</p></div>
+        <div id="repsList">
+          <p>Loading reps...</p>
+        </div>
       </div>
 
       <div id="shopsTab" class="tab-content" style="display:none;">
@@ -94,29 +98,40 @@
 
         <hr class="divider" />
         <h3>Registered Shops</h3>
-        <div id="shopsList"><p>Loading shops...</p></div>
+        <div id="shopsList">
+          <p>Loading shops...</p>
+        </div>
       </div>
 
       <div id="logTab" class="tab-content" style="display:none;">
         <h3>Field Representative Activity Log</h3>
-        <p style="color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 20px;">Track which Delivery Partner registered which shop and when. This helps monitor campaign rollout progress across regions.</p>
-        <div id="logList"><p>Loading registration log...</p></div>
+        <p style="color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 20px;">This helps monitor campaign rollout
+          progress across regions.</p>
+        <div id="logList">
+          <p>Loading registration log...</p>
+        </div>
       </div>
 
       <div id="activityTab" class="tab-content" style="display:none;">
         <h3>Audit Trail</h3>
-        <p style="color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 20px;">See the full action trail for reps and admins, including logins, shop registration, and QR mapping.</p>
-        <div id="activityList"><p>Loading activity trail...</p></div>
+        <p style="color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 20px;">Track which Delivery Partner
+          registered which shop and when. This helps monitor campaign rollout progress across regions.</p>
+        <div id="activityList">
+          <p>Loading activity trail...</p>
+        </div>
       </div>
 
       <div id="statsTab" class="tab-content" style="display:none;">
         <h3>Scan Activity</h3>
-        <div id="statsList"><p>Loading statistics...</p></div>
+        <div id="statsList">
+          <p>Loading statistics...</p>
+        </div>
       </div>
 
       <div id="campaignsTab" class="tab-content" style="display:none;">
         <h3>Campaign Management</h3>
-        <p style="color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 20px;">Create and manage campaigns. Vouchers are automatically disabled when campaigns expire.</p>
+        <p style="color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 20px;">Create and manage campaigns.
+          Vouchers are automatically disabled when campaigns expire.</p>
 
         <h4>Create New Campaign</h4>
         <form id="createCampaignForm">
@@ -145,7 +160,9 @@
 
         <hr class="divider" />
         <h3>Active Campaigns</h3>
-        <div id="campaignsList"><p>Loading campaigns...</p></div>
+        <div id="campaignsList">
+          <p>Loading campaigns...</p>
+        </div>
       </div>
 
     </div>
@@ -484,7 +501,7 @@
         const endDate = new Date(campaign.end_date).toLocaleDateString();
         const statusBadge = `<span style="padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; 
           ${campaign.status === 'active' ? 'background: #d1fae5; color: #166534;' : 'background: #fee2e2; color: #b91c1c;'}">${campaign.status}</span>`;
-        
+
         html += `<tr>
           <td>${campaign.campaign_id}</td>
           <td>${campaign.campaign_name}</td>
@@ -569,4 +586,5 @@
   </script>
 
 </body>
+
 </html>
