@@ -101,7 +101,9 @@
       const shopName = document.getElementById("shopName").value.trim();
       const ownerMobile = document.getElementById("ownerMobile").value.trim();
 
+      // THE UPDATE: Trigger a browser alert popup if fields are empty
       if (!shopName || !ownerMobile) {
+        alert("Action Required: Please fill in all mandatory fields before registering the shop.");
         setMessage("Please fill in all fields.", "error");
         return;
       }
