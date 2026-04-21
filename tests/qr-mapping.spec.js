@@ -2,7 +2,6 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Module 3: QR Mapping & Linking', () => {
 
-  // ARRANGE: The ghost logs in as a Rep and navigates to the mapping page
   test.beforeEach(async ({ page }) => {
     // 1. Go to the live login page
     await page.goto('https://nestle-connect.onrender.com/login.html'); 
@@ -17,20 +16,15 @@ test.describe('Module 3: QR Mapping & Linking', () => {
     await page.goto('https://nestle-connect.onrender.com/qr-mapping.html');
   });
 
-  // THE HAPPY PATH: Successfully linking a QR code to a shop
   test('TC_25: QR Map - Single Valid Link', async ({ page }) => {
     
-    // THE FIX: Tell Playwright to wait for the options to be attached to the DOM, not visually drawn
     await page.waitForSelector('#shopSelect option:not([value=""])', { state: 'attached' });
 
-    // 2. Select the second option in the dropdown (index 1)
     await page.locator('#shopSelect').selectOption({ index: 1 });
 
-    // 3. Verify the Shop Info card becomes visible after selecting a shop
     const shopInfoCard = page.locator('#shopInfo');
     await expect(shopInfoCard).toHaveClass(/show/);
 
-    // 4. Type a unique dummy QR identifier
     const uniqueQRCode = `QR-TEST-${Date.now()}`;
     await page.fill('input[id="qrIdentifier"]', uniqueQRCode);
     
