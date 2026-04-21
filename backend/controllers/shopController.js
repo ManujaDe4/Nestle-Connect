@@ -70,7 +70,7 @@ const createShop = async (req, res) => {
     // Track which rep created this shop
     const createdByRepId = req.user.role === 'rep' ? req.user.id : null;
     const repId = req.user.role === 'rep' ? req.user.id : null;
-    
+
     const insertResult = await pool.query(
       "INSERT INTO shops (shop_id, shop_name, owner_mobile, nic_number, qr_slug, rep_id, created_by_rep_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
       [shop_id, shop_name, owner_mobile, nic_number, uniqueSlug, repId, createdByRepId]
@@ -109,6 +109,9 @@ const createShop = async (req, res) => {
 const deleteShop = async (req, res) => {
   const { id } = req.params;
   try {
+    // Delete associated activity logs first to avoid foreign key constraint violation
+    await pool.query('DELETE FROM activity_logs WHERE shop_id = $1', [id]);
+    
     const result = await pool.query('DELETE FROM shops WHERE id = $1', [id]);
     if (result.rowCount === 0) {
       return res.status(404).json({ message: 'Shop not found' });
@@ -135,8 +138,8 @@ const mapQRCode = async (req, res) => {
     );
 
     if (qrCheck.rows.length > 0) {
-      return res.status(400).json({ 
-        message: `QR code is already linked to: ${qrCheck.rows[0].shop_name}` 
+      return res.status(400).json({
+        message: `QR code is already linked to: ${qrCheck.rows[0].shop_name}`
       });
     }
 
