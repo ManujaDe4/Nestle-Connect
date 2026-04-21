@@ -34,7 +34,7 @@ test.describe('Module 2: Shop Registration', () => {
   });
 
   test('TC_15: Shop Reg - Missing Fields', async ({ page }) => {
-    await page.fill('input[id="ownerMobile"]', '0711234567');
+    await page.fill('input[id="ownerMobile"]', '0768628138');
     
     // Click register
     await page.click('button[id="registerBtn"]');
