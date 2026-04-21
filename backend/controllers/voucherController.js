@@ -20,20 +20,20 @@ const claimVoucher = async (req, res) => {
     );
 
     let campaign = campaignCheck.rows.length > 0 ? campaignCheck.rows[0] : null;
-    
+
     // Auto-heal: If campaign is not found, expired, or disabled, fall back to the currently active campaign
     if (!campaign || campaign.status !== 'active' || new Date(campaign.end_date) <= new Date()) {
       const activeCheck = await pool.query(
         "SELECT * FROM campaigns WHERE status = 'active' AND end_date > NOW() ORDER BY created_at DESC LIMIT 1"
       );
-      
+
       if (activeCheck.rows.length > 0) {
         campaign = activeCheck.rows[0];
         campaign_id = campaign.campaign_id; // Override with the real active campaign
       } else {
         // Only fail if there are genuinely no active campaigns in the entire system
-        return res.status(400).json({ 
-          message: "Campaign is disabled and not accepting claims" 
+        return res.status(400).json({
+          message: "Campaign is disabled and not accepting claims"
         });
       }
     }

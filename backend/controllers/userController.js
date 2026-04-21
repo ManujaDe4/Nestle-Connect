@@ -39,6 +39,12 @@ const createUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   const { id } = req.params;
   try {
+    // Delete activity logs referencing this user first
+    await pool.query('DELETE FROM activity_logs WHERE user_id = $1', [id]);
+    
+    // Nullify references in shops to prevent FK violations
+    await pool.query('UPDATE shops SET rep_id = NULL, created_by_rep_id = NULL WHERE rep_id = $1 OR created_by_rep_id = $1', [id]);
+    
     const result = await pool.query('DELETE FROM users WHERE id = $1 AND role != $2', [id, 'admin']); // Prevent deleting admins
     if (result.rowCount === 0) {
       return res.status(404).json({ message: 'User not found or cannot delete' });

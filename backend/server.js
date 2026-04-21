@@ -141,7 +141,7 @@ const PORT = process.env.PORT || 5000;
 initDatabase().then(() => {
   // Run expiry check immediately on startup
   checkAndExpireCampaigns();
-  
+
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
     console.log('✓ Campaign expiry job scheduled (checks every 5 minutes)');
