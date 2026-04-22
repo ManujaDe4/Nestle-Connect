@@ -18,7 +18,7 @@ test.describe('Module 2: Shop Registration', () => {
 
   test('TC_14: Shop Reg - Valid Submit', async ({ page }) => {
     // Fill out the shop details
-    await page.fill('input[id="shopName"]', 'Kamal Grocery Store');
+    await page.fill('input[id="shopName"]', 'Ntee Groceries');
     await page.fill('input[id="ownerMobile"]', '0768628138');
     
     await page.fill('input[id="nicNumber"]', '198512345678'); 

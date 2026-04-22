@@ -5,8 +5,8 @@ test.describe('Module 4: Consumer Claim Flow', () => {
   test('TC_40: Valid Mobile Number Claim', async ({ page }) => {
     await page.goto('https://nestle-connect.onrender.com/claim-offer.html'); 
     
-    const dummyMobile = `077${Math.floor(1000000 + Math.random() * 9000000)}`;
-    await page.fill('input[id="mobileNumber"]', dummyMobile);
+    // Injecting the actual mobile number instead of a dummy variable
+    await page.fill('input[id="mobileNumber"]', '0773369997');
     
     await page.click('button[id="claimBtn"]');
 
