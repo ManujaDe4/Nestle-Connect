@@ -8,77 +8,66 @@
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
 
-<body>
+<body class="offer-body">
 
   <!-- Toast Popup -->
   <div id="toast" class="toast">
     <span id="toastMessage">Message</span>
   </div>
 
-  <div class="page-wrapper">
+  <div class="page-wrapper" style="max-width: 600px; padding-top: 40px;">
 
     <!-- BRAND -->
-    <div class="brand">
-
-      <!-- ✅ NEW LOGO -->
-      <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" class="brand-logo" />
-
-      <span class="brand-name">Nestlé Connect</span>
-      <span class="brand-divider">·</span>
-      <span class="brand-sub">Customer Portal</span>
+    <div class="brand" style="justify-content: center; margin-bottom: 40px;">
+      <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" class="brand-logo" style="width: 64px; height: 64px;" />
     </div>
 
     <!-- Card -->
-    <div class="card">
-      <div class="corner-mark">C</div>
-
-      <div class="card-header">
-        <h1 class="card-title">Claim <span>Your Offer</span></h1>
+    <div class="offer-card">
+      <div style="text-align: center;">
+        <h1 class="offer-title">Claim Your<br><span>Exclusive Offer</span></h1>
+        <p class="offer-subtitle" style="margin-top: 16px; margin-bottom: 32px;">
+          Enter your mobile number to securely generate your digital voucher.
+        </p>
       </div>
 
-      <hr class="divider" />
-
-      <div class="form-group">
-        <label for="mobileNumber">Mobile Number</label>
-        <input type="text" id="mobileNumber" placeholder="e.g. 0771234567" autocomplete="off" spellcheck="false" />
+      <div class="floating-group">
+        <input type="tel" id="mobileNumber" class="floating-input" placeholder=" " autocomplete="off" spellcheck="false" />
+        <label for="mobileNumber" class="floating-label">Mobile Number (e.g. 0771234567)</label>
       </div>
 
-      <button id="claimBtn"><span>Claim Voucher</span></button>
+      <button id="claimBtn" class="btn-premium"><span>Generate Voucher</span></button>
 
-      <hr class="divider" />
-
-      <div id="responseMsg">Awaiting mobile number input…</div>
+      <div id="responseMsg" style="margin-top: 24px; display: none;"></div>
 
       <div id="successSection" style="display: none;">
-        <hr class="divider" />
-
-        <div class="result-grid">
-          <div class="result-box">
-            <span class="result-label">Claim ID</span>
-            <span id="claimIdValue" class="result-value">-</span>
+        
+        <!-- Premium Ticket UI -->
+        <div class="voucher-ticket">
+          <div class="ticket-header">
+            <p>Voucher Code</p>
+            <div class="ticket-code" id="voucherCodeValue">-</div>
           </div>
-
-          <div class="result-box">
-            <span class="result-label">Voucher Code</span>
-            <span id="voucherCodeValue" class="result-value">-</span>
+          
+          <div class="ticket-details">
+            <div class="ticket-detail-item">
+              <p>Claim ID</p>
+              <h4 id="claimIdValue">-</h4>
+            </div>
+            <div class="ticket-detail-item" style="text-align: right;">
+              <p>Status</p>
+              <h4 style="color: #166534;">Ready to Redeem</h4>
+            </div>
           </div>
         </div>
 
-        <p class="card-footer success-note">
-          The voucher has been generated and linked to the customer mobile number. It can now be redeemed at a
-          participating local shop.
+        <p class="card-footer" style="margin-top: 24px; color: #5B3122; font-weight: 500;">
+          Your voucher has been generated and linked to your mobile number. Show this code at any participating local shop.
         </p>
-
-        <!-- 
-        <a id="continueLink" class="link-button" href="store-verify.html?shop=nugegoda-local-shop">
-          Continue to Store Verification
-        </a> 
-        -->
-
 
       </div>
 
-      <p class="card-footer">
+      <p class="card-footer" style="margin-top: 32px; color: #a99a94;">
         Your mobile number is used only for offer identification and redemption tracking.
       </p>
     </div>
@@ -136,10 +125,16 @@
       }
     }
 
-    function setButtonState(button, disabled, text) {
+    function setButtonState(button, disabled, text, isProcessing = false) {
       button.disabled = disabled;
       const span = button.querySelector("span");
-      if (span && text) span.innerText = text;
+      if (span) {
+        if (isProcessing) {
+          span.innerHTML = `<div class="spinner"></div>`;
+        } else if (text) {
+          span.innerText = text;
+        }
+      }
     }
 
     function isValidMobile(number) {
@@ -180,8 +175,9 @@
         return;
       }
 
-      setButtonState(claimBtn, true, "Processing...");
-      setMessage("Generating voucher...");
+      setButtonState(claimBtn, true, "", true);
+      responseMsg.style.display = "block";
+      setMessage("Generating your exclusive voucher...");
 
       try {
         const res = await fetch(`${API_BASE}/api/vouchers/claim`, {
@@ -200,9 +196,10 @@
         const data = await res.json();
 
         if (!res.ok) {
+          responseMsg.style.display = "block";
           setMessage(data.message || "Failed to claim voucher.", "error");
           showToast(data.message || "Failed to claim voucher.", "error");
-          setButtonState(claimBtn, false, "Claim Voucher");
+          setButtonState(claimBtn, false, "Generate Voucher");
           return;
         }
 
@@ -230,10 +227,11 @@
         successSection.style.display = "block";
       } catch (err) {
         console.error(err);
+        responseMsg.style.display = "block";
         setMessage("Server error while claiming voucher.", "error");
         showToast("Server error while claiming voucher.", "error");
       } finally {
-        setButtonState(claimBtn, false, "Claim Voucher");
+        setButtonState(claimBtn, false, "Generate Voucher");
       }
     }
 
