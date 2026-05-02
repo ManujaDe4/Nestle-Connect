@@ -42,9 +42,26 @@
     
     <nav class="sidebar-nav">
       <button class="nav-item" onclick="window.location.href='admin-dashboard.html'">
-        <i class="ph ph-arrow-left"></i> Back to Dashboard
+        <i class="ph ph-users"></i> Reps
       </button>
-      <div style="margin: 16px 0; border-top: 1px solid var(--border-color);"></div>
+      <button class="nav-item" onclick="window.location.href='admin-dashboard.html'">
+        <i class="ph ph-storefront"></i> Shops
+      </button>
+      <button class="nav-item" onclick="window.location.href='admin-dashboard.html'">
+        <i class="ph ph-clipboard-text"></i> Registration Log
+      </button>
+      <button class="nav-item" onclick="window.location.href='admin-dashboard.html'">
+        <i class="ph ph-activity"></i> Activity Trail
+      </button>
+      <button class="nav-item" onclick="window.location.href='admin-dashboard.html'">
+        <i class="ph ph-megaphone"></i> Campaigns
+      </button>
+      <button class="nav-item" onclick="window.location.href='admin-dashboard.html'">
+        <i class="ph ph-chart-bar"></i> Scan Stats
+      </button>
+      <button class="nav-item" onclick="window.location.href='admin-dashboard.html'">
+        <i class="ph ph-trend-up"></i> ROI Analytics
+      </button>
       <button class="nav-item active">
         <i class="ph ph-briefcase"></i> Corporate Roles
       </button>
@@ -65,9 +82,16 @@
         <i class="ph ph-list"></i>
       </button>
       <h1 class="topbar-title">Corporate Roles Directory</h1>
+      <div class="user-profile" onclick="window.location.href='admin-dashboard.html'" style="cursor:pointer;" title="Return to Dashboard">
+        <div class="user-avatar" id="topbarAvatar">AD</div>
+        <div>
+          <span style="font-weight:600; font-size:0.95rem;" id="topbarName">Admin</span>
+          <div style="font-size:0.72rem; color:var(--text-secondary);" id="topbarRole">Administrator</div>
+        </div>
+      </div>
     </header>
 
-    <div class="content-wrapper">
+    <div class="content-area">
       
       <div class="dashboard-header" style="display:flex; justify-content:space-between; align-items:flex-end;">
         <div>
@@ -127,7 +151,7 @@
           </div>
         </div>
         <div class="table-responsive">
-          <table class="data-table">
+          <table class="modern-table">
             <thead>
               <tr>
                 <th>Employee ID</th>
@@ -165,6 +189,12 @@
       window.location.href = "login.html";
       return;
     }
+
+    // Populate Topbar Profile
+    const username = payload.username || "Admin";
+    document.getElementById("topbarAvatar").textContent = username.slice(0, 2).toUpperCase();
+    document.getElementById("topbarName").textContent = username;
+    document.getElementById("topbarRole").textContent = payload.company_role || "Administrator";
 
     loadCorporateUsers();
 
