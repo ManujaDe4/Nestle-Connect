@@ -5,7 +5,7 @@ const { getLocationPrefix } = require('../utils/locationCodes');
 const getMyProfile = async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, username, employee_id, role, province, region, area, created_at FROM users WHERE id = $1',
+      'SELECT id, username, employee_id, role, company_role, province, region, area, created_at FROM users WHERE id = $1',
       [req.user.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
@@ -40,7 +40,7 @@ const updateMyProfile = async (req, res) => {
     }
 
     const updated = await pool.query(
-      'SELECT id, username, employee_id, role, province, region, area, created_at FROM users WHERE id = $1',
+      'SELECT id, username, employee_id, role, company_role, province, region, area, created_at FROM users WHERE id = $1',
       [req.user.id]
     );
     res.json({ message: 'Profile updated successfully', user: updated.rows[0] });
@@ -52,7 +52,7 @@ const updateMyProfile = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, username, employee_id, role, province, region, area, created_at FROM users ORDER BY created_at DESC');
+    const result = await pool.query('SELECT id, username, employee_id, role, company_role, province, region, area, created_at FROM users ORDER BY created_at DESC');
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('getAllUsers error:', error);
@@ -61,7 +61,7 @@ const getAllUsers = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-  const { username, password, role, province, region, area } = req.body;
+  const { username, password, role, company_role, province, region, area } = req.body;
   if (!username || !password || !role) {
     return res.status(400).json({ message: 'Username, password, and role are required' });
   }
@@ -75,7 +75,6 @@ const createUser = async (req, res) => {
       const locPrefix = getLocationPrefix(province, region);
       const repPrefix = `REP-${locPrefix}-`;
       
-      // Find the latest REP ID for THIS specific prefix
       const lastRep = await pool.query("SELECT employee_id FROM users WHERE employee_id LIKE $1 ORDER BY employee_id DESC LIMIT 1", [`${repPrefix}%`]);
       let nextNum = 1;
       if (lastRep.rows.length > 0) {
@@ -84,6 +83,16 @@ const createUser = async (req, res) => {
         nextNum = parseInt(numPart, 10) + 1;
       }
       newEmployeeId = `${repPrefix}${String(nextNum).padStart(6, '0')}`;
+    } else if (role === 'admin') {
+      const adminPrefix = `CORP-`;
+      const lastAdmin = await pool.query("SELECT employee_id FROM users WHERE employee_id LIKE $1 ORDER BY employee_id DESC LIMIT 1", [`${adminPrefix}%`]);
+      let nextNum = 1;
+      if (lastAdmin.rows.length > 0 && lastAdmin.rows[0].employee_id) {
+        const lastId = lastAdmin.rows[0].employee_id;
+        const numPart = lastId.replace(adminPrefix, '');
+        nextNum = parseInt(numPart, 10) + 1;
+      }
+      newEmployeeId = `${adminPrefix}${String(nextNum).padStart(6, '0')}`;
     }
 
     const existing = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
@@ -92,8 +101,8 @@ const createUser = async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     await pool.query(
-      'INSERT INTO users (username, password_hash, role, employee_id, province, region, area) VALUES ($1, $2, $3, $4, $5, $6, $7)', 
-      [username, hashedPassword, role, newEmployeeId, province || null, region || null, area || null]
+      'INSERT INTO users (username, password_hash, role, company_role, employee_id, province, region, area) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)', 
+      [username, hashedPassword, role, company_role || null, newEmployeeId, province || null, region || null, area || null]
     );
     res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
@@ -111,7 +120,7 @@ const deleteUser = async (req, res) => {
     // Nullify references in shops to prevent FK violations
     await pool.query('UPDATE shops SET rep_id = NULL, created_by_rep_id = NULL WHERE rep_id = $1 OR created_by_rep_id = $1', [id]);
     
-    const result = await pool.query('DELETE FROM users WHERE id = $1 AND role != $2', [id, 'admin']); // Prevent deleting admins
+    const result = await pool.query('DELETE FROM users WHERE id = $1 AND id != 1 AND id != $2', [id, req.user.id]); // Prevent deleting master admin or self
     if (result.rowCount === 0) {
       return res.status(404).json({ message: 'User not found or cannot delete' });
     }

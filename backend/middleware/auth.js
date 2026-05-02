@@ -32,7 +32,7 @@ const login = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role, province: user.province || null, region: user.region || null, area: user.area || null },
+      { id: user.id, username: user.username, role: user.role, company_role: user.company_role || null, province: user.province || null, region: user.region || null, area: user.area || null },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '1h' }
     );
@@ -41,7 +41,7 @@ const login = async (req, res) => {
       action: 'login',
       detail: `User ${user.username} logged in as ${user.role}`
     });
-    res.json({ token, user: { id: user.id, username: user.username, role: user.role, province: user.province || null, region: user.region || null, area: user.area || null } });
+    res.json({ token, user: { id: user.id, username: user.username, role: user.role, company_role: user.company_role || null, province: user.province || null, region: user.region || null, area: user.area || null } });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Corporate Roles - Nestlé Connect</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="./css/dashboard.css" />
+  
+  <style>
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--accent-glow);
+      color: var(--accent-color);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="admin-dashboard.html" class="sidebar-brand">
+        <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" />
+        Nestlé Connect
+      </a>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <button class="nav-item" onclick="window.location.href='admin-dashboard.html'">
+        <i class="ph ph-arrow-left"></i> Back to Dashboard
+      </button>
+      <div style="margin: 16px 0; border-top: 1px solid var(--border-color);"></div>
+      <button class="nav-item active">
+        <i class="ph ph-briefcase"></i> Corporate Roles
+      </button>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="logout-btn">
+        <i class="ph ph-sign-out"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    
+    <header class="topbar">
+      <button class="mobile-menu-toggle" id="mobileMenuBtn">
+        <i class="ph ph-list"></i>
+      </button>
+      <h1 class="topbar-title">Corporate Roles Directory</h1>
+    </header>
+
+    <div class="content-wrapper">
+      
+      <div class="dashboard-header" style="display:flex; justify-content:space-between; align-items:flex-end;">
+        <div>
+          <h2>Manage Corporate Admins</h2>
+          <p>Assign specific corporate titles to users with administrative access.</p>
+        </div>
+      </div>
+
+      <!-- Registration Form -->
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-header">
+          <h3 class="card-title">Register Corporate User</h3>
+        </div>
+        <form id="addCorporateForm" class="form-grid">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="corpName" placeholder="John Doe" required />
+          </div>
+          
+          <div class="form-group">
+            <label>Corporate Role</label>
+            <div class="custom-select-wrapper">
+              <select id="corpRole" required>
+                <option value="Head Office Admin">Head Office Admin</option>
+                <option value="Marketing Manager">Marketing Manager</option>
+                <option value="Integrated Marketing Services Supervisor">Integrated Marketing Services Supervisor</option>
+                <option value="Performance Marketing Specialist">Performance Marketing Specialist</option>
+                <option value="CRM & Data Analyst">CRM & Data Analyst</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="corpPassword" placeholder="Secure password" required />
+          </div>
+          
+          <div class="form-actions" style="grid-column: 1 / -1;">
+            <button type="submit" class="btn-primary" id="addCorpBtn">
+              <i class="ph ph-user-plus"></i> Register User
+            </button>
+          </div>
+        </form>
+        <div id="corpErrorMsg" class="error-text" style="display: none; margin-top: 10px;"></div>
+      </div>
+
+      <!-- Corporate Users Table -->
+      <div class="card table-card">
+        <div class="card-header flex-between">
+          <h3 class="card-title">Corporate Directory</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee ID</th>
+                <th>Name</th>
+                <th>Corporate Role</th>
+                <th>Joined Date</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="corporateTableBody">
+              <tr><td colspan="5" style="text-align:center; padding:30px;">Loading directory...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') 
+    ? 'http://localhost:5000' 
+    : 'https://nestle-connect.onrender.com';
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (payload.role !== "admin") {
+      window.location.href = "login.html";
+      return;
+    }
+
+    loadCorporateUsers();
+
+    document.getElementById("addCorporateForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("addCorpBtn");
+      const err = document.getElementById("corpErrorMsg");
+      const originalText = btn.innerHTML;
+      
+      err.style.display = 'none';
+      btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Registering...';
+      btn.disabled = true;
+
+      const userData = {
+        username: document.getElementById("corpName").value.trim(),
+        role: "admin",
+        company_role: document.getElementById("corpRole").value,
+        password: document.getElementById("corpPassword").value
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/users`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify(userData)
+        });
+
+        if (res.ok) {
+          document.getElementById("addCorporateForm").reset();
+          loadCorporateUsers();
+        } else {
+          const data = await res.json();
+          err.textContent = data.message || "Failed to create user";
+          err.style.display = 'block';
+        }
+      } catch (error) {
+        err.textContent = "Server error occurred.";
+        err.style.display = 'block';
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("token");
+      window.location.href = "login.html";
+    });
+  });
+
+  async function loadCorporateUsers() {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_BASE}/api/users`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to load users");
+      const users = await res.json();
+      
+      // Filter for admins only
+      const admins = users.filter(u => u.role === 'admin');
+      
+      const tbody = document.getElementById("corporateTableBody");
+      tbody.innerHTML = "";
+
+      if (admins.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-secondary);">No corporate users found.</td></tr>`;
+        return;
+      }
+
+      admins.forEach(user => {
+        const isSelf = user.username === JSON.parse(atob(token.split(".")[1])).username;
+        const joinedDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : '—';
+        const roleLabel = user.company_role || 'Head Office Admin';
+        
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>${user.employee_id || '—'}</strong></td>
+          <td>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:32px; height:32px; border-radius:50%; background:var(--accent-glow); color:var(--accent-color); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem;">
+                ${user.username.slice(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <div style="font-weight:600; color:var(--text-primary);">${user.username}</div>
+                ${isSelf ? '<div style="font-size:0.7rem; color:var(--success);">You</div>' : ''}
+              </div>
+            </div>
+          </td>
+          <td><span class="role-badge"><i class="ph ph-briefcase"></i> ${roleLabel}</span></td>
+          <td style="color:var(--text-secondary);">${joinedDate}</td>
+          <td class="text-right">
+            <button class="btn-icon btn-icon-danger" title="Delete User" onclick="deleteUser(${user.id})" ${isSelf ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>
+              <i class="ph ph-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (error) {
+      document.getElementById("corporateTableBody").innerHTML = `<tr><td colspan="5" style="text-align:center; color:#dc2626; padding:20px;">Error loading data.</td></tr>`;
+    }
+  }
+
+  async function deleteUser(id) {
+    if (!confirm("Are you sure you want to permanently remove this corporate user?")) return;
+    
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_BASE}/api/users/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        loadCorporateUsers();
+      } else {
+        const data = await res.json();
+        alert(data.message || "Failed to delete user.");
+      }
+    } catch (error) {
+      alert("Error occurred while deleting.");
+    }
+  }
+</script>
+</body>
+</html>
