@@ -103,6 +103,21 @@ async function initDatabase() {
     await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS address TEXT`);
 
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS redemptions (
+        id SERIAL PRIMARY KEY,
+        redemption_id VARCHAR(30) UNIQUE NOT NULL,
+        claim_id VARCHAR(30) NOT NULL,
+        shop_id VARCHAR(20) NOT NULL,
+        otp_code VARCHAR(10) NOT NULL,
+        otp_status VARCHAR(20) DEFAULT 'pending',
+        final_status VARCHAR(20) DEFAULT 'pending',
+        otp_expires_at TIMESTAMP DEFAULT (NOW() + INTERVAL '5 minutes'),
+        otp_attempts INTEGER DEFAULT 0,
+        redeemed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS activity_logs (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
