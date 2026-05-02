@@ -31,13 +31,17 @@ const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role, province: user.province || null, region: user.region || null, area: user.area || null },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '1h' }
+    );
     await logActivity({
       userId: user.id,
       action: 'login',
       detail: `User ${user.username} logged in as ${user.role}`
     });
-    res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
+    res.json({ token, user: { id: user.id, username: user.username, role: user.role, province: user.province || null, region: user.region || null, area: user.area || null } });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }

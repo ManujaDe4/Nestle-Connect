@@ -4,282 +4,768 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rep Dashboard - Nestlé Connect</title>
-  <link rel="stylesheet" href="./css/styles.css" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="./css/dashboard.css" />
+
+  <!-- Locations data -->
+  <script src="./js/locations.js"></script>
 </head>
 <body>
 
-  <div class="page-wrapper">
+<div class="dashboard-layout">
 
-    <div class="brand">
-      <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" class="brand-logo" />
-      <span class="brand-name">Nestlé Connect</span>
-      <span class="brand-divider">·</span>
-      <span class="brand-sub">Rep Portal</span>
+  <!-- Mobile Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="#" class="sidebar-brand">
+        <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" />
+        Nestlé Connect
+      </a>
     </div>
 
-    <div class="card">
-      <div class="corner-mark">R</div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="shops">
+        <i class="ph ph-storefront"></i> My Shops
+      </button>
+      <button class="nav-item" data-tab="register">
+        <i class="ph ph-plus-circle"></i> Register Shop
+      </button>
+      <button class="nav-item" data-tab="qrlink">
+        <i class="ph ph-qr-code"></i> Link QR Code
+      </button>
+    </nav>
 
-      <div class="card-header">
-        <h1 class="card-title">Rep <span>Dashboard</span></h1>
-        <p>View your shops, register new locations, and monitor your performance.</p>
-      </div>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="logout-btn">
+        <i class="ph ph-sign-out"></i> Logout
+      </button>
+    </div>
+  </aside>
 
-      <hr class="divider" />
+  <!-- Main Content -->
+  <main class="main-content">
 
-      <div class="card-actions">
-        <button id="logoutBtn" class="btn-secondary">Logout</button>
-        <button id="mapQRBtn" class="btn-secondary"><span>Link QR Code</span></button>
-      </div>
-
-      <div class="dashboard-grid">
-        <div class="dashboard-card">
-          <h4>My Shops</h4>
-          <p id="repShopCount">—</p>
+    <header class="topbar">
+      <button class="mobile-menu-toggle" id="mobileMenuBtn">
+        <i class="ph ph-list"></i>
+      </button>
+      <h1 class="topbar-title" id="pageTitle">My Shops</h1>
+      <div class="user-profile" onclick="toggleProfilePanel()" style="cursor:pointer;" title="View profile">
+        <div class="user-avatar" id="userAvatar">R</div>
+        <div>
+          <div style="font-weight:600; font-size:0.95rem;" id="userName">Rep</div>
+          <div style="font-size:0.72rem; color:var(--text-secondary);" id="userRegion">—</div>
         </div>
-        <div class="dashboard-card">
-          <h4>Last Update</h4>
-          <p id="lastUpdated">—</p>
+        <i class="ph ph-caret-down" id="repProfileCaret" style="font-size:0.8rem; color:var(--text-secondary); margin-left:4px;"></i>
+      </div>
+
+      <!-- Profile Slide Panel -->
+      <div id="profileSidePanel" style="position:fixed; top:0; right:-340px; width:320px; height:100vh; background:#fff; border-left:1px solid var(--border-color); box-shadow:-8px 0 32px rgba(0,0,0,0.12); z-index:9999; transition:right 0.35s cubic-bezier(0.4,0,0.2,1); overflow-y:auto; font-family:'Plus Jakarta Sans',sans-serif;">
+        <div style="background:linear-gradient(135deg,#0f4c81,#1e88e5); padding:28px 20px 24px; position:relative;">
+          <button onclick="toggleProfilePanel()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.18); border:none; border-radius:8px; width:30px; height:30px; cursor:pointer; color:#fff; font-size:1.1rem; display:flex; align-items:center; justify-content:center;"><i class="ph ph-x"></i></button>
+          <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,rgba(255,255,255,0.35),rgba(255,255,255,0.15)); border:3px solid rgba(255,255,255,0.5); display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:800; color:#fff; margin-bottom:12px;" id="panelAvatarEl">R</div>
+          <div style="color:#fff; font-size:1.1rem; font-weight:700; margin-bottom:2px;" id="panelNameEl">Rep</div>
+          <div style="color:rgba(255,255,255,0.75); font-size:0.8rem;" id="panelRoleEl">Sales Representative</div>
+        </div>
+        <div style="padding:20px;">
+          <div style="font-size:0.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">Account Details</div>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:24px;">
+            <div style="background:#f8fafc; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:10px;">
+              <i class="ph ph-identification-badge" style="color:#3b82f6; font-size:1.1rem;"></i>
+              <div><div style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Employee ID</div><div style="font-size:0.88rem; color:#334155; font-weight:600;" id="panelEmpId">—</div></div>
+            </div>
+            <div style="background:#f8fafc; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:10px;">
+              <i class="ph ph-map-pin" style="color:#10b981; font-size:1.1rem;"></i>
+              <div><div style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Assigned Region</div><div style="font-size:0.88rem; color:#334155; font-weight:600;" id="panelRegion">—</div></div>
+            </div>
+            <div style="background:#f8fafc; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:10px;">
+              <i class="ph ph-storefront" style="color:#f59e0b; font-size:1.1rem;"></i>
+              <div><div style="font-size:0.7rem; color:#94a3b8; font-weight:600;">My Shops</div><div style="font-size:0.88rem; color:#334155; font-weight:600;" id="panelShopCount">—</div></div>
+            </div>
+            <div style="background:#f8fafc; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:10px;">
+              <i class="ph ph-calendar" style="color:#9333ea; font-size:1.1rem;"></i>
+              <div><div style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Member Since</div><div style="font-size:0.88rem; color:#334155; font-weight:600;" id="panelSince">—</div></div>
+            </div>
+          </div>
+
+          <!-- Edit Profile Accordion -->
+          <button onclick="toggleEditProfile()" id="editProfileToggleBtn" style="width:100%; display:flex; justify-content:space-between; align-items:center; padding:13px 16px; background:linear-gradient(135deg,#f1f5ff,#e8f0fe); border:1.5px solid rgba(59,130,246,0.2); border-radius:10px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:0.88rem; color:#1e3a5f; margin-bottom:0; transition:background 0.2s;">
+            <span><i class="ph ph-pencil-simple" style="margin-right:7px; color:#3b82f6;"></i>Edit Profile</span>
+            <i class="ph ph-caret-down" id="editProfileCaret" style="color:#3b82f6; font-size:0.9rem; transition:transform 0.3s;"></i>
+          </button>
+          <div id="editProfileAccordion" style="max-height:0; overflow:hidden; transition:max-height 0.4s cubic-bezier(0.4,0,0.2,1);">
+            <div style="display:flex; flex-direction:column; gap:10px; padding:16px 4px 4px;">
+              <div>
+                <label style="font-size:0.78rem; color:#64748b; font-weight:600; display:block; margin-bottom:4px;">Display Name</label>
+                <input id="editDisplayName" type="text" style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; outline:none;" placeholder="Enter name" />
+              </div>
+              <!-- Change Password sub-section -->
+              <button onclick="togglePwdSection()" id="pwdToggleBtn" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:0.82rem; color:#64748b; width:100%;">
+                <span><i class="ph ph-lock" style="margin-right:6px; color:#94a3b8;"></i>Change Password</span>
+                <i class="ph ph-caret-down" id="pwdCaret" style="color:#94a3b8; font-size:0.85rem; transition:transform 0.3s;"></i>
+              </button>
+              <div id="pwdAccordion" style="max-height:0; overflow:hidden; transition:max-height 0.35s cubic-bezier(0.4,0,0.2,1);">
+                <div style="display:flex; flex-direction:column; gap:8px; padding:10px 2px 2px;">
+                  <div>
+                    <label style="font-size:0.78rem; color:#64748b; font-weight:600; display:block; margin-bottom:4px;">Current Password</label>
+                    <input id="editCurrentPwd" type="password" style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; outline:none;" placeholder="Enter current password" />
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem; color:#64748b; font-weight:600; display:block; margin-bottom:4px;">New Password</label>
+                    <input id="editNewPwd" type="password" style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; outline:none;" placeholder="Enter new password" />
+                  </div>
+                </div>
+              </div>
+              <div id="profileEditMsg" style="font-size:0.8rem; min-height:18px;"></div>
+              <button onclick="saveProfile()" style="padding:11px; background:linear-gradient(135deg,#0f4c81,#1e88e5); color:#fff; border:none; border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:0.9rem; cursor:pointer;"><i class="ph ph-floppy-disk"></i> Save Changes</button>
+            </div>
+          </div>
+
+          <div style="margin-top:28px; padding-top:20px; border-top:1px solid #e2e8f0;">
+            <button onclick="localStorage.clear(); window.location.href='login.html';" style="width:100%; padding:11px; background:#fee2e2; color:#dc2626; border:1px solid rgba(220,38,38,0.25); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:0.9rem; cursor:pointer;"><i class="ph ph-sign-out"></i> Sign Out</button>
+          </div>
+        </div>
+      </div>
+      <div id="profilePanelOverlay" onclick="toggleProfilePanel()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.25); z-index:9998;"></div>
+    </header>
+
+    <div class="content-area">
+
+      <!-- Stats Overview -->
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">My Shops</span>
+            <div class="stat-icon"><i class="ph ph-storefront"></i></div>
+          </div>
+          <div class="stat-value" id="repShopCount">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">My Region</span>
+            <div class="stat-icon"><i class="ph ph-map-pin"></i></div>
+          </div>
+          <div class="stat-value" style="font-size: 1.4rem;" id="repRegionStat">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">Last Updated</span>
+            <div class="stat-icon"><i class="ph ph-clock"></i></div>
+          </div>
+          <div class="stat-value" style="font-size: 1.4rem;" id="lastUpdated">—</div>
         </div>
       </div>
 
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="shops">My Shops</button>
-        <button class="tab-btn" data-tab="register">Register Shop</button>
-      </div>
-
-      <div id="shopsTab" class="tab-content active">
-        <div id="shopsList">
-          <p>Loading your shops...</p>
+      <!-- My Shops Tab -->
+      <div id="shopsTab" class="tab-content" style="display:block;">
+        <div class="panel">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h2 class="panel-title">My Registered Shops</h2>
+              <p class="panel-desc">All shops you have registered in your assigned region.</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <div style="position:relative;">
+                <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
+                <input type="text" id="searchMyShops" placeholder="Search shops..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:min(250px,100%); font-family:'Plus Jakarta Sans',sans-serif;" />
+              </div>
+              <button id="downloadShopsCsvBtn" onclick="downloadShopsCSV()" style="display:inline-flex; align-items:center; gap:7px; padding:9px 16px; background:linear-gradient(135deg,#059669,#047857); color:#fff; border:none; border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:0.85rem; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                <i class="ph ph-file-csv" style="font-size:1rem;"></i> Download CSV
+              </button>
+            </div>
+          </div>
+          <div class="modern-table-wrap" id="shopsList">
+            <p>Loading your shops...</p>
+          </div>
         </div>
       </div>
 
-      <div id="registerTab" class="tab-content">
-        <h3 class="section-title">Register New Shop</h3>
-        <p>Register a new shop and generate its verification QR instantly.</p>
-
-        <form id="registrationForm">
-          <div class="form-group">
-            <label for="shopName">Shop Name</label>
-            <input type="text" id="shopName" placeholder="Enter shop name" required />
+      <!-- Register Shop Tab -->
+      <div id="registerTab" class="tab-content" style="display:none;">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Register New Shop</h2>
+              <p class="panel-desc">Register a new shop within your assigned region and generate its verification QR instantly.</p>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="ownerMobile">Owner Mobile</label>
-            <input type="tel" id="ownerMobile" placeholder="Enter owner mobile number" required />
+          <!-- Region lock notice -->
+          <div id="regionLockNotice" style="display:none; background: rgba(15,76,129,0.07); border: 1px solid rgba(15,76,129,0.18); border-radius: 12px; padding: 14px 18px; margin-bottom: 24px; display:flex; align-items:center; gap:10px;">
+            <i class="ph ph-lock" style="color: var(--accent-color); font-size: 1.2rem;"></i>
+            <span style="font-size: 0.9rem; color: var(--text-primary);">Location locked to your assigned region and area: <strong id="lockedRegionLabel">—</strong></span>
           </div>
 
-          <div class="form-group">
-            <label for="nicNumber">NIC Number</label>
-            <input type="text" id="nicNumber" placeholder="Enter owner NIC number" required />
+          <form id="registrationForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="shopName">Shop Name</label>
+                <input type="text" id="shopName" placeholder="Enter shop name" required />
+              </div>
+              <div class="form-group">
+                <label for="ownerMobile">Owner Mobile</label>
+                <input type="tel" id="ownerMobile" placeholder="e.g. 0712345678" required />
+              </div>
+              <div class="form-group">
+                <label for="nicNumber">NIC Number</label>
+                <input type="text" id="nicNumber" placeholder="Owner NIC number" required />
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="brNumber">BR Number</label>
+                <input type="text" id="brNumber" placeholder="Business Registration No." />
+              </div>
+              <div class="form-group" style="grid-column: span 2;">
+                <label for="shopAddress">Shop Address</label>
+                <input type="text" id="shopAddress" placeholder="Full address" required />
+              </div>
+            </div>
+            <button type="submit" class="btn-primary" id="registerBtn">
+              <i class="ph ph-storefront"></i> <span>Register Shop</span>
+            </button>
+          </form>
+
+          <hr style="border: none; border-top: 1px solid var(--border-color); margin: 32px 0;" />
+
+          <div id="responseMsg" style="display:none;"></div>
+
+          <div id="qrSection" style="display: none;">
+            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 28px; margin-top: 8px;">
+              <h3 style="margin-bottom: 20px; color: var(--text-primary); font-family: 'Plus Jakarta Sans', sans-serif;">
+                <i class="ph ph-check-circle" style="color: #166534;"></i> Registration Complete
+              </h3>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                <div style="background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                  <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 6px;">Shop ID</div>
+                  <div style="font-weight: 700; color: var(--text-primary);" id="shopId"></div>
+                </div>
+                <div style="background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                  <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 6px;">Shop Name</div>
+                  <div style="font-weight: 700; color: var(--text-primary);" id="shopNameDisplay"></div>
+                </div>
+                <div style="background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                  <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 6px;">Owner Mobile</div>
+                  <div style="font-weight: 700; color: var(--text-primary);" id="ownerMobileDisplay"></div>
+                </div>
+                <div style="background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                  <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 6px;">QR Slug</div>
+                  <div style="font-weight: 700; color: var(--text-primary);" id="qrSlug"></div>
+                </div>
+              </div>
+              <div style="text-align: center;">
+                <img id="qrCode" src="" alt="QR Code" style="max-width: 220px; width: 100%; border-radius: 16px; border: 1px solid var(--border-color); padding: 10px; background: white;" />
+                <div style="margin-top: 12px;">
+                  <a id="qrEmbedLink" href="#" target="_blank" style="font-size: 0.85rem; color: var(--accent-color); word-break: break-all; text-decoration: underline;"></a>
+                </div>
+                <br>
+                <button id="downloadQrBtn" type="button" class="btn-secondary" style="margin-top: 8px;">
+                  <i class="ph ph-download-simple"></i> Download QR Code
+                </button>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
 
-          <button type="submit" id="registerBtn" class="btn-primary"><span>Register Shop</span></button>
-        </form>
-
-        <hr class="divider" />
-
-        <div id="responseMsg">Fill in the details and click register.</div>
-
-        <div id="qrSection" style="display: none;" class="dashboard-card" >
-          <h3>Registration Complete</h3>
-          <div class="result-grid">
-            <div class="result-box"><span class="result-label">Shop ID</span><span class="result-value" id="shopId"></span></div>
-            <div class="result-box"><span class="result-label">Shop Name</span><span class="result-value" id="shopNameDisplay"></span></div>
-            <div class="result-box"><span class="result-label">Owner Mobile</span><span class="result-value" id="ownerMobileDisplay"></span></div>
-            <div class="result-box"><span class="result-label">NIC Number</span><span class="result-value" id="nicNumberDisplay"></span></div>
-            <div class="result-box"><span class="result-label">QR Slug</span><span class="result-value" id="qrSlug"></span></div>
+      <!-- QR Link Tab -->
+      <div id="qrlinkTab" class="tab-content" style="display:none;">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Link QR Code to Shop</h2>
+              <p class="panel-desc">Scan or enter a QR identifier and link it to a registered shop.</p>
+            </div>
           </div>
-          <div style="margin-top: 20px; text-align:center;">
-            <img id="qrCode" src="" alt="QR Code" style="max-width: 260px; width: 100%; border-radius: 16px; border: 1px solid var(--border); padding: 10px; background: var(--surface);" />
-            <br>
-            <button id="downloadQrBtn" type="button" class="btn-secondary" style="margin-top: 15px;">Download QR Code</button>
-          </div>
+          <a href="qr-mapping.html" class="btn-primary" style="display:inline-flex; text-decoration:none;">
+            <i class="ph ph-qr-code"></i> Open QR Mapping Tool
+          </a>
         </div>
       </div>
 
     </div>
+  </main>
+</div>
 
-  </div>
+<script>
+  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://localhost:5000' : 'https://nestle-connect.onrender.com';
 
-  <script>
-    const API_BASE = window.location.origin;
-
-    const logoutBtn = document.getElementById("logoutBtn");
-    const mapQRBtn = document.getElementById("mapQRBtn");
-    const shopsList = document.getElementById("shopsList");
-    const repShopCount = document.getElementById("repShopCount");
-    const lastUpdated = document.getElementById("lastUpdated");
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-    const form = document.getElementById("registrationForm");
-    const registerBtn = document.getElementById("registerBtn");
-    const responseMsg = document.getElementById("responseMsg");
-    const qrSection = document.getElementById("qrSection");
-    const downloadQrBtn = document.getElementById("downloadQrBtn");
-
-    function checkAuth() {
-      const token = localStorage.getItem("token");
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (!token || !user || user.role !== "rep") {
-        window.location.href = "login.html";
-      }
-    }
-
-    function logout() {
+  function checkAuth() {
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!token || !user || user.role !== "rep" || !user.province) {
+      // If province is missing, the cache is outdated. Force re-login.
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "login.html";
+      return null;
     }
+    return user;
+  }
 
-    function switchTab(tab) {
-      tabBtns.forEach(btn => btn.classList.remove('active'));
-      tabContents.forEach(content => content.classList.remove('active'));
-      document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-      document.getElementById(`${tab}Tab`).classList.add('active');
-      if (tab === 'shops') {
+  const currentUser = checkAuth();
+
+  // ─── Populate topbar info ────────────────────────────────────────────────
+  if (currentUser) {
+    document.getElementById('userName').textContent = currentUser.username;
+    document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+    const regionLabel = [currentUser.province, currentUser.region, currentUser.area].filter(Boolean).join(' › ') || 'No region assigned';
+    document.getElementById('userRegion').textContent = regionLabel;
+    document.getElementById('repRegionStat').textContent = currentUser.region || '—';
+  }
+
+  // ─── Tab switching ───────────────────────────────────────────────────────
+  const navItems = document.querySelectorAll('.nav-item');
+  const pageTitle = document.getElementById('pageTitle');
+
+  const TAB_TITLES = {
+    shops: 'My Shops',
+    register: 'Register New Shop',
+    qrlink: 'Link QR Code'
+  };
+
+  function switchTab(tab) {
+    navItems.forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+    document.getElementById(`${tab}Tab`).style.display = 'block';
+    pageTitle.textContent = TAB_TITLES[tab] || tab;
+
+    if (tab === 'shops') loadShops();
+  }
+
+  navItems.forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  // ─── Logout ──────────────────────────────────────────────────────────────
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
+  });
+
+  // ─── Load Shops ──────────────────────────────────────────────────────────
+  async function loadShops() {
+    const token = localStorage.getItem("token");
+    const shopsList = document.getElementById("shopsList");
+    shopsList.innerHTML = '<p>Loading your shops...</p>';
+    try {
+      const response = await fetch(`${API_BASE}/api/shops`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      const shops = await response.json();
+      if (response.ok) {
+        displayShops(shops);
+        document.getElementById('repShopCount').textContent = shops.length;
+        document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString();
+      } else {
+        shopsList.innerHTML = '<p>Error loading shops.</p>';
+      }
+    } catch (error) {
+      shopsList.innerHTML = '<p>Error loading shops.</p>';
+    }
+  }
+
+  function displayShops(shops) {
+    const shopsList = document.getElementById("shopsList");
+    if (shops.length === 0) {
+      shopsList.innerHTML = '<p style="color: var(--text-secondary);">No shops registered yet. Use the <strong>Register Shop</strong> tab to add your first shop.</p>';
+      return;
+    }
+    let html = "<table class='modern-table'><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>Location</th><th>QR Linked</th><th>Registered</th><th>Actions</th></tr></thead><tbody>";
+    shops.forEach(shop => {
+      const qrLinked = shop.qr_identifier
+        ? '<span class="badge active">Yes</span>'
+        : '<span class="badge expired">No</span>';
+      const region = [shop.province, shop.region, shop.area].filter(Boolean).join(' › ') || '—';
+      
+      const shopNameSafe = shop.shop_name.replace(/'/g, "\\'");
+      const qrSlugSafe = shop.qr_slug.replace(/'/g, "\\'");
+
+      html += `<tr>
+        <td><strong>${shop.shop_id}</strong></td>
+        <td>${shop.shop_name}</td>
+        <td>${shop.owner_mobile}</td>
+        <td>${shop.nic_number || '-'}</td>
+        <td style="font-size:0.85rem;">${region}</td>
+        <td>${qrLinked}</td>
+        <td>${new Date(shop.created_at).toLocaleDateString()}</td>
+        <td>
+          <select class="action-dropdown" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: white; font-size: 0.85rem; cursor: pointer; outline: none; color: var(--text-primary);" onchange="handleShopAction(this, ${shop.id}, '${shopNameSafe}', '${qrSlugSafe}')">
+            <option value="">Select Action...</option>
+            <option value="copy_link">Copy Embed Link</option>
+            <option value="download_qr">Download QR</option>
+            <option value="delete">Delete Shop</option>
+          </select>
+        </td>
+      </tr>`;
+    });
+    html += "</tbody></table>";
+    shopsList.innerHTML = html;
+  }
+
+  window.handleShopAction = function(selectElement, shopId, shopName, qrSlug) {
+    const action = selectElement.value;
+    selectElement.value = ""; // Reset dropdown after selection
+    
+    if (action === 'copy_link') {
+      const embedUrl = `https://nestle-connect.onrender.com/shop-owner-verify.html?qr=${qrSlug}`;
+      navigator.clipboard.writeText(embedUrl)
+        .then(() => alert('Embedded link copied to clipboard!'))
+        .catch(() => alert('Failed to copy link. The link is: ' + embedUrl));
+    } else if (action === 'download_qr') {
+      downloadShopQR(shopName, qrSlug);
+    } else if (action === 'delete') {
+      deleteShop(shopId);
+    }
+  };
+
+  async function downloadShopQR(shopName, qrSlug) {
+    const url = `https://nestle-connect.onrender.com/store-verify.html?shop=${qrSlug}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+    
+    try {
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = objectUrl;
+      a.download = `QR_${shopName.replace(/\\s+/g, '_')}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(objectUrl);
+      a.remove();
+    } catch (e) {
+      alert("Error downloading QR code");
+    }
+  }
+
+  async function deleteShop(id) {
+    if (!confirm('Are you sure you want to delete this shop?')) return;
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/shops/${id}`, {
+        method: 'DELETE',
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (response.ok) {
         loadShops();
-      }
-    }
-
-    async function loadShops() {
-      const token = localStorage.getItem("token");
-      try {
-        const response = await fetch(`${API_BASE}/api/shops`, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-        const shops = await response.json();
-        if (response.ok) {
-          displayShops(shops);
-          repShopCount.textContent = shops.length;
-          lastUpdated.textContent = new Date().toLocaleDateString();
-        } else {
-          shopsList.innerHTML = "<p>Error loading shops.</p>";
-        }
-      } catch (error) {
-        shopsList.innerHTML = "<p>Error loading shops.</p>";
-      }
-    }
-
-    function displayShops(shops) {
-      if (shops.length === 0) {
-        shopsList.innerHTML = "<p>No shops registered yet.</p>";
-        return;
-      }
-      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>QR Linked</th><th>Created At</th></tr></thead><tbody>";
-      shops.forEach(shop => {
-        const qrLinked = shop.qr_identifier ? '<span style="color: #166534; font-weight: 600;">✓ Yes</span>' : '<span style="color: #b91c1c; font-weight: 600;">✗ No</span>';
-        html += `<tr>
-          <td>${shop.shop_id}</td>
-          <td>${shop.shop_name}</td>
-          <td>${shop.owner_mobile}</td>
-          <td>${shop.nic_number || '-'}</td>
-          <td>${qrLinked}</td>
-          <td>${new Date(shop.created_at).toLocaleDateString()}</td>
-        </tr>`;
-      });
-      html += "</tbody></table>";
-      shopsList.innerHTML = html;
-    }
-
-    function setMessage(message, type = "") {
-      responseMsg.className = "";
-      responseMsg.innerHTML = message;
-
-      if (type === "success") {
-        responseMsg.classList.add("state-success");
-      } else if (type === "error") {
-        responseMsg.classList.add("state-error");
-      }
-    }
-
-    function setButtonState(button, disabled, text) {
-      button.disabled = disabled;
-      const span = button.querySelector("span");
-      if (span && text) span.innerText = text;
-    }
-
-    logoutBtn.addEventListener("click", logout);
-    mapQRBtn.addEventListener("click", () => {
-      window.location.href = "qr-mapping.html";
-    });
-
-    tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        switchTab(btn.dataset.tab);
-      });
-    });
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const shopName = document.getElementById("shopName").value.trim();
-      const ownerMobile = document.getElementById("ownerMobile").value.trim();
-      const nicNumber = document.getElementById("nicNumber").value.trim();
-
-      if (!shopName || !ownerMobile || !nicNumber) {
-        setMessage("Please fill in all fields.", "error");
-        return;
-      }
-
-      setButtonState(registerBtn, true, "Registering...");
-      setMessage("Registering shop...");
-
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(`${API_BASE}/api/shops`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            shop_name: shopName,
-            owner_mobile: ownerMobile,
-            nic_number: nicNumber,
-          }),
-        });
-
+      } else {
         const data = await response.json();
+        alert(data.message || 'Error deleting shop');
+      }
+    } catch (error) {
+      alert('Error deleting shop');
+    }
+  }
 
-        if (response.ok) {
-          setMessage(data.message, "success");
-          document.getElementById("shopId").textContent = data.shop.shop_id;
-          document.getElementById("shopNameDisplay").textContent = data.shop.shop_name;
-          document.getElementById("ownerMobileDisplay").textContent = data.shop.owner_mobile;
-          document.getElementById("nicNumberDisplay").textContent = data.shop.nic_number;
-          document.getElementById("qrSlug").textContent = data.shop.qr_slug;
-          document.getElementById("qrCode").src = data.qrCode;
-          qrSection.style.display = "block";
-          // Refresh shops list after registration
-          loadShops();
-        } else {
-          setMessage(data.message || "Registration failed.", "error");
-        }
-      } catch (error) {
-        console.error("Registration error:", error);
-        setMessage("An error occurred during registration.", "error");
-      } finally {
-        setButtonState(registerBtn, false, "Register Shop");
+
+
+  // ─── Registration Form ────────────────────────────────────────────────────
+  const form = document.getElementById("registrationForm");
+  const registerBtn = document.getElementById("registerBtn");
+  const responseMsg = document.getElementById("responseMsg");
+  const qrSection   = document.getElementById("qrSection");
+
+  function showMessage(message, type) {
+    responseMsg.style.display = 'block';
+    responseMsg.className = '';
+    responseMsg.style.padding = '16px 20px';
+    responseMsg.style.borderRadius = '12px';
+    responseMsg.style.marginBottom = '24px';
+    responseMsg.style.fontWeight = '500';
+    if (type === 'success') {
+      responseMsg.style.background = '#dcfce7';
+      responseMsg.style.border = '1px solid rgba(22,101,52,0.2)';
+      responseMsg.style.color = '#166534';
+    } else {
+      responseMsg.style.background = '#fee2e2';
+      responseMsg.style.border = '1px solid rgba(185,28,28,0.2)';
+      responseMsg.style.color = '#991b1b';
+    }
+    responseMsg.innerHTML = message;
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const shopName   = document.getElementById("shopName").value.trim();
+    const ownerMobile = document.getElementById("ownerMobile").value.trim();
+    const nicNumber  = document.getElementById("nicNumber").value.trim();
+    const brNumber   = document.getElementById("brNumber").value.trim();
+    const address    = document.getElementById("shopAddress").value.trim();
+    
+    // Auto-assign location from Rep's assigned area
+    const province   = currentUser.province;
+    const region     = currentUser.region;
+    const area       = currentUser.area;
+
+    if (!shopName || !ownerMobile || !nicNumber || !address) {
+      showMessage("Please fill in all required fields.", "error");
+      return;
+    }
+
+    const span = registerBtn.querySelector('span');
+    registerBtn.disabled = true;
+    if (span) span.textContent = "Registering...";
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/api/shops`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          shop_name: shopName, 
+          owner_mobile: ownerMobile, 
+          nic_number: nicNumber, 
+          br_number: brNumber,
+          address: address,
+          province, 
+          region, 
+          area 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showMessage(data.message, "success");
+        document.getElementById("shopId").textContent = data.shop.shop_id;
+        document.getElementById("shopNameDisplay").textContent = data.shop.shop_name;
+        document.getElementById("ownerMobileDisplay").textContent = data.shop.owner_mobile;
+        document.getElementById("qrSlug").textContent = data.shop.qr_slug;
+        document.getElementById("qrCode").src = data.qrCode;
+        
+        // Show embedded link
+        const embedUrl = `https://nestle-connect.onrender.com/shop-owner-verify.html?qr=${data.shop.qr_slug}`;
+        const qrEmbedLink = document.getElementById("qrEmbedLink");
+        qrEmbedLink.href = embedUrl;
+        qrEmbedLink.textContent = embedUrl;
+        
+        qrSection.style.display = "block";
+        form.reset();
+        // Update shop count
+        loadShops();
+      } else {
+        showMessage(data.message || "Registration failed.", "error");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      showMessage("An error occurred during registration.", "error");
+    } finally {
+      registerBtn.disabled = false;
+      if (span) span.textContent = "Register Shop";
+    }
+  });
+
+  // ─── Download QR ─────────────────────────────────────────────────────────
+  document.getElementById("downloadQrBtn").addEventListener("click", () => {
+    const qrImage = document.getElementById("qrCode");
+    const shopName = document.getElementById("shopNameDisplay").textContent || "Shop";
+    const link = document.createElement("a");
+    link.href = qrImage.src;
+    link.download = `${shopName.replace(/\s+/g, '-')}-QR.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+
+  // ── Search Filter ────────────────────────────────────────────────────────
+  const searchMyShops = document.getElementById('searchMyShops');
+  if (searchMyShops) {
+    searchMyShops.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      const rows = document.querySelectorAll('#shopsList table tbody tr');
+      rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+  }
+
+  // ── Mobile Menu Toggle ───────────────────────────────────────────────────
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+  function toggleMobileMenu() {
+    sidebar.classList.toggle('open');
+    sidebarOverlay.classList.toggle('open');
+  }
+
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+  }
+  if (sidebarOverlay) {
+    sidebarOverlay.addEventListener('click', toggleMobileMenu);
+  }
+  
+  // Close menu when clicking a nav item on mobile
+  navItems.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (window.innerWidth <= 1024) {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('open');
       }
     });
+  });
 
-    downloadQrBtn.addEventListener("click", () => {
-      const qrImage = document.getElementById("qrCode");
-      const shopName = document.getElementById("shopNameDisplay").textContent || "Shop";
-      const link = document.createElement("a");
-      link.href = qrImage.src;
-      link.download = `${shopName.replace(/\s+/g, '-')}-QR.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
+  // Load initial tab
+  switchTab('shops');
 
-    checkAuth();
-    loadShops();
-  </script>
+  window.downloadShopsCSV = async function() {
+    const btn = document.getElementById('downloadShopsCsvBtn');
+    const origHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="ph ph-circle-notch"></i> Preparing…';
+    btn.disabled = true;
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_BASE}/api/shops/export/csv`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const disposition = res.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      const filename = match ? match[1] : `Nestle_Connect_My_Shops_${new Date().toISOString().slice(0,10)}.csv`;
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Error downloading shops CSV. Please try again.');
+    } finally {
+      btn.innerHTML = origHtml;
+      btn.disabled = false;
+    }
+  };
+
+  // ── Profile Panel ─────────────────────────────────────────────────────────
+  let _profileOpen = false;
+  let _profileData = null;
+
+  window.toggleEditProfile = function() {
+    const acc   = document.getElementById('editProfileAccordion');
+    const caret = document.getElementById('editProfileCaret');
+    const open  = acc.style.maxHeight && acc.style.maxHeight !== '0px';
+    acc.style.maxHeight = open ? '0' : acc.scrollHeight + 300 + 'px';
+    if (caret) caret.style.transform = open ? '' : 'rotate(180deg)';
+    if (open) {
+      const pwdAcc = document.getElementById('pwdAccordion');
+      if (pwdAcc) pwdAcc.style.maxHeight = '0';
+      const pwdCaret = document.getElementById('pwdCaret');
+      if (pwdCaret) pwdCaret.style.transform = '';
+    }
+  };
+
+  window.togglePwdSection = function() {
+    const acc   = document.getElementById('pwdAccordion');
+    const caret = document.getElementById('pwdCaret');
+    const open  = acc.style.maxHeight && acc.style.maxHeight !== '0px';
+    acc.style.maxHeight = open ? '0' : acc.scrollHeight + 50 + 'px';
+    if (caret) caret.style.transform = open ? '' : 'rotate(180deg)';
+    if (!open) {
+      const parent = document.getElementById('editProfileAccordion');
+      if (parent) parent.style.maxHeight = parseInt(parent.style.maxHeight || 0) + 200 + 'px';
+    }
+  };
+
+  async function loadProfileData() {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_BASE}/api/users/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      const u = await res.json();
+      _profileData = u;
+
+      const initials = (u.username || 'R').slice(0, 2).toUpperCase();
+      const region = [u.province, u.region, u.area].filter(Boolean).join(' › ') || '—';
+      const since = u.created_at ? new Date(u.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
+      const shopCount = document.getElementById('repShopCount')?.textContent;
+
+      document.getElementById('userAvatar').textContent = initials;
+      document.getElementById('userName').textContent   = u.username;
+      document.getElementById('userRegion').textContent = u.employee_id || region;
+      document.getElementById('panelAvatarEl').textContent = initials;
+      document.getElementById('panelNameEl').textContent   = u.username;
+      document.getElementById('panelRoleEl').textContent   = `Sales Representative${u.employee_id ? ' · ' + u.employee_id : ''}`;
+      document.getElementById('panelEmpId').textContent    = u.employee_id || '—';
+      document.getElementById('panelRegion').textContent   = region;
+      document.getElementById('panelShopCount').textContent = shopCount && shopCount !== '-' ? shopCount + ' shops' : '—';
+      document.getElementById('panelSince').textContent    = since;
+      document.getElementById('editDisplayName').value     = u.username;
+    } catch(e) { console.error('Profile load error', e); }
+  }
+
+  window.toggleProfilePanel = function() {
+    const panel   = document.getElementById('profileSidePanel');
+    const overlay = document.getElementById('profilePanelOverlay');
+    const caret   = document.getElementById('repProfileCaret');
+    _profileOpen = !_profileOpen;
+    panel.style.right     = _profileOpen ? '0' : '-340px';
+    overlay.style.display = _profileOpen ? 'block' : 'none';
+    if (caret) caret.style.transform = _profileOpen ? 'rotate(180deg)' : '';
+    if (_profileOpen && !_profileData) loadProfileData();
+  };
+
+  window.saveProfile = async function() {
+    const token  = localStorage.getItem('token');
+    const name   = document.getElementById('editDisplayName').value.trim();
+    const curPwd = document.getElementById('editCurrentPwd').value;
+    const newPwd = document.getElementById('editNewPwd').value;
+    const msgEl  = document.getElementById('profileEditMsg');
+    msgEl.style.color = '#94a3b8';
+    msgEl.textContent = 'Saving…';
+    try {
+      const body = { display_name: name };
+      if (newPwd) { body.current_password = curPwd; body.new_password = newPwd; }
+      const res = await fetch(`${API_BASE}/api/users/me`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msgEl.style.color = '#059669';
+        msgEl.textContent = '✓ Profile updated!';
+        _profileData = null;
+        loadProfileData();
+        document.getElementById('editCurrentPwd').value = '';
+        document.getElementById('editNewPwd').value = '';
+      } else {
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = data.message || 'Error updating profile';
+      }
+    } catch(e) {
+      msgEl.style.color = '#dc2626';
+      msgEl.textContent = 'Network error. Please try again.';
+    }
+  };
+
+  loadProfileData();
+</script>
 
 </body>
 </html>

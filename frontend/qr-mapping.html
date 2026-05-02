@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Link QR Code to Shop - Nestlé Connect</title>
     <link rel="stylesheet" href="./css/styles.css">
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        .search-bar { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9rem; }
+        #reader { width: 100%; max-width: 400px; margin: 0 auto 16px auto; display: none; }
+    </style>
 </head>
 <body>
     <div class="qr-mapping-container">
@@ -23,6 +28,7 @@
         <div class="form-group">
             <label for="shopSelect">Select Shop *</label>
             <div class="shop-selector">
+                <input type="text" id="shopSearch" class="search-bar" placeholder="Type to search shops..." onkeyup="filterShops()">
                 <select id="shopSelect" onchange="onShopSelected()">
                     <option value="">-- Choose a shop --</option>
                 </select>
@@ -60,6 +66,7 @@
                 >
                 <button type="button" onclick="triggerCamera()">📷</button>
             </div>
+            <div id="reader"></div>
             <div class="scan-note">
                 💡 Scan the pre-printed QR code or enter its identifier manually
             </div>
@@ -75,13 +82,15 @@
     </div>
 
     <script>
+        const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://localhost:5000' : 'https://nestle-connect.onrender.com';
         const token = localStorage.getItem('token');
         let shops = [];
         let selectedShop = null;
+        let html5QrcodeScanner = null;
 
         async function loadShops() {
             try {
-                const response = await fetch('/api/shops', {
+                const response = await fetch(`${API_BASE}/api/shops`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -96,15 +105,26 @@
             }
         }
 
-        function populateShopDropdown() {
+        function populateShopDropdown(filterText = '') {
             const select = document.getElementById('shopSelect');
+            select.innerHTML = '<option value="">-- Choose a shop --</option>'; // Clear existing
+            
+            const lowerFilter = filterText.toLowerCase();
             shops.forEach(shop => {
-                const option = document.createElement('option');
-                option.value = shop.id;
-                option.textContent = `${shop.shop_name} (${shop.shop_id})`;
-                option.setAttribute('data-shop', JSON.stringify(shop));
-                select.appendChild(option);
+                const text = `${shop.shop_name} (${shop.shop_id})`;
+                if (text.toLowerCase().includes(lowerFilter)) {
+                    const option = document.createElement('option');
+                    option.value = shop.id;
+                    option.textContent = text;
+                    option.setAttribute('data-shop', JSON.stringify(shop));
+                    select.appendChild(option);
+                }
             });
+        }
+
+        function filterShops() {
+            const text = document.getElementById('shopSearch').value;
+            populateShopDropdown(text);
         }
 
         function onShopSelected() {
@@ -141,7 +161,7 @@
             }
 
             try {
-                const response = await fetch('/api/shops/map-qr', {
+                const response = await fetch(`${API_BASE}/api/shops/map-qr`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -172,10 +192,39 @@
         }
 
         function triggerCamera() {
-            // For now, just focus on text input
-            // In a real app, integrate with camera/barcode scanner library
-            document.getElementById('qrIdentifier').focus();
-            alert('Please use your device\'s camera/barcode scanner to scan the QR code, or enter the code manually.');
+            const readerDiv = document.getElementById('reader');
+            if (html5QrcodeScanner) {
+                // If already scanning, stop it
+                html5QrcodeScanner.clear();
+                html5QrcodeScanner = null;
+                readerDiv.style.display = 'none';
+                return;
+            }
+
+            readerDiv.style.display = 'block';
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader",
+                { fps: 10, qrbox: {width: 250, height: 250} },
+                /* verbose= */ false
+            );
+            
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Fill the input with the scanned text
+            document.getElementById('qrIdentifier').value = decodedText;
+            
+            // Stop scanning automatically
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear();
+                html5QrcodeScanner = null;
+                document.getElementById('reader').style.display = 'none';
+            }
+        }
+
+        function onScanFailure(error) {
+            // handle scan failure, usually better to ignore and keep scanning
         }
 
         function showSuccess(message) {

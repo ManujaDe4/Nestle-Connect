@@ -61,16 +61,25 @@
 
   <script>
     // Get campaign and ad info from URL parameters
+    // Supports: ?campaign=X&src=instagram  OR  ?campaign_id=X&platform=instagram
     const urlParams = new URLSearchParams(window.location.search);
-    const campaignId = urlParams.get('campaign_id');
+    const campaignId = urlParams.get('campaign_id') || urlParams.get('campaign');
     const adId = urlParams.get('ad_id') || 'AD001';
+    const platform = urlParams.get('platform') || urlParams.get('src') || 'other';
 
-    // Update the link to pass parameters
+    // Pass ALL parameters through to claim-offer
     const claimLink = document.getElementById('claimLink');
+    let url = `claim-offer.html?ad_id=${encodeURIComponent(adId)}&platform=${encodeURIComponent(platform)}`;
     if (campaignId) {
-      claimLink.href = `claim-offer.html?campaign_id=${encodeURIComponent(campaignId)}&ad_id=${encodeURIComponent(adId)}`;
-    } else {
-      claimLink.href = `claim-offer.html?ad_id=${encodeURIComponent(adId)}`;
+      url += `&campaign_id=${encodeURIComponent(campaignId)}`;
+    }
+    claimLink.href = url;
+
+    // Show campaign & platform info on the entry page if available
+    if (platform && platform !== 'other') {
+      const platformNames = { instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok', youtube: 'YouTube' };
+      const pLabel = platformNames[platform.toLowerCase()] || platform;
+      document.querySelector('.card-footer').textContent = `You arrived via ${pLabel}. Click below to claim your exclusive offer.`;
     }
   </script>
 

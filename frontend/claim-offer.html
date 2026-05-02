@@ -87,7 +87,9 @@
 
   <script>
     // Use localhost for development, production URL for deployed version
-    const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://nestle-connect.onrender.com';
+    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') 
+      ? 'http://localhost:5000' 
+      : 'https://nestle-connect.onrender.com';
 
     const claimBtn = document.getElementById("claimBtn");
     const mobileInput = document.getElementById("mobileNumber");
@@ -100,9 +102,11 @@
     const toastMessage = document.getElementById("toastMessage");
 
     // Get campaign and ad info from URL parameters
+    // Supports both ?campaign_id=X and ?campaign=X (from embed links)
     const urlParams = new URLSearchParams(window.location.search);
-    let campaignId = urlParams.get('campaign_id');
+    let campaignId = urlParams.get('campaign_id') || urlParams.get('campaign');
     const adId = urlParams.get('ad_id') || 'AD001';
+    const platform = urlParams.get('platform') || urlParams.get('src') || 'other';
 
     // Fetch active campaign on load so we use the correct one
     if (!campaignId) {
@@ -188,7 +192,8 @@
           body: JSON.stringify({
             customer_mobile: customerMobile,
             campaign_id: campaignId || 'CMP001',
-            ad_id: adId
+            ad_id: adId,
+            platform: platform
           })
         });
 

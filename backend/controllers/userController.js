@@ -1,9 +1,58 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
+const { getLocationPrefix } = require('../utils/locationCodes');
+
+const getMyProfile = async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, username, employee_id, role, province, region, area, created_at FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('getMyProfile error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const updateMyProfile = async (req, res) => {
+  const { display_name, current_password, new_password } = req.body;
+  try {
+    const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.user.id]);
+    if (userRes.rows.length === 0) return res.status(404).json({ message: 'User not found' });
+    const user = userRes.rows[0];
+
+    // If changing password, verify current first
+    if (new_password) {
+      if (!current_password) return res.status(400).json({ message: 'Current password is required' });
+      const match = await bcrypt.compare(current_password, user.password_hash);
+      if (!match) return res.status(400).json({ message: 'Current password is incorrect' });
+      const hashed = await bcrypt.hash(new_password, 10);
+      await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hashed, req.user.id]);
+    }
+
+    // Update display name if provided (stored in username field for simplicity)
+    if (display_name && display_name !== user.username) {
+      const existing = await pool.query('SELECT id FROM users WHERE username = $1 AND id != $2', [display_name, req.user.id]);
+      if (existing.rows.length > 0) return res.status(409).json({ message: 'That name is already taken' });
+      await pool.query('UPDATE users SET username = $1 WHERE id = $2', [display_name, req.user.id]);
+    }
+
+    const updated = await pool.query(
+      'SELECT id, username, employee_id, role, province, region, area, created_at FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    res.json({ message: 'Profile updated successfully', user: updated.rows[0] });
+  } catch (error) {
+    console.error('updateMyProfile error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
 const getAllUsers = async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, username, employee_id, role, created_at FROM users ORDER BY created_at DESC');
+    const result = await pool.query('SELECT id, username, employee_id, role, province, region, area, created_at FROM users ORDER BY created_at DESC');
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('getAllUsers error:', error);
@@ -12,23 +61,40 @@ const getAllUsers = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-  const { username, password, role, employee_id } = req.body;
+  const { username, password, role, province, region, area } = req.body;
   if (!username || !password || !role) {
     return res.status(400).json({ message: 'Username, password, and role are required' });
-  }
-  if (role === 'rep' && !employee_id) {
-    return res.status(400).json({ message: 'Rep ID is required' });
   }
   if (!['admin', 'rep'].includes(role)) {
     return res.status(400).json({ message: 'Invalid role' });
   }
   try {
-    const existing = await pool.query('SELECT id FROM users WHERE username = $1 OR (employee_id = $2 AND employee_id IS NOT NULL)', [username, employee_id]);
+    let newEmployeeId = null;
+
+    if (role === 'rep') {
+      const locPrefix = getLocationPrefix(province, region);
+      const repPrefix = `REP-${locPrefix}-`;
+      
+      // Find the latest REP ID for THIS specific prefix
+      const lastRep = await pool.query("SELECT employee_id FROM users WHERE employee_id LIKE $1 ORDER BY employee_id DESC LIMIT 1", [`${repPrefix}%`]);
+      let nextNum = 1;
+      if (lastRep.rows.length > 0) {
+        const lastId = lastRep.rows[0].employee_id;
+        const numPart = lastId.replace(repPrefix, '');
+        nextNum = parseInt(numPart, 10) + 1;
+      }
+      newEmployeeId = `${repPrefix}${String(nextNum).padStart(6, '0')}`;
+    }
+
+    const existing = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
     if (existing.rows.length > 0) {
-      return res.status(400).json({ message: 'Username or Rep ID already exists' });
+      return res.status(400).json({ message: 'Username already exists' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    await pool.query('INSERT INTO users (username, password_hash, role, employee_id) VALUES ($1, $2, $3, $4)', [username, hashedPassword, role, employee_id || null]);
+    await pool.query(
+      'INSERT INTO users (username, password_hash, role, employee_id, province, region, area) VALUES ($1, $2, $3, $4, $5, $6, $7)', 
+      [username, hashedPassword, role, newEmployeeId, province || null, region || null, area || null]
+    );
     res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
     console.error('createUser error:', error);
@@ -56,4 +122,4 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, createUser, deleteUser };
+module.exports = { getAllUsers, createUser, deleteUser, getMyProfile, updateMyProfile };

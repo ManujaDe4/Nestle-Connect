@@ -1,596 +1,2732 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard - Nestlé Connect</title>
-  <link rel="stylesheet" href="./css/styles.css" />
-</head>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- D3.js — Sri Lanka SVG Map -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  
+  <!-- PDF Export (jsPDF + html2canvas) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="./css/dashboard.css" />
+  
+  <script src="./js/locations.js"></script>
+
+  <style>
+    /* ── Embedded Link Dropdown ── */
+    .embed-dropdown { position: relative; display: inline-block; }
+    .embed-toggle {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; font-size: 0.8rem; font-weight: 600;
+      border: 1px solid var(--border-color); border-radius: 8px;
+      background: #f8fafc; color: var(--text-primary);
+      cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .embed-toggle:hover { background: #e2e8f0; }
+    .embed-menu {
+      display: none; position: absolute; right: 0; top: calc(100% + 6px);
+      min-width: 220px; background: #fff;
+      border: 1px solid var(--border-color); border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12); z-index: 9999;
+      overflow: hidden;
+    }
+    .embed-menu.open { display: block; }
+    .embed-menu-header {
+      padding: 10px 14px 8px; font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-secondary); border-bottom: 1px solid var(--border-color);
+    }
+    .embed-menu a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; font-size: 0.875rem; font-weight: 500;
+      color: var(--text-primary); text-decoration: none;
+      transition: background 0.15s;
+    }
+    .embed-menu a:hover { background: #f1f5f9; }
+    .embed-menu a .plat-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+    .embed-menu a .plat-label { flex: 1; }
+    .embed-menu a .copy-hint { font-size: 0.72rem; color: #94a3b8; }
+    /* ── Delete Confirm Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(4px);
+      z-index: 10000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: 20px; padding: 36px;
+      width: 100%; max-width: 440px; box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+      animation: fadeUp 0.25s ease both;
+    }
+    .modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; color: #0f172a; }
+    .modal-desc { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 22px; line-height: 1.6; }
+    .modal-warning {
+      background: #fee2e2; border: 1px solid rgba(185,28,28,0.2); border-radius: 10px;
+      padding: 12px 14px; font-size: 0.85rem; color: #991b1b; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .modal-input {
+      width: 100%; padding: 12px 14px; border: 1px solid var(--border-color);
+      border-radius: 10px; font-size: 0.95rem; font-family: 'Inter', sans-serif;
+      color: var(--text-primary); background: #f8fafc;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+      box-sizing: border-box;
+    }
+    .modal-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(15,76,129,0.1); background: #fff; }
+    .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
+    .btn-danger-solid {
+      flex: 1; padding: 12px 20px; background: #dc2626; color: #fff;
+      border: none; border-radius: 10px; font-weight: 700; cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif; transition: background 0.2s;
+    }
+    .btn-danger-solid:hover { background: #b91c1c; }
+    .btn-cancel-modal {
+      flex: 1; padding: 12px 20px; background: #f1f5f9; color: var(--text-primary);
+      border: 1px solid var(--border-color); border-radius: 10px; font-weight: 600;
+      cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .btn-cancel-modal:hover { background: #e2e8f0; }
+    .modal-error { color: #dc2626; font-size: 0.85rem; margin-top: 8px; display: none; }
+  </style>
+
+</head>
 <body>
 
-  <div class="page-wrapper">
+<div class="dashboard-layout">
+  <!-- Mobile Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <div class="brand">
-      <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" class="brand-logo" />
-      <span class="brand-name">Nestlé Connect</span>
-      <span class="brand-divider">·</span>
-      <span class="brand-sub">Admin Portal</span>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="#" class="sidebar-brand">
+        <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" />
+        Nestlé Connect
+      </a>
     </div>
+    
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="reps">
+        <i class="ph ph-users"></i> Reps
+      </button>
+      <button class="nav-item" data-tab="shops">
+        <i class="ph ph-storefront"></i> Shops
+      </button>
+      <button class="nav-item" data-tab="log">
+        <i class="ph ph-clipboard-text"></i> Registration Log
+      </button>
+      <button class="nav-item" data-tab="activity">
+        <i class="ph ph-activity"></i> Activity Trail
+      </button>
+      <button class="nav-item" data-tab="campaigns">
+        <i class="ph ph-megaphone"></i> Campaigns
+      </button>
+      <button class="nav-item" data-tab="stats">
+        <i class="ph ph-chart-bar"></i> Scan Stats
+      </button>
+      <button class="nav-item" data-tab="roi">
+        <i class="ph ph-trend-up"></i> ROI Analytics
+      </button>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="logout-btn">
+        <i class="ph ph-sign-out"></i> Logout
+      </button>
+    </div>
+  </aside>
 
-    <div class="card">
-      <div class="corner-mark">A</div>
-
-      <div class="card-header">
-        <h1 class="card-title">Admin <span>Dashboard</span></h1>
-        <p>Manage reps and shops, review scan activity, and keep your network running smoothly.</p>
-      </div>
-
-      <hr class="divider" />
-
-      <div class="card-actions">
-        <button id="logoutBtn" class="btn-secondary">Logout</button>
-      </div>
-
-      <div class="dashboard-grid">
-        <div class="dashboard-card">
-          <h4>Total Users</h4>
-          <p id="totalUsers">—</p>
+  <!-- Main Content -->
+  <main class="main-content">
+    
+    <header class="topbar">
+      <button class="mobile-menu-toggle" id="mobileMenuBtn">
+        <i class="ph ph-list"></i>
+      </button>
+      <h1 class="topbar-title" id="pageTitle">Manage Reps</h1>
+      <div class="user-profile" id="profileToggleBtn" onclick="toggleProfilePanel()" style="cursor:pointer; position:relative;" title="View profile">
+        <div class="user-avatar" id="adminAvatarEl">AD</div>
+        <div>
+          <span style="font-weight:600; font-size:0.95rem;" id="adminNameEl">Admin</span>
+          <div style="font-size:0.72rem; color:var(--text-secondary);" id="adminRoleEl">Administrator</div>
         </div>
-        <div class="dashboard-card">
-          <h4>Total Shops</h4>
-          <p id="totalShops">—</p>
+        <i class="ph ph-caret-down" style="font-size:0.8rem; color:var(--text-secondary); margin-left:4px;" id="profileCaretIcon"></i>
+      </div>
+
+      <!-- Profile Slide Panel -->
+      <div id="profileSidePanel" style="position:fixed; top:0; right:-340px; width:320px; height:100vh; background:#fff; border-left:1px solid var(--border-color); box-shadow:-8px 0 32px rgba(0,0,0,0.12); z-index:9999; transition:right 0.35s cubic-bezier(0.4,0,0.2,1); overflow-y:auto; font-family:'Plus Jakarta Sans',sans-serif;">
+        <!-- Panel Header -->
+        <div style="background:linear-gradient(135deg,#0f4c81,#1e88e5); padding:28px 20px 24px; position:relative;">
+          <button onclick="toggleProfilePanel()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.18); border:none; border-radius:8px; width:30px; height:30px; cursor:pointer; color:#fff; font-size:1.1rem; display:flex; align-items:center; justify-content:center;"><i class="ph ph-x"></i></button>
+          <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,rgba(255,255,255,0.35),rgba(255,255,255,0.15)); border:3px solid rgba(255,255,255,0.5); display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:800; color:#fff; margin-bottom:12px;" id="panelAvatarEl">AD</div>
+          <div style="color:#fff; font-size:1.1rem; font-weight:700; margin-bottom:2px;" id="panelNameEl">Admin</div>
+          <div style="color:rgba(255,255,255,0.75); font-size:0.8rem;" id="panelRoleEl">Administrator</div>
         </div>
-        <div class="dashboard-card">
-          <h4>Total QR Scans</h4>
-          <p id="totalScans">—</p>
+        <!-- Info section -->
+        <div style="padding:20px;">
+          <div style="font-size:0.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">Account Details</div>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:24px;">
+            <div style="background:#f8fafc; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:10px;">
+              <i class="ph ph-identification-badge" style="color:#3b82f6; font-size:1.1rem;"></i>
+              <div><div style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Employee ID</div><div style="font-size:0.88rem; color:#334155; font-weight:600;" id="panelEmpId">—</div></div>
+            </div>
+            <div style="background:#f8fafc; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:10px;">
+              <i class="ph ph-map-pin" style="color:#10b981; font-size:1.1rem;"></i>
+              <div><div style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Office</div><div style="font-size:0.88rem; color:#334155; font-weight:600;" id="panelRegion">Head Office</div></div>
+            </div>
+            <div style="background:#f8fafc; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:10px;">
+              <i class="ph ph-calendar" style="color:#f59e0b; font-size:1.1rem;"></i>
+              <div><div style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Member Since</div><div style="font-size:0.88rem; color:#334155; font-weight:600;" id="panelSince">—</div></div>
+            </div>
+          </div>
+
+          <!-- Edit Profile Accordion -->
+          <button onclick="toggleEditProfile()" id="editProfileToggleBtn" style="width:100%; display:flex; justify-content:space-between; align-items:center; padding:13px 16px; background:linear-gradient(135deg,#f1f5ff,#e8f0fe); border:1.5px solid rgba(59,130,246,0.2); border-radius:10px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:0.88rem; color:#1e3a5f; margin-bottom:0; transition:background 0.2s;">
+            <span><i class="ph ph-pencil-simple" style="margin-right:7px; color:#3b82f6;"></i>Edit Profile</span>
+            <i class="ph ph-caret-down" id="editProfileCaret" style="color:#3b82f6; font-size:0.9rem; transition:transform 0.3s;"></i>
+          </button>
+          <div id="editProfileAccordion" style="max-height:0; overflow:hidden; transition:max-height 0.4s cubic-bezier(0.4,0,0.2,1);">
+            <div style="display:flex; flex-direction:column; gap:10px; padding:16px 4px 4px;">
+              <div>
+                <label style="font-size:0.78rem; color:#64748b; font-weight:600; display:block; margin-bottom:4px;">Display Name</label>
+                <input id="editDisplayName" type="text" style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; outline:none;" placeholder="Enter name" />
+              </div>
+              <!-- Change Password sub-section -->
+              <button onclick="togglePwdSection()" id="pwdToggleBtn" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:0.82rem; color:#64748b; width:100%;">
+                <span><i class="ph ph-lock" style="margin-right:6px; color:#94a3b8;"></i>Change Password</span>
+                <i class="ph ph-caret-down" id="pwdCaret" style="color:#94a3b8; font-size:0.85rem; transition:transform 0.3s;"></i>
+              </button>
+              <div id="pwdAccordion" style="max-height:0; overflow:hidden; transition:max-height 0.35s cubic-bezier(0.4,0,0.2,1);">
+                <div style="display:flex; flex-direction:column; gap:8px; padding:10px 2px 2px;">
+                  <div>
+                    <label style="font-size:0.78rem; color:#64748b; font-weight:600; display:block; margin-bottom:4px;">Current Password</label>
+                    <input id="editCurrentPwd" type="password" style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; outline:none;" placeholder="Enter current password" />
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem; color:#64748b; font-weight:600; display:block; margin-bottom:4px;">New Password</label>
+                    <input id="editNewPwd" type="password" style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; outline:none;" placeholder="Enter new password" />
+                  </div>
+                </div>
+              </div>
+              <div id="profileEditMsg" style="font-size:0.8rem; min-height:18px;"></div>
+              <button onclick="saveProfile()" style="padding:11px; background:linear-gradient(135deg,#0f4c81,#1e88e5); color:#fff; border:none; border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:0.9rem; cursor:pointer;"><i class="ph ph-floppy-disk"></i> Save Changes</button>
+            </div>
+          </div>
+
+          <!-- Logout -->
+          <div style="margin-top:28px; padding-top:20px; border-top:1px solid #e2e8f0;">
+            <button onclick="localStorage.clear(); window.location.href='login.html';" style="width:100%; padding:11px; background:#fee2e2; color:#dc2626; border:1px solid rgba(220,38,38,0.25); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:0.9rem; cursor:pointer;"><i class="ph ph-sign-out"></i> Sign Out</button>
+          </div>
+        </div>
+      </div>
+      <div id="profilePanelOverlay" onclick="toggleProfilePanel()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.25); z-index:9998;"></div>
+    </header>
+
+    <div class="content-area">
+      
+      <!-- Stats Overview (Always visible) -->
+      <div class="stat-grid" id="globalStatGrid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">Total Users</span>
+            <div class="stat-icon"><i class="ph ph-users-three"></i></div>
+          </div>
+          <div class="stat-value" id="totalUsers">—</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">Registered Shops</span>
+            <div class="stat-icon"><i class="ph ph-storefront"></i></div>
+          </div>
+          <div class="stat-value" id="totalShops">—</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">Total QR Scans</span>
+            <div class="stat-icon"><i class="ph ph-qr-code"></i></div>
+          </div>
+          <div class="stat-value" id="totalScans">—</div>
         </div>
       </div>
 
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="reps">Manage Reps</button>
-        <button class="tab-btn" data-tab="shops">Manage Shops</button>
-        <button class="tab-btn" data-tab="log">Registration Log</button>
-        <button class="tab-btn" data-tab="activity">Activity Trail</button>
-        <button class="tab-btn" data-tab="campaigns">Campaigns</button>
-        <button class="tab-btn" data-tab="stats">Statistics</button>
-      </div>
-
+      <!-- Tab Contents -->
+      
+      <!-- Reps Tab -->
       <div id="repsTab" class="tab-content">
-        <h3>Add New Rep</h3>
-        <form id="addRepForm">
-          <div class="form-group">
-            <label for="repId">Rep ID</label>
-            <input type="text" id="repId" placeholder="e.g. REP001" required />
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Add New Representative</h2>
+              <p class="panel-desc">Create a new field representative account.</p>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="repUsername">Name</label>
-            <input type="text" id="repUsername" placeholder="rep name" required />
-          </div>
-          <div class="form-group">
-            <label for="repPassword">Password</label>
-            <input type="password" id="repPassword" placeholder="secure password" required />
-          </div>
-          <button type="submit" class="btn-primary"><span>Add Rep</span></button>
-        </form>
+          <form id="addRepForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="repUsername">Name</label>
+                <input type="text" id="repUsername" placeholder="Full name" required />
+              </div>
+              <div class="form-group">
+                <label for="repPassword">Password</label>
+                <input type="password" id="repPassword" placeholder="Secure password" required />
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="repProvince">Province</label>
+                <select id="repProvince" required><option value="">Select Province</option></select>
+              </div>
+              <div class="form-group">
+                <label for="repRegion">Region (District)</label>
+                <select id="repRegion" required><option value="">Select Region</option></select>
+              </div>
+              <div class="form-group">
+                <label for="repArea">Area</label>
+                <select id="repArea" required><option value="">Select Area</option></select>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary"><i class="ph ph-plus-circle"></i> Add Representative</button>
+          </form>
+        </div>
 
-        <hr class="divider" />
-        <h3>Existing Users</h3>
-        <div id="repsList">
-          <p>Loading reps...</p>
+        <div class="panel">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <h2 class="panel-title">Existing Representatives</h2>
+            <div style="position:relative;">
+              <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
+              <input type="text" id="searchReps" placeholder="Search reps..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
+            </div>
+          </div>
+          <div class="table-responsive" id="repsList">
+            <p>Loading reps...</p>
+          </div>
         </div>
       </div>
 
+      <!-- Shops Tab -->
       <div id="shopsTab" class="tab-content" style="display:none;">
-        <h3>Add New Shop</h3>
-        <form id="addShopForm">
-          <div class="form-group">
-            <label for="shopName">Shop Name</label>
-            <input type="text" id="shopName" placeholder="shop name" required />
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Add New Shop</h2>
+              <p class="panel-desc">Register a new shop directly from the dashboard.</p>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="ownerMobile">Owner Mobile</label>
-            <input type="tel" id="ownerMobile" placeholder="owner mobile" required />
-          </div>
-          <div class="form-group">
-            <label for="nicNumber">NIC Number</label>
-            <input type="text" id="nicNumber" placeholder="owner NIC number" required />
-          </div>
-          <button type="submit" class="btn-primary"><span>Add Shop</span></button>
-        </form>
+          <form id="addShopForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="shopName">Shop Name</label>
+                <input type="text" id="shopName" placeholder="Enter shop name" required />
+              </div>
+              <div class="form-group">
+                <label for="ownerMobile">Owner Mobile</label>
+                <input type="tel" id="ownerMobile" placeholder="e.g. 0712345678" required />
+              </div>
+              <div class="form-group">
+                <label for="nicNumber">NIC Number</label>
+                <input type="text" id="nicNumber" placeholder="Owner NIC" required />
+              </div>
+              <div class="form-group">
+                <label for="adminBrNumber">BR Number</label>
+                <input type="text" id="adminBrNumber" placeholder="Business Reg. No." />
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="shopProvince">Province</label>
+                <select id="shopProvince" required><option value="">Select Province</option></select>
+              </div>
+              <div class="form-group">
+                <label for="shopRegion">Region (District)</label>
+                <select id="shopRegion" required><option value="">Select Region</option></select>
+              </div>
+              <div class="form-group">
+                <label for="shopArea">Area</label>
+                <select id="shopArea" required><option value="">Select Area</option></select>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:20px;">
+              <label for="adminShopAddress">Shop Address</label>
+              <input type="text" id="adminShopAddress" placeholder="Full street address" />
+            </div>
+            <button type="submit" class="btn-primary"><i class="ph ph-storefront"></i> Add Shop</button>
+          </form>
+        </div>
 
-        <hr class="divider" />
-        <h3>Registered Shops</h3>
-        <div id="shopsList">
-          <p>Loading shops...</p>
+        <div class="panel">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <h2 class="panel-title">Registered Shops</h2>
+            <div style="position:relative;">
+              <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
+              <input type="text" id="searchShops" placeholder="Search shops..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
+            </div>
+          </div>
+          <div class="table-responsive" id="shopsList">
+            <p>Loading shops...</p>
+          </div>
         </div>
       </div>
 
+      <!-- Log Tab -->
       <div id="logTab" class="tab-content" style="display:none;">
-        <h3>Field Representative Activity Log</h3>
-        <p style="color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 20px;">This helps monitor campaign rollout
-          progress across regions.</p>
-        <div id="logList">
-          <p>Loading registration log...</p>
+        <div class="panel">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h2 class="panel-title">Field Representative Activity Log</h2>
+              <p class="panel-desc">Monitor campaign rollout progress across regions.</p>
+            </div>
+            <div style="position:relative;">
+              <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
+              <input type="text" id="searchLog" placeholder="Search logs..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
+            </div>
+          </div>
+          <div class="table-responsive" id="logList">
+            <p>Loading registration log...</p>
+          </div>
         </div>
       </div>
 
+      <!-- Activity Tab -->
       <div id="activityTab" class="tab-content" style="display:none;">
-        <h3>Audit Trail</h3>
-        <p style="color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 20px;">Track which Delivery Partner
-          registered which shop and when. This helps monitor campaign rollout progress across regions.</p>
-        <div id="activityList">
-          <p>Loading activity trail...</p>
+        <div class="panel">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h2 class="panel-title">System Audit Trail</h2>
+              <p class="panel-desc">Track system actions, shop registrations, and modifications.</p>
+            </div>
+            <div style="position:relative;">
+              <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
+              <input type="text" id="searchActivity" placeholder="Search activity..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
+            </div>
+          </div>
+          <div class="table-responsive" id="activityList">
+            <p>Loading activity trail...</p>
+          </div>
         </div>
       </div>
 
+      <!-- Stats Tab -->
       <div id="statsTab" class="tab-content" style="display:none;">
-        <h3>Scan Activity</h3>
-        <div id="statsList">
-          <p>Loading statistics...</p>
+        <div class="panel">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h2 class="panel-title">QR Scan Activity</h2>
+              <p class="panel-desc">Detailed view of QR scans per shop.</p>
+            </div>
+            <div style="position:relative;">
+              <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
+              <input type="text" id="searchStats" placeholder="Search scan stats..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
+            </div>
+          </div>
+          <div class="table-responsive" id="statsList">
+            <p>Loading statistics...</p>
+          </div>
         </div>
       </div>
 
+      <!-- Campaigns Tab -->
       <div id="campaignsTab" class="tab-content" style="display:none;">
-        <h3>Campaign Management</h3>
-        <p style="color: var(--ink-muted); font-size: 0.95rem; margin-bottom: 20px;">Create and manage campaigns.
-          Vouchers are automatically disabled when campaigns expire.</p>
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Create New Campaign</h2>
+              <p class="panel-desc">Vouchers are automatically tied to active campaigns.</p>
+            </div>
+          </div>
+          <form id="createCampaignForm" class="premium-form">
+            
+            <!-- Section 1: Strategy & Setup -->
+            <div class="form-section">
+              <h3 class="form-section-title"><i class="ph ph-strategy"></i> Campaign Strategy & Setup</h3>
+              <p class="form-section-desc">Define the core identity and strategic goal of this marketing campaign.</p>
+              
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="campaignId"><i class="ph ph-barcode"></i> Campaign ID</label>
+                  <input type="text" id="campaignId" placeholder="e.g. CMP-SUMMER" required />
+                  <span class="helper-text">A unique tracking code for backend use.</span>
+                </div>
+                <div class="form-group">
+                  <label for="campaignName"><i class="ph ph-text-t"></i> Campaign Name</label>
+                  <input type="text" id="campaignName" placeholder="e.g. Summer Offer 2026" required />
+                  <span class="helper-text">The display name visible to reps and shop owners.</span>
+                </div>
+                <div class="form-group">
+                  <label for="campaignObjective"><i class="ph ph-target"></i> Objective</label>
+                  <input type="text" id="campaignObjective" placeholder="e.g. Drive 10k new leads" required />
+                </div>
+                <div class="form-group">
+                  <label for="targetAudience"><i class="ph ph-users"></i> Target Audience</label>
+                  <select id="targetAudience" required>
+                    <option value="" disabled selected>Select Audience...</option>
+                    <option value="all">All Consumers</option>
+                    <option value="existing">Existing Customers</option>
+                    <option value="new">New Customers</option>
+                  </select>
+                </div>
+              </div>
+            </div>
 
-        <h4>Create New Campaign</h4>
-        <form id="createCampaignForm">
-          <div class="form-group">
-            <label for="campaignId">Campaign ID</label>
-            <input type="text" id="campaignId" placeholder="e.g., CMP001" required />
-          </div>
-          <div class="form-group">
-            <label for="campaignName">Campaign Name</label>
-            <input type="text" id="campaignName" placeholder="e.g., Summer Offer 2026" required />
-          </div>
-          <div class="form-group">
-            <label for="campaignDesc">Description</label>
-            <textarea id="campaignDesc" placeholder="Campaign details" rows="3"></textarea>
-          </div>
-          <div class="form-group">
-            <label for="startDate">Start Date</label>
-            <input type="datetime-local" id="startDate" required />
-          </div>
-          <div class="form-group">
-            <label for="endDate">End Date</label>
-            <input type="datetime-local" id="endDate" required />
-          </div>
-          <button type="submit" class="btn-primary" style="width: 100%;"><span>Create Campaign</span></button>
-        </form>
+            <!-- Section 2: Offer Details -->
+            <div class="form-section">
+              <h3 class="form-section-title"><i class="ph ph-ticket"></i> Offer Details</h3>
+              <p class="form-section-desc">Set the value of the promotion and the total limits to control your exposure.</p>
+              
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="voucherValue"><i class="ph ph-coin"></i> Voucher Value / Discount</label>
+                  <input type="text" id="voucherValue" placeholder="e.g. 20% OFF or LKR 500" required />
+                </div>
+                <div class="form-group">
+                  <label for="voucherLimit"><i class="ph ph-hash"></i> Total Voucher Limit</label>
+                  <input type="number" id="voucherLimit" placeholder="e.g. 5000" min="1" required />
+                  <span class="helper-text">Maximum number of vouchers that can be issued.</span>
+                </div>
+              </div>
 
-        <hr class="divider" />
-        <h3>Active Campaigns</h3>
-        <div id="campaignsList">
-          <p>Loading campaigns...</p>
+              <div class="form-group" style="margin-top: 16px;">
+                <label for="campaignDesc"><i class="ph ph-textAlign-left"></i> Description & Terms</label>
+                <textarea id="campaignDesc" placeholder="Enter campaign details, rules, and redemption terms here..." rows="3" required></textarea>
+              </div>
+            </div>
+
+            <!-- Section 3: Timeline & Budget -->
+            <div class="form-section">
+              <h3 class="form-section-title"><i class="ph ph-calendar-blank"></i> Timeline & Budget</h3>
+              <p class="form-section-desc">Set the active duration and the allocated financial budget for this campaign.</p>
+              
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="startDate"><i class="ph ph-clock"></i> Start Date & Time</label>
+                  <input type="datetime-local" id="startDate" required />
+                </div>
+                <div class="form-group">
+                  <label for="endDate"><i class="ph ph-hourglass-high"></i> End Date & Time</label>
+                  <input type="datetime-local" id="endDate" required />
+                </div>
+                <div class="form-group">
+                  <label for="campaignBudget"><i class="ph ph-money"></i> Estimated Budget (LKR)</label>
+                  <input type="number" id="campaignBudget" placeholder="e.g. 150000" min="0" required />
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 4: Media & Assets -->
+            <div class="form-section">
+              <h3 class="form-section-title"><i class="ph ph-image"></i> Media & Assets</h3>
+              <p class="form-section-desc">Provide the visual assets that will be displayed to customers claiming the offer.</p>
+              
+              <div class="form-group">
+                <label for="bannerUrl"><i class="ph ph-link"></i> Campaign Banner URL</label>
+                <input type="url" id="bannerUrl" placeholder="https://example.com/banner.jpg" />
+                <span class="helper-text">Optional. Provide a direct link to an image to use as the campaign header.</span>
+              </div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 32px; display: flex; justify-content: flex-end; padding-top: 24px; border-top: 1px solid var(--border-color);">
+              <button type="button" class="btn-secondary" style="margin-right: 12px;" onclick="document.getElementById('createCampaignForm').reset()">Clear Form</button>
+              <button type="submit" class="btn-primary" style="padding: 14px 32px; font-size: 1rem;"><i class="ph ph-rocket-launch"></i> Launch Campaign</button>
+            </div>
+          </form>
+
+        </div>
+
+        <div class="panel">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <h2 class="panel-title">Active Campaigns</h2>
+            <div style="position:relative;">
+              <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
+              <input type="text" id="searchCampaigns" placeholder="Search campaigns..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
+            </div>
+          </div>
+          <div class="table-responsive" id="campaignsList">
+            <p>Loading campaigns...</p>
+          </div>
         </div>
       </div>
+
+      <!-- ROI Analytics Tab -->
+      <div id="roiTab" class="tab-content" style="display:none;">
+
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+          <div>
+            <h2 style="font-size:1.5rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin-bottom:4px;">Marketing ROI Analytics</h2>
+            <p style="color:var(--text-secondary); font-size:0.92rem;">Deep-dive analytics per campaign — funnel, platform, trend & regional performance.</p>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button id="exportRoiBtn" class="btn-primary"><i class="ph ph-file-csv"></i> Export CSV</button>
+            <button id="exportRoiPdfBtn" class="btn-primary" style="background:linear-gradient(135deg,#dc2626,#b91c1c);"><i class="ph ph-file-pdf"></i> Export PDF</button>
+          </div>
+        </div>
+
+        <!-- Campaign Selector Bar -->
+        <div class="panel" style="margin-bottom:24px; padding:16px 24px;">
+          <div style="display:flex; flex-direction:row; align-items:center; gap:12px; flex-wrap:nowrap; overflow:hidden;">
+            <!-- Icon + label -->
+            <i class="ph ph-funnel" style="color:var(--accent-color); font-size:1.1rem; flex-shrink:0;"></i>
+            <span style="font-weight:600; font-size:0.88rem; color:var(--text-primary); white-space:nowrap; flex-shrink:0;">Campaign:</span>
+            <!-- Dropdown takes remaining space -->
+            <select id="campaignFilterSelect" style="flex:1; min-width:0; padding:8px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem; background:#f8fafc; color:var(--text-primary); outline:none; cursor:pointer;">
+              <option value="__all__">📊 All Campaigns (Overview)</option>
+            </select>
+            <!-- Active campaign badge -->
+            <div id="roiSelectedBadge" style="display:none; padding:4px 12px; border-radius:99px; background:rgba(15,76,129,0.09); color:var(--accent-color); font-size:0.8rem; font-weight:600; white-space:nowrap; flex-shrink:0; border:1px solid rgba(15,76,129,0.15);"></div>
+            <!-- Search box — fixed width, always on same line -->
+            <div style="position:relative; flex-shrink:0; width:210px;">
+              <i class="ph ph-magnifying-glass" style="position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--text-secondary); font-size:0.9rem; pointer-events:none;"></i>
+              <input type="text" id="roiCampaignSearch" placeholder="Search campaigns..." style="width:100%; box-sizing:border-box; padding:8px 10px 8px 30px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.84rem; background:#f8fafc; outline:none; color:var(--text-primary);" />
+            </div>
+          </div>
+        </div>
+
+
+        <!-- KPI Cards -->
+        <div class="stat-grid" style="margin-bottom:24px;">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Total Claims</span>
+              <div class="stat-icon"><i class="ph ph-hand-pointing"></i></div>
+            </div>
+            <div class="stat-value" id="kpiTotalClaims">—</div>
+            <div style="margin-top:8px; font-size:0.8rem; color:var(--text-secondary);">Vouchers claimed across platforms</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Total Redeemed</span>
+              <div class="stat-icon" style="background:rgba(16,185,129,0.1); color:#059669;"><i class="ph ph-check-circle"></i></div>
+            </div>
+            <div class="stat-value" style="color:#059669;" id="kpiTotalRedeemed">—</div>
+            <div style="margin-top:8px; font-size:0.8rem; color:var(--text-secondary);">Vouchers redeemed at shops</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Conversion Rate</span>
+              <div class="stat-icon" style="background:rgba(245,158,11,0.1); color:#d97706;"><i class="ph ph-trend-up"></i></div>
+            </div>
+            <div class="stat-value" style="color:#d97706;" id="kpiConversionRate">—</div>
+            <div style="margin-top:8px; font-size:0.8rem; color:var(--text-secondary);">Claims converted to redemptions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Top Platform</span>
+              <div class="stat-icon" style="background:rgba(99,102,241,0.1); color:#6366f1;"><i class="ph ph-megaphone"></i></div>
+            </div>
+            <div class="stat-value" style="font-size:1.4rem; color:#6366f1;" id="kpiTopPlatform">—</div>
+            <div style="margin-top:8px; font-size:0.8rem; color:var(--text-secondary);">Highest-performing ad channel</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Cost Per Acquisition</span>
+              <div class="stat-icon" style="background:rgba(239,68,68,0.1); color:#dc2626;"><i class="ph ph-coins"></i></div>
+            </div>
+            <div class="stat-value" style="font-size:1.3rem; color:#dc2626;" id="kpiCPA">—</div>
+            <div style="margin-top:8px; font-size:0.8rem; color:var(--text-secondary);">Budget ÷ Total Redemptions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Projected Liability</span>
+              <div class="stat-icon" style="background:rgba(147,51,234,0.1); color:#9333ea;"><i class="ph ph-warning"></i></div>
+            </div>
+            <div class="stat-value" style="font-size:1.3rem; color:#9333ea;" id="kpiLiability">—</div>
+            <div style="margin-top:8px; font-size:0.8rem; color:var(--text-secondary);">Pending Claims × Voucher Value</div>
+          </div>
+        </div>
+
+        <!-- ── Strategic Campaign Intelligence Panel ─────────────────────── -->
+        <div id="campaignIntelPanel" class="panel" style="margin-bottom:24px; display:none;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#0f4c81,#1e88e5); display:flex; align-items:center; justify-content:center;">
+              <i class="ph ph-brain" style="color:#fff; font-size:1.1rem;"></i>
+            </div>
+            <div>
+              <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin-bottom:2px;">Campaign Intelligence Center</h3>
+              <p style="font-size:0.8rem; color:var(--text-secondary);">AI-grade financial analytics & campaign brief — select a campaign to unlock</p>
+            </div>
+          </div>
+
+          <!-- Row 1: Campaign Brief + Budget Utilization -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+
+            <!-- Campaign Brief -->
+            <div style="background:linear-gradient(135deg,#f8faff,#eff6ff); border:1px solid rgba(59,130,246,0.15); border-radius:14px; padding:20px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+                <i class="ph ph-target" style="color:#3b82f6; font-size:1.1rem;"></i>
+                <span style="font-weight:700; font-size:0.9rem; color:#1e3a5f;">Campaign Brief</span>
+              </div>
+              <div style="margin-bottom:12px;">
+                <div style="font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Objective</div>
+                <div style="font-size:0.9rem; color:#334155; line-height:1.5;" id="intelObjective">Select a campaign to view objective</div>
+              </div>
+              <div style="margin-bottom:12px;">
+                <div style="font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Target Audience</div>
+                <div style="font-size:0.9rem; color:#334155;" id="intelAudience">—</div>
+              </div>
+              <div style="display:flex; gap:24px;">
+                <div>
+                  <div style="font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Start Date</div>
+                  <div style="font-size:0.88rem; color:#334155; font-weight:600;" id="intelStartDate">—</div>
+                </div>
+                <div>
+                  <div style="font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">End Date</div>
+                  <div style="font-size:0.88rem; color:#334155; font-weight:600;" id="intelEndDate">—</div>
+                </div>
+                <div>
+                  <div style="font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Duration</div>
+                  <div style="font-size:0.88rem; color:#334155; font-weight:600;" id="intelDuration">—</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Budget Utilization + Financial Metrics -->
+            <div style="background:linear-gradient(135deg,#f8fff8,#ecfdf5); border:1px solid rgba(16,185,129,0.15); border-radius:14px; padding:20px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+                <i class="ph ph-currency-circle-dollar" style="color:#10b981; font-size:1.1rem;"></i>
+                <span style="font-weight:700; font-size:0.9rem; color:#1e3a5f;">Budget & Financial Exposure</span>
+              </div>
+              <div style="margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span style="font-size:0.8rem; font-weight:600; color:#64748b;">Budget Utilization</span>
+                  <span style="font-size:0.88rem; font-weight:700; color:#059669;" id="intelBudgetPct">0%</span>
+                </div>
+                <div style="background:#d1fae5; border-radius:99px; height:9px; overflow:hidden;">
+                  <div id="intelBudgetBar" style="height:100%; width:0%; background:linear-gradient(90deg,#10b981,#059669); border-radius:99px; transition:width 0.8s cubic-bezier(0.4,0,0.2,1);"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                  <span style="font-size:0.72rem; color:#94a3b8;">Spent (Cost of Redemptions)</span>
+                  <span style="font-size:0.72rem; color:#94a3b8;" id="intelBudgetSpent">LKR 0</span>
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div style="background:rgba(255,255,255,0.7); border-radius:10px; padding:12px; border:1px solid rgba(16,185,129,0.1);">
+                  <div style="font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Total Budget</div>
+                  <div style="font-size:1rem; font-weight:700; color:#059669;" id="intelBudget">—</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.7); border-radius:10px; padding:12px; border:1px solid rgba(16,185,129,0.1);">
+                  <div style="font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Voucher Value</div>
+                  <div style="font-size:1rem; font-weight:700; color:#0891b2;" id="intelVoucherVal">—</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.7); border-radius:10px; padding:12px; border:1px solid rgba(16,185,129,0.1);">
+                  <div style="font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Voucher Limit</div>
+                  <div style="font-size:1rem; font-weight:700; color:#334155;" id="intelVoucherLimit">—</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.7); border-radius:10px; padding:12px; border:1px solid rgba(147,51,234,0.12);">
+                  <div style="font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Open Liability</div>
+                  <div style="font-size:1rem; font-weight:700; color:#9333ea;" id="intelLiabilityDetail">—</div>
+                  <div style="font-size:0.7rem; color:#94a3b8; margin-top:2px;">Pending × Voucher Value</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 2: Performance Health Gauges -->
+          <div style="background:#f8fafc; border-radius:14px; padding:20px; border:1px solid var(--border-color);">
+            <div style="font-size:0.78rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:16px;">Campaign Performance Scorecard</div>
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                  <span style="font-size:0.8rem;color:#64748b;font-weight:600;">Redemption Rate</span>
+                  <span style="font-size:0.8rem;font-weight:700;color:#10b981;" id="scoreRedemptionRate">0%</span>
+                </div>
+                <div style="background:#e2e8f0;border-radius:99px;height:6px;">
+                  <div id="scoreRedemptionBar" style="height:100%;width:0%;background:#10b981;border-radius:99px;transition:width 0.8s;"></div>
+                </div>
+                <div style="font-size:0.7rem;color:#94a3b8;margin-top:3px;">Redeemed ÷ Claims</div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                  <span style="font-size:0.8rem;color:#64748b;font-weight:600;">Voucher Fill Rate</span>
+                  <span style="font-size:0.8rem;font-weight:700;color:#3b82f6;" id="scoreVoucherFill">0%</span>
+                </div>
+                <div style="background:#e2e8f0;border-radius:99px;height:6px;">
+                  <div id="scoreVoucherBar" style="height:100%;width:0%;background:#3b82f6;border-radius:99px;transition:width 0.8s;"></div>
+                </div>
+                <div style="font-size:0.7rem;color:#94a3b8;margin-top:3px;">Claims ÷ Voucher Limit</div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                  <span style="font-size:0.8rem;color:#64748b;font-weight:600;">Budget Efficiency</span>
+                  <span style="font-size:0.8rem;font-weight:700;color:#f59e0b;" id="scoreBudgetEff">—</span>
+                </div>
+                <div style="background:#e2e8f0;border-radius:99px;height:6px;">
+                  <div id="scoreBudgetBar" style="height:100%;width:0%;background:#f59e0b;border-radius:99px;transition:width 0.8s;"></div>
+                </div>
+                <div style="font-size:0.7rem;color:#94a3b8;margin-top:3px;">Redemption Value ÷ Budget</div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                  <span style="font-size:0.8rem;color:#64748b;font-weight:600;">Campaign Health</span>
+                  <span style="font-size:0.8rem;font-weight:700;" id="scoreHealthLabel" style="color:#64748b;">—</span>
+                </div>
+                <div style="background:#e2e8f0;border-radius:99px;height:6px;">
+                  <div id="scoreHealthBar" style="height:100%;width:0%;background:#94a3b8;border-radius:99px;transition:width 0.8s;"></div>
+                </div>
+                <div style="font-size:0.7rem;color:#94a3b8;margin-top:3px;">Weighted composite score</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row 1: Funnel + Platform -->
+        <div class="charts-grid" style="margin-bottom:24px;">
+          <div class="panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary);">Voucher Funnel</h3>
+              <span style="font-size:0.78rem; color:var(--text-secondary); background:#f1f5f9; padding:4px 10px; border-radius:99px;" id="funnelLabel">All time</span>
+            </div>
+            <div class="chart-container" id="convChartContainer"><canvas id="conversionChart"></canvas></div>
+          </div>
+          <div class="panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary);">Claims by Platform</h3>
+              <span style="font-size:0.78rem; color:var(--text-secondary); background:#f1f5f9; padding:4px 10px; border-radius:99px;">Voucher claims</span>
+            </div>
+            <div class="chart-container" id="channelChartContainer"><canvas id="channelChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Charts Row 2: Trend + Regions -->
+        <div class="charts-grid" style="margin-bottom:24px;">
+          <div class="panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary);">30-Day Activity Trend</h3>
+              <span style="font-size:0.78rem; color:var(--text-secondary); background:#f1f5f9; padding:4px 10px; border-radius:99px;">Claims & Redemptions</span>
+            </div>
+            <div class="chart-container" id="trendChartContainer" style="height:260px;"><canvas id="trendChart"></canvas></div>
+          </div>
+          <div class="panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary);">Performance by Province</h3>
+              <span style="font-size:0.78rem; color:var(--text-secondary); background:#f1f5f9; padding:4px 10px; border-radius:99px;">Redemptions</span>
+            </div>
+            <div class="chart-container" id="locationChartContainer" style="height:260px;"><canvas id="locationChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Sri Lanka Geographic Distribution Map -->
+        <div class="panel" style="margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin-bottom:4px;">Geographic Campaign Spread</h3>
+                <select id="mapLevelSelect" class="modern-input" style="padding:4px 8px; font-size:0.8rem; width:auto;">
+                  <option value="province">By Province</option>
+                  <option value="region">By Region (District)</option>
+                  <option value="area">By Area Breakdown</option>
+                </select>
+              </div>
+              <p style="font-size:0.875rem; color:var(--text-secondary);">Campaign penetration across Sri Lanka — hover for details.</p>
+            </div>
+            <div id="mapLegend" style="display:flex; align-items:center; gap:6px; font-size:0.78rem; color:var(--text-secondary);"></div>
+          </div>
+          <div id="sriLankaMap" style="height:480px; border-radius:12px; overflow:hidden; background:#f0f4fa; border:1px solid var(--border-color); position:relative;">
+            <div id="slMapLoading" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:0.9rem;text-align:center;"><i class="ph ph-circle-notch" style="font-size:1.4rem;display:block;margin-bottom:8px;"></i>Loading map…</div>
+          </div>
+        </div>
+
+        <!-- Platform Breakdown Table -->
+        <div class="panel" style="margin-bottom:24px;">
+          <div style="margin-bottom:20px;">
+            <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin-bottom:4px;">Platform Breakdown</h3>
+            <p style="font-size:0.875rem; color:var(--text-secondary);">Detailed claims, redemptions and conversion rate per advertising channel.</p>
+          </div>
+          <div class="table-responsive" id="platformTable"><p>Loading...</p></div>
+        </div>
+
+        <!-- Campaign Comparison Table (only shown on "All" view) -->
+        <div class="panel" id="campaignCompPanel">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+            <div>
+              <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin-bottom:4px;">Campaign Comparison</h3>
+              <p style="font-size:0.875rem; color:var(--text-secondary);">Click any campaign row to drill into its analytics.</p>
+            </div>
+            <div style="position:relative;">
+              <i class="ph ph-magnifying-glass" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
+              <input type="text" id="campaignTableSearch" placeholder="Search campaigns..." style="padding:8px 12px 8px 32px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.85rem; background:#f8fafc; outline:none; width:220px;" />
+            </div>
+          </div>
+          <div class="table-responsive" id="campaignPerfTable"><p>Loading...</p></div>
+        </div>
+
+      </div>
+
 
     </div>
+  </main>
+</div>
 
+<!-- ── Delete Campaign Password Modal ── -->
+<div class="modal-overlay" id="deleteCampaignModal">
+  <div class="modal-box">
+    <div class="modal-title"><i class="ph ph-trash" style="color:#dc2626;"></i> Delete Campaign</div>
+    <p class="modal-desc">You are about to permanently delete campaign <strong id="modalCampaignId"></strong> and <em>all its associated vouchers</em>. This action cannot be undone.</p>
+    <div class="modal-warning">
+      <i class="ph ph-warning-circle"></i>
+      Enter your admin password to confirm deletion.
+    </div>
+    <input type="password" class="modal-input" id="deletePasswordInput" placeholder="Admin password" autocomplete="off" />
+    <div class="modal-error" id="deleteModalError"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel-modal" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-danger-solid" id="confirmDeleteBtn" onclick="confirmDeleteCampaign()">
+        <i class="ph ph-trash"></i> Delete Campaign
+      </button>
+    </div>
   </div>
+</div>
 
-  <script>
-    const API_BASE = window.location.origin;
+<!-- ── Edit Campaign Modal ── -->
+<div class="modal-overlay" id="editCampaignModal" style="display:none; align-items:flex-start; padding-top: 5vh; overflow-y:auto;">
+  <div class="modal-box" style="max-width: 800px; width: 100%; margin-bottom: 5vh;">
+    <div class="modal-title"><i class="ph ph-pencil-simple" style="color:var(--accent-color);"></i> Edit Campaign</div>
+    <p class="modal-desc">Modify the details, budget, or timeline of this campaign.</p>
+    
+    <form id="editCampaignForm" class="premium-form" style="margin-top:24px;">
+      <input type="hidden" id="editCampaignId" />
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="editCampaignName"><i class="ph ph-text-t"></i> Campaign Name</label>
+          <input type="text" id="editCampaignName" required />
+        </div>
+        <div class="form-group">
+          <label for="editCampaignObjective"><i class="ph ph-target"></i> Objective</label>
+          <input type="text" id="editCampaignObjective" required />
+        </div>
+        <div class="form-group">
+          <label for="editTargetAudience"><i class="ph ph-users"></i> Target Audience</label>
+          <select id="editTargetAudience" required>
+            <option value="all">All Consumers</option>
+            <option value="existing">Existing Customers</option>
+            <option value="new">New Customers</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editCampaignBudget"><i class="ph ph-money"></i> Budget (LKR)</label>
+          <input type="number" id="editCampaignBudget" min="0" required />
+        </div>
+        <div class="form-group">
+          <label for="editVoucherValue"><i class="ph ph-coin"></i> Voucher Value</label>
+          <input type="text" id="editVoucherValue" required />
+        </div>
+        <div class="form-group">
+          <label for="editVoucherLimit"><i class="ph ph-hash"></i> Total Voucher Limit</label>
+          <input type="number" id="editVoucherLimit" min="1" required />
+        </div>
+        <div class="form-group">
+          <label for="editStartDate"><i class="ph ph-clock"></i> Start Date & Time</label>
+          <input type="datetime-local" id="editStartDate" required />
+        </div>
+        <div class="form-group">
+          <label for="editEndDate"><i class="ph ph-hourglass-high"></i> End Date & Time</label>
+          <input type="datetime-local" id="editEndDate" required />
+        </div>
+      </div>
+      
+      <div class="form-group" style="margin-top: 16px;">
+        <label for="editCampaignDesc"><i class="ph ph-textAlign-left"></i> Description & Terms</label>
+        <textarea id="editCampaignDesc" rows="3" required></textarea>
+      </div>
+      
+      <div class="form-group" style="margin-top: 16px;">
+        <label for="editBannerUrl"><i class="ph ph-link"></i> Banner URL</label>
+        <input type="url" id="editBannerUrl" />
+      </div>
+      
+      <div class="modal-actions" style="margin-top: 32px; border-top: 1px solid var(--border-color); padding-top: 24px;">
+        <button type="button" class="btn-cancel-modal" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn-primary" id="saveEditBtn">
+          <i class="ph ph-floppy-disk"></i> Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 
-    const logoutBtn = document.getElementById("logoutBtn");
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-    const addRepForm = document.getElementById('addRepForm');
-    const addShopForm = document.getElementById('addShopForm');
-    const createCampaignForm = document.getElementById('createCampaignForm');
-    const repsList = document.getElementById('repsList');
-    const shopsList = document.getElementById('shopsList');
-    const campaignsList = document.getElementById('campaignsList');
-    const logList = document.getElementById('logList');
-    const activityList = document.getElementById('activityList');
-    const statsList = document.getElementById('statsList');
-    const totalUsers = document.getElementById('totalUsers');
-    const totalShops = document.getElementById('totalShops');
-    const totalScans = document.getElementById('totalScans');
+<!-- Scripts -->
+<script>
+  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://localhost:5000' : 'https://nestle-connect.onrender.com';
 
-    function checkAuth() {
-      const token = localStorage.getItem("token");
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (!token || !user || user.role !== "admin") {
-        window.location.href = "login.html";
-      }
-    }
+  const logoutBtn = document.getElementById("logoutBtn");
+  const tabBtns = document.querySelectorAll('.nav-item');
+  const tabContents = document.querySelectorAll('.tab-content');
+  const pageTitle = document.getElementById('pageTitle');
+  
+  const addRepForm = document.getElementById('addRepForm');
+  const addShopForm = document.getElementById('addShopForm');
+  const createCampaignForm = document.getElementById('createCampaignForm');
+  
+  const repsList = document.getElementById('repsList');
+  const shopsList = document.getElementById('shopsList');
+  const campaignsList = document.getElementById('campaignsList');
+  const logList = document.getElementById('logList');
+  const activityList = document.getElementById('activityList');
+  const statsList = document.getElementById('statsList');
+  
+  const totalUsers = document.getElementById('totalUsers');
+  const totalShops = document.getElementById('totalShops');
+  const totalScans = document.getElementById('totalScans');
 
-    function logout() {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+  function checkAuth() {
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!token || !user || user.role !== "admin") {
       window.location.href = "login.html";
     }
+  }
 
-    function switchTab(tab) {
-      tabBtns.forEach(btn => btn.classList.remove('active'));
-      tabContents.forEach(content => content.style.display = 'none');
-      document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-      document.getElementById(`${tab}Tab`).style.display = 'block';
-      if (tab === 'reps') loadReps();
-      if (tab === 'shops') loadShops();
-      if (tab === 'log') loadRegistrationLog();
-      if (tab === 'activity') loadActivityLog();
-      if (tab === 'campaigns') loadCampaigns();
-      if (tab === 'stats') loadStats();
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
+  }
+
+  function switchTab(tab, titleText) {
+    tabBtns.forEach(btn => btn.classList.remove('active'));
+    tabContents.forEach(content => content.style.display = 'none');
+    
+    const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
+    activeBtn.classList.add('active');
+    
+    if (titleText) {
+      pageTitle.textContent = titleText;
+    } else {
+      pageTitle.textContent = activeBtn.textContent.trim();
     }
+    
+    document.getElementById(`${tab}Tab`).style.display = 'block';
+    
+    // Hide global stat grid on ROI tab (has its own KPI grid); show on all others
+    const globalGrid = document.getElementById('globalStatGrid');
+    if (globalGrid) globalGrid.style.display = tab === 'roi' ? 'none' : '';
+    
+    if (tab === 'reps') loadReps();
+    if (tab === 'shops') loadShops();
+    if (tab === 'log') loadRegistrationLog();
+    if (tab === 'activity') loadActivityLog();
+    if (tab === 'campaigns') loadCampaigns();
+    if (tab === 'stats') loadStats();
+    if (tab === 'roi') { loadRoiAnalytics(); setTimeout(initSriLankaMap, 200); }
+  }
 
-    function updateSummary(users, shops, scans) {
-      totalUsers.textContent = users;
-      totalShops.textContent = shops;
-      totalScans.textContent = scans;
-    }
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchTab(btn.dataset.tab, btn.textContent.trim());
+    });
+  });
 
-    async function loadReps() {
-      const token = localStorage.getItem("token");
-      try {
-        const response = await fetch(`${API_BASE}/api/users`, {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-        const reps = await response.json();
-        displayReps(reps);
-        updateSummary(reps.length, shopsList.dataset.count || 0, totalScans.textContent || 0);
-      } catch (error) {
-        repsList.innerHTML = "<p>Error loading reps.</p>";
-      }
-    }
+  function updateSummary(users, shops, scans) {
+    totalUsers.textContent = users;
+    totalShops.textContent = shops;
+    totalScans.textContent = scans;
+  }
 
-    function displayReps(reps) {
-      let html = "<table><thead><tr><th>Rep ID</th><th>Name</th><th>Role</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
-      reps.forEach(rep => {
-        html += `<tr>
-          <td>${rep.employee_id || '-'}</td>
-          <td>${rep.username}</td>
-          <td>${rep.role}</td>
-          <td>${new Date(rep.created_at).toLocaleDateString()}</td>
-          <td><button class="action-button danger" onclick="deleteRep(${rep.id})">Delete</button></td>
-        </tr>`;
+  async function loadReps() {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/users`, {
+        headers: { "Authorization": `Bearer ${token}` },
       });
-      html += "</tbody></table>";
-      repsList.innerHTML = html;
+      const reps = await response.json();
+      displayReps(reps);
+      updateSummary(reps.length, shopsList.dataset.count || 0, totalScans.textContent || 0);
+    } catch (error) {
+      repsList.innerHTML = "<p>Error loading reps.</p>";
     }
+  }
 
-    async function deleteRep(id) {
-      if (!confirm('Delete this rep?')) return;
-      const token = localStorage.getItem("token");
-      try {
-        const response = await fetch(`${API_BASE}/api/users/${id}`, {
-          method: 'DELETE',
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-        if (response.ok) {
-          loadReps();
-        } else {
-          alert('Error deleting rep');
-        }
-      } catch (error) {
+  function displayReps(reps) {
+    let html = "<table class='modern-table'><thead><tr><th>Rep ID</th><th>Name</th><th>Role</th><th>Location</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
+    reps.forEach(rep => {
+      const loc = rep.role === 'admin' ? 'Head Office' : [rep.province, rep.region, rep.area].filter(Boolean).join(', ') || 'Unassigned';
+      html += `<tr>
+        <td><strong>${rep.employee_id || '-'}</strong></td>
+        <td>${rep.username}</td>
+        <td><span class="badge ${rep.role === 'admin' ? 'expired' : 'active'}">${rep.role}</span></td>
+        <td>${loc}</td>
+        <td>${new Date(rep.created_at).toLocaleDateString()}</td>
+        <td><button class="btn-danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="deleteRep(${rep.id})"><i class="ph ph-trash"></i></button></td>
+      </tr>`;
+    });
+    html += "</tbody></table>";
+    repsList.innerHTML = html;
+  }
+
+  async function deleteRep(id) {
+    if (!confirm('Delete this rep?')) return;
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/users/${id}`, {
+        method: 'DELETE',
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (response.ok) {
+        loadReps();
+      } else {
         alert('Error deleting rep');
       }
+    } catch (error) {
+      alert('Error deleting rep');
     }
+  }
 
-    async function loadShops() {
-      const token = localStorage.getItem("token");
-      try {
-        const response = await fetch(`${API_BASE}/api/shops`, {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-        const shops = await response.json();
-        displayShops(shops);
-        shopsList.dataset.count = shops.length;
-        updateSummary(document.querySelectorAll('#repsList table tbody tr').length, shops.length, totalScans.textContent || 0);
-      } catch (error) {
-        shopsList.innerHTML = "<p>Error loading shops.</p>";
-      }
-    }
-
-    function displayShops(shops) {
-      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
-      shops.forEach(shop => {
-        html += `<tr>
-          <td>${shop.shop_id}</td>
-          <td>${shop.shop_name}</td>
-          <td>${shop.owner_mobile}</td>
-          <td>${shop.nic_number || '-'}</td>
-          <td>${new Date(shop.created_at).toLocaleDateString()}</td>
-          <td><button class="action-button danger" onclick="deleteShop(${shop.id})">Delete</button></td>
-        </tr>`;
+  async function loadShops() {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/shops`, {
+        headers: { "Authorization": `Bearer ${token}` },
       });
-      html += "</tbody></table>";
-      shopsList.innerHTML = html;
+      const shops = await response.json();
+      displayShops(shops);
+      shopsList.dataset.count = shops.length;
+      updateSummary(document.querySelectorAll('#repsList table tbody tr').length, shops.length, totalScans.textContent || 0);
+    } catch (error) {
+      shopsList.innerHTML = "<p>Error loading shops.</p>";
     }
+  }
 
-    async function deleteShop(id) {
-      if (!confirm('Delete this shop?')) return;
-      const token = localStorage.getItem("token");
-      try {
-        const response = await fetch(`${API_BASE}/api/shops/${id}`, {
-          method: 'DELETE',
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-        if (response.ok) {
-          loadShops();
-        } else {
-          alert('Error deleting shop');
-        }
-      } catch (error) {
+  function displayShops(shops) {
+    if (shops.length === 0) {
+      shopsList.innerHTML = '<p style="color:var(--text-secondary);">No shops registered yet.</p>';
+      return;
+    }
+    let html = "<table class='modern-table'><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC</th><th>BR No.</th><th>Address</th><th>Location</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
+    shops.forEach(shop => {
+      const region = [shop.province, shop.region, shop.area].filter(Boolean).join(' › ') || '—';
+      html += `<tr>
+        <td><strong>${shop.shop_id}</strong></td>
+        <td>${shop.shop_name}</td>
+        <td>${shop.owner_mobile}</td>
+        <td>${shop.nic_number || '-'}</td>
+        <td>${shop.br_number || '-'}</td>
+        <td style="font-size:0.82rem; max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${shop.address || ''}">${shop.address || '-'}</td>
+        <td style="font-size:0.82rem;">${region}</td>
+        <td>${new Date(shop.created_at).toLocaleDateString()}</td>
+        <td><button class="btn-danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="deleteShop(${shop.id})"><i class="ph ph-trash"></i></button></td>
+      </tr>`;
+    });
+    html += "</tbody></table>";
+    shopsList.innerHTML = html;
+  }
+
+  async function deleteShop(id) {
+    if (!confirm('Delete this shop?')) return;
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/shops/${id}`, {
+        method: 'DELETE',
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (response.ok) {
+        loadShops();
+      } else {
         alert('Error deleting shop');
       }
+    } catch (error) {
+      alert('Error deleting shop');
     }
+  }
 
-    async function loadRegistrationLog() {
-      const token = localStorage.getItem("token");
-      try {
-        const response = await fetch(`${API_BASE}/api/shops/log/registrations`, {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-        const log = await response.json();
-        displayRegistrationLog(log);
-      } catch (error) {
-        logList.innerHTML = "<p>Error loading registration log.</p>";
-      }
-    }
-
-    function displayRegistrationLog(log) {
-      if (log.length === 0) {
-        logList.innerHTML = "<p>No registrations yet.</p>";
-        return;
-      }
-      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>Registered By</th><th>QR Linked</th><th>Created At</th></tr></thead><tbody>";
-      log.forEach(entry => {
-        const repName = entry.rep_name || 'Admin';
-        const qrLinked = entry.qr_identifier ? '✓ Yes' : '✗ No';
-        html += `<tr>
-          <td>${entry.shop_id}</td>
-          <td>${entry.shop_name}</td>
-          <td>${entry.owner_mobile}</td>
-          <td>${entry.nic_number || '-'}</td>
-          <td>${repName}</td>
-          <td>${qrLinked}</td>
-          <td>${new Date(entry.created_at).toLocaleDateString()} ${new Date(entry.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-        </tr>`;
+  async function loadRegistrationLog() {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/shops/log/registrations`, {
+        headers: { "Authorization": `Bearer ${token}` },
       });
-      html += "</tbody></table>";
-      logList.innerHTML = html;
+      const log = await response.json();
+      displayRegistrationLog(log);
+    } catch (error) {
+      logList.innerHTML = "<p>Error loading registration log.</p>";
     }
+  }
 
-    async function loadActivityLog() {
-      const token = localStorage.getItem("token");
-      try {
-        const response = await fetch(`${API_BASE}/api/activity`, {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-        const activity = await response.json();
-        displayActivityLog(activity);
-      } catch (error) {
-        activityList.innerHTML = "<p>Error loading activity trail.</p>";
-      }
+  function displayRegistrationLog(log) {
+    if (log.length === 0) {
+      logList.innerHTML = "<p>No registrations yet.</p>";
+      return;
     }
-
-    function displayActivityLog(activity) {
-      if (activity.length === 0) {
-        activityList.innerHTML = "<p>No activity recorded yet.</p>";
-        return;
-      }
-
-      let html = "<table><thead><tr><th>User</th><th>Action</th><th>Shop</th><th>Details</th><th>When</th></tr></thead><tbody>";
-      activity.forEach(entry => {
-        const shopLabel = entry.shop_id ? `${entry.shop_id} - ${entry.shop_name}` : '—';
-        html += `<tr>
-          <td>${entry.performed_by || 'Unknown'}</td>
-          <td>${entry.action}</td>
-          <td>${shopLabel}</td>
-          <td>${entry.detail || '—'}</td>
-          <td>${new Date(entry.created_at).toLocaleString()}</td>
-        </tr>`;
-      });
-      html += "</tbody></table>";
-      activityList.innerHTML = html;
-    }
-
-    async function loadStats() {
-      const token = localStorage.getItem("token");
-      try {
-        const response = await fetch(`${API_BASE}/api/dashboard/admin`, {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-        const stats = await response.json();
-        displayStats(stats);
-        updateSummary(document.querySelectorAll('#repsList table tbody tr').length, shopsList.dataset.count || 0, stats.reduce((sum, item) => sum + Number(item.scan_count), 0));
-      } catch (error) {
-        statsList.innerHTML = "<p>Error loading stats.</p>";
-      }
-    }
-
-    function displayStats(stats) {
-      let html = "<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>QR Scans</th><th>Created At</th></tr></thead><tbody>";
-      stats.forEach(stat => {
-        html += `<tr>
-          <td>${stat.shop_id}</td>
-          <td>${stat.shop_name}</td>
-          <td>${stat.owner_mobile}</td>
-          <td>${stat.nic_number || '-'}</td>
-          <td>${stat.scan_count}</td>
-          <td>${new Date(stat.created_at).toLocaleDateString()}</td>
-        </tr>`;
-      });
-      html += "</tbody></table>";
-      statsList.innerHTML = html;
-    }
-
-    tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    let html = "<table class='modern-table'><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>Registered By</th><th>QR Linked</th><th>Created At</th></tr></thead><tbody>";
+    log.forEach(entry => {
+      const repName = entry.rep_name || 'Admin';
+      const qrLinked = entry.qr_identifier ? '<span class="badge active">Yes</span>' : '<span class="badge expired">No</span>';
+      html += `<tr>
+        <td><strong>${entry.shop_id}</strong></td>
+        <td>${entry.shop_name}</td>
+        <td>${entry.owner_mobile}</td>
+        <td>${entry.nic_number || '-'}</td>
+        <td>${repName}</td>
+        <td>${qrLinked}</td>
+        <td>${new Date(entry.created_at).toLocaleDateString()} ${new Date(entry.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+      </tr>`;
     });
+    html += "</tbody></table>";
+    logList.innerHTML = html;
+  }
 
-    addRepForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const employee_id = document.getElementById('repId').value.trim();
-      const username = document.getElementById('repUsername').value.trim();
-      const password = document.getElementById('repPassword').value.trim();
-      const token = localStorage.getItem("token");
-      if (!username || !password || !employee_id) return;
-      try {
-        const response = await fetch(`${API_BASE}/api/users`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({ username, password, role: 'rep', employee_id }),
-        });
-        if (response.ok) {
-          addRepForm.reset();
-          loadReps();
-        } else {
-          alert('Error adding rep');
-        }
-      } catch (error) {
+  async function loadActivityLog() {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/activity`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      const activity = await response.json();
+      displayActivityLog(activity);
+    } catch (error) {
+      activityList.innerHTML = "<p>Error loading activity trail.</p>";
+    }
+  }
+
+  function displayActivityLog(activity) {
+    if (activity.length === 0) {
+      activityList.innerHTML = "<p>No activity recorded yet.</p>";
+      return;
+    }
+
+    let html = "<table class='modern-table'><thead><tr><th>User</th><th>Action</th><th>Shop</th><th>Details</th><th>When</th></tr></thead><tbody>";
+    activity.forEach(entry => {
+      const shopLabel = entry.shop_id ? `${entry.shop_id} - ${entry.shop_name}` : '—';
+      html += `<tr>
+        <td><strong>${entry.performed_by || 'Unknown'}</strong></td>
+        <td><span class="badge" style="background:#e2e8f0; color:#475569;">${entry.action}</span></td>
+        <td>${shopLabel}</td>
+        <td>${entry.detail || '—'}</td>
+        <td>${new Date(entry.created_at).toLocaleString()}</td>
+      </tr>`;
+    });
+    html += "</tbody></table>";
+    activityList.innerHTML = html;
+  }
+
+  async function loadStats() {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/dashboard/admin`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      const stats = await response.json();
+      displayStats(stats);
+      updateSummary(document.querySelectorAll('#repsList table tbody tr').length, shopsList.dataset.count || 0, stats.reduce((sum, item) => sum + Number(item.scan_count), 0));
+    } catch (error) {
+      statsList.innerHTML = "<p>Error loading stats.</p>";
+    }
+  }
+
+  function displayStats(stats) {
+    let html = "<table class='modern-table'><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Owner Mobile</th><th>NIC Number</th><th>QR Scans</th><th>Created At</th></tr></thead><tbody>";
+    stats.forEach(stat => {
+      html += `<tr>
+        <td><strong>${stat.shop_id}</strong></td>
+        <td>${stat.shop_name}</td>
+        <td>${stat.owner_mobile}</td>
+        <td>${stat.nic_number || '-'}</td>
+        <td><strong style="color:var(--accent-color); font-size:1.1rem;">${stat.scan_count}</strong></td>
+        <td>${new Date(stat.created_at).toLocaleDateString()}</td>
+      </tr>`;
+    });
+    html += "</tbody></table>";
+    statsList.innerHTML = html;
+  }
+
+  addRepForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('repUsername').value.trim();
+    const password = document.getElementById('repPassword').value.trim();
+    const province = document.getElementById('repProvince').value;
+    const region = document.getElementById('repRegion').value;
+    const area = document.getElementById('repArea').value;
+    const token = localStorage.getItem("token");
+    if (!username || !password) return;
+    
+    const btn = addRepForm.querySelector('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Adding...';
+    btn.disabled = true;
+    
+    try {
+      const response = await fetch(`${API_BASE}/api/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ username, password, role: 'rep', province, region, area }),
+      });
+      if (response.ok) {
+        addRepForm.reset();
+        loadReps();
+      } else {
         alert('Error adding rep');
       }
-    });
+    } catch (error) {
+      alert('Error adding rep');
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  });
 
-    addShopForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const shop_name = document.getElementById('shopName').value.trim();
-      const owner_mobile = document.getElementById('ownerMobile').value.trim();
-      const nic_number = document.getElementById('nicNumber').value.trim();
-      const token = localStorage.getItem("token");
-      if (!shop_name || !owner_mobile || !nic_number) return;
-      try {
-        const response = await fetch(`${API_BASE}/api/shops`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({ shop_name, owner_mobile, nic_number }),
-        });
-        if (response.ok) {
-          addShopForm.reset();
-          loadShops();
-        } else {
-          alert('Error adding shop');
-        }
-      } catch (error) {
+  addShopForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const shop_name = document.getElementById('shopName').value.trim();
+    const owner_mobile = document.getElementById('ownerMobile').value.trim();
+    const nic_number = document.getElementById('nicNumber').value.trim();
+    const br_number = document.getElementById('adminBrNumber').value.trim();
+    const address = document.getElementById('adminShopAddress').value.trim();
+    const province = document.getElementById('shopProvince').value;
+    const region = document.getElementById('shopRegion').value;
+    const area = document.getElementById('shopArea').value;
+    const token = localStorage.getItem("token");
+    if (!shop_name || !owner_mobile || !nic_number) return;
+    
+    const btn = addShopForm.querySelector('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Adding...';
+    btn.disabled = true;
+
+    try {
+      const response = await fetch(`${API_BASE}/api/shops`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ shop_name, owner_mobile, nic_number, br_number, address, province, region, area }),
+      });
+      if (response.ok) {
+        addShopForm.reset();
+        loadShops();
+      } else {
         alert('Error adding shop');
       }
-    });
+    } catch (error) {
+      alert('Error adding shop');
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  });
 
-    logoutBtn.addEventListener("click", logout);
+  logoutBtn.addEventListener("click", logout);
 
-    // Campaign Management Functions
-    async function loadCampaigns() {
-      const token = localStorage.getItem("token");
-      try {
-        const response = await fetch(`${API_BASE}/api/campaigns`, {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-        const campaigns = await response.json();
-        displayCampaigns(campaigns);
-      } catch (error) {
-        campaignsList.innerHTML = "<p>Error loading campaigns.</p>";
-      }
+  // Campaign Management
+  let _campaignsList = [];
+
+  async function loadCampaigns() {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/campaigns`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      const campaigns = await response.json();
+      _campaignsList = campaigns;
+      displayCampaigns(campaigns);
+    } catch (error) {
+      campaignsList.innerHTML = "<p>Error loading campaigns.</p>";
+    }
+  }
+
+  function displayCampaigns(campaigns) {
+    if (campaigns.length === 0) {
+      campaignsList.innerHTML = "<p>No campaigns created yet.</p>";
+      return;
     }
 
-    function displayCampaigns(campaigns) {
-      if (campaigns.length === 0) {
-        campaignsList.innerHTML = "<p>No campaigns created yet.</p>";
-        return;
+    let html = "<table class='modern-table'><thead><tr><th>Campaign ID</th><th>Campaign Name</th><th>Start Date</th><th>End Date</th><th>Status</th><th>Embedded Link</th><th>Actions</th></tr></thead><tbody>";
+    campaigns.forEach(campaign => {
+      const startDate = new Date(campaign.start_date).toLocaleDateString();
+      const endDate   = new Date(campaign.end_date).toLocaleDateString();
+      const badgeClass = campaign.status === 'active' ? 'active' : 'expired';
+      const cid = campaign.campaign_id.replace(/'/g, "\\'");
+
+      // Always use the live server URL for embedded/shareable links
+      const LIVE_BASE = 'https://nestle-connect.onrender.com';
+      const baseUrl = `${LIVE_BASE}/ad-entry.html?campaign=${encodeURIComponent(campaign.campaign_id)}`;
+
+      const platforms = [
+        { key: 'instagram', label: 'Instagram', icon: '📸', color: '#E1306C' },
+        { key: 'facebook',  label: 'Facebook',  icon: '📘', color: '#1877F2' },
+        { key: 'tiktok',    label: 'TikTok',    icon: '🎵', color: '#000000' },
+        { key: 'youtube',   label: 'YouTube',   icon: '▶️', color: '#FF0000' },
+        { key: 'other',     label: 'Other / Direct', icon: '🔗', color: '#64748b' },
+      ];
+
+      const menuId = `embed-menu-${campaign.campaign_id.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+      const platformLinks = platforms.map(p => {
+        const link = `${baseUrl}&src=${p.key}`;
+        return `<a href="#" onclick="copyEmbedLink(event, '${link.replace(/'/g, "&apos;")}', '${p.label}')"
+          title="Copy ${p.label} link">
+          <span class="plat-icon">${p.icon}</span>
+          <span class="plat-label">${p.label}</span>
+          <span class="copy-hint">Copy link</span>
+        </a>`;
+      }).join('');
+
+      html += `<tr>
+        <td><strong>${campaign.campaign_id}</strong></td>
+        <td>${campaign.campaign_name}</td>
+        <td>${startDate}</td>
+        <td>${endDate}</td>
+        <td><span class="badge ${badgeClass}">${campaign.status.toUpperCase()}</span></td>
+        <td>
+          <div class="embed-dropdown">
+            <button class="embed-toggle" onclick="toggleEmbedMenu(event, '${menuId}')">
+              <i class="ph ph-link"></i> Get Link <i class="ph ph-caret-down"></i>
+            </button>
+            <div class="embed-menu" id="${menuId}">
+              <div class="embed-menu-header">Copy link for platform</div>
+              ${platformLinks}
+            </div>
+          </div>
+        </td>
+        <td>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="viewCampaignStats('${cid}')">
+              <i class="ph ph-chart-bar"></i> Stats
+            </button>
+            <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-color: var(--accent-color); color: var(--accent-color);" onclick="openEditModal('${cid}')">
+              <i class="ph ph-pencil-simple"></i> Edit
+            </button>
+            ${campaign.status === 'active' ? `<button class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-color: #f59e0b; color: #b45309;" onclick="toggleCampaignStatus('${cid}', 'disabled')">
+              <i class="ph ph-pause-circle"></i> Disable
+            </button>` : `<button class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-color: #10b981; color: #059669;" onclick="toggleCampaignStatus('${cid}', 'active')">
+              <i class="ph ph-play-circle"></i> Enable
+            </button>`}
+            <button style="padding: 6px 12px; font-size: 0.8rem; background:#fee2e2; color:#dc2626; border:1px solid rgba(220,38,38,0.25); border-radius:8px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; display:inline-flex; align-items:center; gap:5px;" onclick="openDeleteModal('${cid}')">
+              <i class="ph ph-trash"></i> Delete
+            </button>
+          </div>
+        </td>
+      </tr>`;
+    });
+    html += "</tbody></table>";
+    campaignsList.innerHTML = html;
+  }
+
+  // ── Embed link dropdown helpers ──────────────────────────────────────────
+  function toggleEmbedMenu(event, menuId) {
+    event.stopPropagation();
+    // Close all other open menus first
+    document.querySelectorAll('.embed-menu.open').forEach(m => {
+      if (m.id !== menuId) m.classList.remove('open');
+    });
+    document.getElementById(menuId).classList.toggle('open');
+  }
+
+  function copyEmbedLink(event, link, platform) {
+    event.preventDefault();
+    navigator.clipboard.writeText(link).then(() => {
+      // Show a brief toast-style feedback
+      const btn = event.currentTarget;
+      const orig = btn.querySelector('.copy-hint').textContent;
+      btn.querySelector('.copy-hint').textContent = '✓ Copied!';
+      btn.style.background = '#dcfce7';
+      setTimeout(() => {
+        btn.querySelector('.copy-hint').textContent = orig;
+        btn.style.background = '';
+      }, 1800);
+      // Close the menu
+      document.querySelectorAll('.embed-menu.open').forEach(m => m.classList.remove('open'));
+    }).catch(() => {
+      prompt(`Copy this ${platform} link:`, link);
+    });
+  }
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.embed-menu.open').forEach(m => m.classList.remove('open'));
+  });
+
+  // ── Delete Campaign Modal ────────────────────────────────────────────────
+  let _pendingDeleteId = null;
+
+  function openDeleteModal(campaignId) {
+    _pendingDeleteId = campaignId;
+    document.getElementById('modalCampaignId').textContent = campaignId;
+    document.getElementById('deletePasswordInput').value = '';
+    document.getElementById('deleteModalError').style.display = 'none';
+    document.getElementById('deleteCampaignModal').classList.add('open');
+    setTimeout(() => document.getElementById('deletePasswordInput').focus(), 100);
+  }
+
+  function closeDeleteModal() {
+    _pendingDeleteId = null;
+    document.getElementById('deleteCampaignModal').classList.remove('open');
+  }
+
+  async function confirmDeleteCampaign() {
+    const password = document.getElementById('deletePasswordInput').value;
+    const errorEl  = document.getElementById('deleteModalError');
+    const btn       = document.getElementById('confirmDeleteBtn');
+    errorEl.style.display = 'none';
+
+    if (!password) {
+      errorEl.textContent = 'Please enter your admin password.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Deleting...';
+
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${API_BASE}/api/campaigns/${_pendingDeleteId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        closeDeleteModal();
+        loadCampaigns();
+      } else {
+        errorEl.textContent = data.message || 'Deletion failed.';
+        errorEl.style.display = 'block';
       }
+    } catch (err) {
+      errorEl.textContent = 'Network error. Please try again.';
+      errorEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ph ph-trash"></i> Delete Campaign';
+    }
+  }
 
-      let html = "<table><thead><tr><th>Campaign ID</th><th>Campaign Name</th><th>Start Date</th><th>End Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>";
-      campaigns.forEach(campaign => {
-        const startDate = new Date(campaign.start_date).toLocaleDateString();
-        const endDate = new Date(campaign.end_date).toLocaleDateString();
-        const statusBadge = `<span style="padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; 
-          ${campaign.status === 'active' ? 'background: #d1fae5; color: #166534;' : 'background: #fee2e2; color: #b91c1c;'}">${campaign.status}</span>`;
+  // Allow pressing Enter in password field
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('deletePasswordInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmDeleteCampaign();
+    });
+    // Close modal on overlay click
+    document.getElementById('deleteCampaignModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('deleteCampaignModal')) closeDeleteModal();
+    });
+  });
 
+
+  async function expireCampaignNow(campaignId) {
+    if (!confirm(`Manually end campaign ${campaignId} and disable all vouchers?`)) return;
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/campaigns/expire`, {
+        method: 'POST',
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ campaign_id: campaignId })
+      });
+      if (response.ok) {
+        alert('Campaign ended successfully');
+        loadCampaigns();
+      } else {
+        alert('Error ending campaign');
+      }
+    } catch (error) {
+      alert('Error ending campaign');
+    }
+  }
+
+  async function toggleCampaignStatus(campaignId, newStatus) {
+    if (!confirm(`Are you sure you want to ${newStatus === 'active' ? 'enable' : 'disable'} campaign ${campaignId}?`)) return;
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/campaigns/${encodeURIComponent(campaignId)}`, {
+        method: 'PUT',
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (response.ok) {
+        alert(`Campaign ${newStatus === 'active' ? 'enabled' : 'disabled'} successfully`);
+        loadCampaigns();
+        loadRoiAnalytics(); // Refresh analytics to reflect the status change
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Error updating campaign status');
+      }
+    } catch (error) {
+      alert('Error updating campaign status');
+    }
+  }
+
+  async function viewCampaignStats(campaignId) {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/campaigns/${campaignId}/stats`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      const stats = await response.json();
+      alert(`Campaign Stats for ${campaignId}\nTotal Claimed (Vouchers): ${stats.total_vouchers}\nPending Redemption: ${stats.claimed_count}\nRedeemed: ${stats.redeemed_count}\nExpired: ${stats.expired_count}`);
+    } catch (error) {
+      alert('Error loading campaign stats');
+    }
+  }
+
+  createCampaignForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    const campaignData = {
+      campaign_id: document.getElementById("campaignId").value,
+      campaign_name: document.getElementById("campaignName").value,
+      description: document.getElementById("campaignDesc").value,
+      start_date: document.getElementById("startDate").value,
+      end_date: document.getElementById("endDate").value,
+      objective: document.getElementById("campaignObjective").value,
+      target_audience: document.getElementById("targetAudience").value,
+      voucher_value: document.getElementById("voucherValue").value,
+      voucher_limit: document.getElementById("voucherLimit").value ? parseInt(document.getElementById("voucherLimit").value) : null,
+      budget: document.getElementById("campaignBudget").value ? parseFloat(document.getElementById("campaignBudget").value) : null,
+      banner_url: document.getElementById("bannerUrl").value || null
+    };
+
+    const btn = createCampaignForm.querySelector('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Launching...';
+    btn.disabled = true;
+
+    try {
+      const response = await fetch(`${API_BASE}/api/campaigns`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(campaignData)
+      });
+
+      if (response.ok) {
+        alert("Campaign created successfully");
+        createCampaignForm.reset();
+        loadCampaigns();
+        loadRoiAnalytics();
+      } else {
+        const error = await response.json();
+        alert(error.message || "Error creating campaign");
+      }
+    } catch (error) {
+      alert("Error connecting to server");
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  });
+
+  // Edit Campaign Logic
+  function openEditModal(campaignId) {
+    const campaign = _campaignsList.find(c => c.campaign_id === campaignId);
+    if (!campaign) return;
+
+    document.getElementById("editCampaignId").value = campaign.campaign_id;
+    document.getElementById("editCampaignName").value = campaign.campaign_name || '';
+    document.getElementById("editCampaignObjective").value = campaign.objective || '';
+    document.getElementById("editTargetAudience").value = campaign.target_audience || '';
+    document.getElementById("editCampaignBudget").value = campaign.budget || '';
+    document.getElementById("editVoucherValue").value = campaign.voucher_value || '';
+    document.getElementById("editVoucherLimit").value = campaign.voucher_limit || '';
+    
+    // Format dates for datetime-local
+    const formatDateTime = (dateString) => {
+      if (!dateString) return '';
+      const d = new Date(dateString);
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    };
+    
+    document.getElementById("editStartDate").value = formatDateTime(campaign.start_date);
+    document.getElementById("editEndDate").value = formatDateTime(campaign.end_date);
+    document.getElementById("editCampaignDesc").value = campaign.description || '';
+    document.getElementById("editBannerUrl").value = campaign.banner_url || '';
+
+    document.getElementById("editCampaignModal").style.display = "flex";
+  }
+
+  function closeEditModal() {
+    document.getElementById("editCampaignModal").style.display = "none";
+  }
+
+  document.getElementById("editCampaignForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const campaignId = document.getElementById("editCampaignId").value;
+    const token = localStorage.getItem("token");
+    
+    const updateData = {
+      campaign_name: document.getElementById("editCampaignName").value,
+      objective: document.getElementById("editCampaignObjective").value,
+      target_audience: document.getElementById("editTargetAudience").value,
+      budget: document.getElementById("editCampaignBudget").value ? parseFloat(document.getElementById("editCampaignBudget").value) : null,
+      voucher_value: document.getElementById("editVoucherValue").value,
+      voucher_limit: document.getElementById("editVoucherLimit").value ? parseInt(document.getElementById("editVoucherLimit").value) : null,
+      start_date: document.getElementById("editStartDate").value,
+      end_date: document.getElementById("editEndDate").value,
+      description: document.getElementById("editCampaignDesc").value,
+      banner_url: document.getElementById("editBannerUrl").value || null
+    };
+
+    const btn = document.getElementById('saveEditBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="ph ph-spinner"></i> Saving...';
+    btn.disabled = true;
+
+    try {
+      const response = await fetch(`${API_BASE}/api/campaigns/${campaignId}`, {
+        method: "PUT",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(updateData)
+      });
+
+      if (response.ok) {
+        alert("Campaign updated successfully");
+        closeEditModal();
+        loadCampaigns();
+        loadRoiAnalytics();
+      } else {
+        const err = await response.json();
+        alert(err.message || "Error updating campaign");
+      }
+    } catch (error) {
+      alert("Error connecting to server");
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  });
+
+  // ROI Analytics
+  let roiCharts = {};
+  let _roiAllData = null; // cache overview data
+
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.color = '#64748b';
+
+  // ── Platform Colors (hoisted so all functions can use it) ──────────────────
+  const PLATFORM_COLORS = {
+    instagram: '#E1306C',
+    facebook:  '#1877F2',
+    tiktok:    '#010101',
+    youtube:   '#FF0000',
+    other:     '#64748b'
+  };
+  const PLAT_ICONS = { instagram:'📸', facebook:'📘', tiktok:'🎵', youtube:'▶️', other:'🔗' };
+
+  function getPlatformColor(p) {
+    return PLATFORM_COLORS[(p || 'other').toLowerCase()] || '#94a3b8';
+  }
+
+  async function loadRoiAnalytics() {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(`${API_BASE}/api/roi/summary`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      const data = await response.json();
+      _roiAllData = data;
+
+      renderRoiCharts(data);
+      renderCampaignCompTable(data.campaigns || []);
+
+      // Populate campaign selector only ONCE (clear & rebuild each time)
+      const sel = document.getElementById('campaignFilterSelect');
+      // Remove all options except the first "All" option
+      while (sel.options.length > 1) sel.remove(1);
+      if (data.campaigns && data.campaigns.length > 0) {
+        data.campaigns.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.campaign_id;
+          opt.textContent = `${c.campaign_id} — ${c.campaign_name || 'Unnamed'}`;
+          sel.appendChild(opt);
+        });
+      }
+      // Reset selector to "All"
+      sel.value = '__all__';
+      document.getElementById('roiSelectedBadge').style.display = 'none';
+      document.getElementById('campaignCompPanel').style.display = '';
+      document.getElementById('funnelLabel').textContent = 'All time';
+
+    } catch (error) {
+      console.error('Error loading ROI analytics', error);
+    }
+  }
+
+  // ── Campaign selector change ──────────────────────────────────────────────
+  document.getElementById('campaignFilterSelect').addEventListener('change', async function() {
+    const val = this.value;
+    const badge = document.getElementById('roiSelectedBadge');
+    const compPanel = document.getElementById('campaignCompPanel');
+    if (val === '__all__') {
+      badge.style.display = 'none';
+      compPanel.style.display = '';
+      document.getElementById('funnelLabel').textContent = 'All time';
+      document.getElementById('campaignIntelPanel').style.display = 'none';
+      if (_roiAllData) {
+        renderRoiCharts(_roiAllData);
+        renderCampaignCompTable(_roiAllData.campaigns || []);
+      }
+    } else {
+      badge.style.display = '';
+      badge.textContent = `📌 Viewing: ${val}`;
+      compPanel.style.display = 'none';
+      await loadCampaignDrilldown(val);
+    }
+  });
+
+  // ── Campaign search filter (filters dropdown options) ─────────────────────
+  document.getElementById('roiCampaignSearch').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    const sel = document.getElementById('campaignFilterSelect');
+    Array.from(sel.options).forEach(opt => {
+      if (opt.value === '__all__') return;
+      opt.style.display = opt.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+
+  // ── Campaign table search ─────────────────────────────────────────────────
+  document.getElementById('campaignTableSearch').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#campaignPerfTable table tbody tr');
+    rows.forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+
+  async function loadCampaignDrilldown(campaignId) {
+    const token = localStorage.getItem('token');
+    // Show loading state in KPI cards
+    ['kpiTotalClaims','kpiTotalRedeemed','kpiConversionRate','kpiTopPlatform','kpiCPA','kpiLiability'].forEach(id => {
+      document.getElementById(id).textContent = '\u2026';
+    });
+    try {
+      const res = await fetch(`${API_BASE}/api/roi/campaign/${encodeURIComponent(campaignId)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const d = await res.json();
+      const meta = d.meta || {};
+
+      // Map the campaign-specific response to the same shape renderRoiCharts expects
+      renderRoiCharts({
+        conversion: d.funnel || {},
+        channels:   d.platforms || [],
+        trend:      d.trend || [],
+        locations:  (d.regions || []),
+        campaigns:  [],
+        // Pass campaign metadata for the Intelligence Center
+        meta: {
+          budget:          parseFloat(meta.budget) || 0,
+          voucher_value:   parseFloat(meta.voucher_value) || 0,
+          voucher_limit:   parseInt(meta.voucher_limit, 10) || 0,
+          objective:       meta.objective || '',
+          target_audience: meta.target_audience || '',
+          start_date:      meta.start_date || null,
+          end_date:        meta.end_date || null,
+          campaign_name:   meta.campaign_name || campaignId,
+        }
+      });
+      document.getElementById('funnelLabel').textContent = meta.campaign_name || campaignId;
+      document.getElementById('campaignIntelPanel').style.display = '';
+
+    } catch(e) {
+      console.error('Campaign drilldown error', e);
+      ['kpiTotalClaims','kpiTotalRedeemed','kpiConversionRate','kpiTopPlatform','kpiCPA','kpiLiability'].forEach(id => {
+        document.getElementById(id).textContent = '\u2014';
+      });
+      document.getElementById('campaignIntelPanel').style.display = 'none';
+    }
+  }
+
+
+
+  function renderRoiCharts(data) {
+    const conv = data.conversion || {};
+    const meta = data.meta || {};
+    const totalClaims   = parseInt(conv.total_claims,   10) || 0;
+    const totalRedeemed = parseInt(conv.total_redeemed, 10) || 0;
+    const totalPending  = parseInt(conv.total_pending,  10) || 0;
+    const totalExpired  = parseInt(conv.total_expired,  10) || 0;
+    const convRate = totalClaims > 0 ? ((totalRedeemed / totalClaims) * 100).toFixed(1) : '0.0';
+    const topPlatform = (data.channels && data.channels.length > 0)
+      ? data.channels[0].platform : 'N/A';
+
+    const budget       = parseFloat(meta.budget) || 0;
+    const voucherValue = parseFloat(meta.voucher_value) || 0;
+    const voucherLimit = parseInt(meta.voucher_limit, 10) || 0;
+
+    // ── Financial Calculations ─────────────────────────────────────────────
+    const moneySpent   = totalRedeemed * voucherValue;                    // Cost of redemptions
+    const cpa          = totalRedeemed > 0 && budget > 0 ? (budget / totalRedeemed) : null;
+    const liability    = totalPending * voucherValue;                     // Outstanding voucher exposure
+    const budgetPct    = budget > 0 ? Math.min((moneySpent / budget) * 100, 100) : 0;
+    const budgetReturn = budget > 0 ? ((moneySpent / budget) * 100) : null; // ROI proxy
+    const voucherFill  = voucherLimit > 0 ? Math.min((totalClaims / voucherLimit) * 100, 100) : 0;
+
+    // ── Composite Health Score (0-100) ─────────────────────────────────────
+    // Weighted: 40% conversion rate + 30% voucher fill + 30% budget efficiency
+    const convScore    = parseFloat(convRate) || 0;
+    const fillScore    = voucherFill;
+    const effScore     = budgetReturn !== null ? Math.min(budgetReturn, 100) : 0;
+    const healthScore  = (convScore * 0.4) + (fillScore * 0.3) + (effScore * 0.3);
+    const healthLabel  = healthScore >= 75 ? '\uD83D\uDFE2 Excellent' : healthScore >= 50 ? '\uD83D\uDFE1 Good' : healthScore >= 25 ? '\uD83D\uDFE0 Moderate' : '\uD83D\uDD34 Needs Attention';
+    const healthColor  = healthScore >= 75 ? '#10b981' : healthScore >= 50 ? '#f59e0b' : healthScore >= 25 ? '#f97316' : '#ef4444';
+
+    // ── KPI Cards ──────────────────────────────────────────────────────────
+    document.getElementById('kpiTotalClaims').textContent    = totalClaims.toLocaleString();
+    document.getElementById('kpiTotalRedeemed').textContent  = totalRedeemed.toLocaleString();
+    document.getElementById('kpiConversionRate').textContent = convRate + '%';
+    document.getElementById('kpiTopPlatform').textContent    =
+      topPlatform.charAt(0).toUpperCase() + topPlatform.slice(1);
+    document.getElementById('kpiCPA').textContent =
+      cpa !== null ? `LKR ${cpa.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}` : '\u2014';
+    document.getElementById('kpiLiability').textContent =
+      voucherValue > 0 ? `LKR ${liability.toLocaleString(undefined, {minimumFractionDigits:2})}` : '\u2014';
+
+    // ── Intelligence Center (only when meta is present) ────────────────────
+    if (meta.campaign_name) {
+      document.getElementById('intelObjective').textContent    = meta.objective    || 'Not specified';
+      document.getElementById('intelAudience').textContent     = meta.target_audience || 'Not specified';
+      document.getElementById('intelStartDate').textContent    = meta.start_date ? new Date(meta.start_date).toLocaleDateString() : '\u2014';
+      document.getElementById('intelEndDate').textContent      = meta.end_date   ? new Date(meta.end_date).toLocaleDateString()   : '\u2014';
+      if (meta.start_date && meta.end_date) {
+        const days = Math.round((new Date(meta.end_date) - new Date(meta.start_date)) / 86400000);
+        document.getElementById('intelDuration').textContent = `${days} days`;
+      } else {
+        document.getElementById('intelDuration').textContent = '\u2014';
+      }
+      // Budget card
+      document.getElementById('intelBudget').textContent      = budget > 0 ? `LKR ${budget.toLocaleString(undefined, {minimumFractionDigits:2})}` : 'Not set';
+      document.getElementById('intelVoucherVal').textContent  = voucherValue > 0 ? `LKR ${voucherValue.toLocaleString(undefined, {minimumFractionDigits:2})}` : 'Not set';
+      document.getElementById('intelVoucherLimit').textContent= voucherLimit > 0 ? voucherLimit.toLocaleString() : 'Unlimited';
+      document.getElementById('intelLiabilityDetail').textContent = voucherValue > 0 ? `LKR ${liability.toLocaleString(undefined, {minimumFractionDigits:2})}` : '\u2014';
+      document.getElementById('intelBudgetSpent').textContent = `LKR ${moneySpent.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+      document.getElementById('intelBudgetPct').textContent   = `${budgetPct.toFixed(1)}%`;
+      setTimeout(() => { document.getElementById('intelBudgetBar').style.width = budgetPct + '%'; }, 50);
+      // Scorecard gauges
+      document.getElementById('scoreRedemptionRate').textContent = convRate + '%';
+      setTimeout(() => { document.getElementById('scoreRedemptionBar').style.width = Math.min(parseFloat(convRate),100) + '%'; }, 50);
+      document.getElementById('scoreVoucherFill').textContent = voucherFill.toFixed(1) + '%';
+      setTimeout(() => { document.getElementById('scoreVoucherBar').style.width = voucherFill + '%'; }, 50);
+      document.getElementById('scoreBudgetEff').textContent = budgetReturn !== null ? budgetReturn.toFixed(1) + '%' : '\u2014';
+      setTimeout(() => { document.getElementById('scoreBudgetBar').style.width = (budgetReturn !== null ? Math.min(budgetReturn,100) : 0) + '%'; }, 50);
+      document.getElementById('scoreHealthLabel').textContent = healthLabel;
+      document.getElementById('scoreHealthLabel').style.color = healthColor;
+      document.getElementById('scoreHealthBar').style.background = healthColor;
+      setTimeout(() => { document.getElementById('scoreHealthBar').style.width = healthScore.toFixed(1) + '%'; }, 50);
+    } else {
+      // All campaigns view — hide Intelligence Center
+      document.getElementById('campaignIntelPanel').style.display = 'none';
+      document.getElementById('kpiCPA').textContent      = '\u2014';
+      document.getElementById('kpiLiability').textContent = '\u2014';
+    }
+
+    // ── 1. Funnel Doughnut ─────────────────────────────────────────────────
+    if (roiCharts.conversion) roiCharts.conversion.destroy();
+    document.getElementById('convChartContainer').innerHTML = '<canvas id="conversionChart"></canvas>';
+    const convCtx = document.getElementById('conversionChart').getContext('2d');
+    if (totalClaims === 0) {
+      document.getElementById('convChartContainer').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:0.9rem;"><i class="ph ph-chart-donut" style="margin-right:8px;font-size:1.3rem;"></i>No voucher data yet</div>';
+    } else {
+      roiCharts.conversion = new Chart(convCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Redeemed', 'Pending', 'Expired'],
+          datasets: [{ data: [totalRedeemed, totalPending, totalExpired],
+            backgroundColor: ['#10b981', '#3b82f6', '#e2e8f0'], borderWidth: 0, hoverOffset: 6 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '72%',
+          plugins: {
+            legend: { position: 'bottom', labels: { padding: 18, usePointStyle: true, font: { size: 12 } } },
+            tooltip: { callbacks: { label: ctx => {
+              const val = ctx.raw;
+              const pct = totalClaims > 0 ? ((val / totalClaims) * 100).toFixed(1) : 0;
+              return ` ${ctx.label}: ${val.toLocaleString()} (${pct}%)`;
+            }}}
+          }
+        }
+      });
+    }
+
+    // ── 2. Platform Bar Chart ──────────────────────────────────────────────
+    if (roiCharts.channels) roiCharts.channels.destroy();
+    document.getElementById('channelChartContainer').innerHTML = '<canvas id="channelChart"></canvas>';
+    const chanCtx = document.getElementById('channelChart').getContext('2d');
+    const channels = data.channels || [];
+    if (channels.length === 0) {
+      document.getElementById('channelChartContainer').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:0.9rem;"><i class="ph ph-chart-bar" style="margin-right:8px;font-size:1.3rem;"></i>No platform data yet</div>';
+    } else {
+      const platLabels = channels.map(c => c.platform.charAt(0).toUpperCase() + c.platform.slice(1));
+      const platClaims = channels.map(c => parseInt(c.claim_count, 10));
+      const platColors = channels.map(c => getPlatformColor(c.platform));
+      roiCharts.channels = new Chart(chanCtx, {
+        type: 'bar',
+        data: { labels: platLabels, datasets: [{ label: 'Claims', data: platClaims,
+          backgroundColor: platColors, borderRadius: 10, borderSkipped: false }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { borderDash:[4,4], color:'#f1f5f9' }, border:{ display:false }, ticks:{ precision:0 } },
+            x: { grid: { display: false }, border: { display: false } }
+          }
+        }
+      });
+    }
+
+    // ── 3. 30-Day Trend Line ───────────────────────────────────────────────
+    if (roiCharts.trend) roiCharts.trend.destroy();
+    document.getElementById('trendChartContainer').innerHTML = '<canvas id="trendChart"></canvas>';
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    const trendRows    = data.trend || [];
+    if (trendRows.length === 0) {
+      document.getElementById('trendChartContainer').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:0.9rem;"><i class="ph ph-trend-up" style="margin-right:8px;font-size:1.3rem;"></i>No activity in last 30 days</div>';
+    } else {
+      const trendDays     = trendRows.map(r => r.day ? r.day.slice(5) : '');
+      const trendClaims   = trendRows.map(r => parseInt(r.claims, 10));
+      const trendRedeemed = trendRows.map(r => parseInt(r.redemptions, 10));
+      const gradClaim  = trendCtx.createLinearGradient(0,0,0,300);
+      gradClaim.addColorStop(0,'rgba(59,130,246,0.25)'); gradClaim.addColorStop(1,'rgba(59,130,246,0)');
+      const gradRedeem = trendCtx.createLinearGradient(0,0,0,300);
+      gradRedeem.addColorStop(0,'rgba(16,185,129,0.25)'); gradRedeem.addColorStop(1,'rgba(16,185,129,0)');
+      roiCharts.trend = new Chart(trendCtx, {
+        type: 'line',
+        data: { labels: trendDays, datasets: [
+          { label:'Claims',   data:trendClaims,   borderColor:'#3b82f6', backgroundColor:gradClaim,
+            borderWidth:2.5, tension:0.4, fill:true, pointRadius:3, pointHoverRadius:6,
+            pointBackgroundColor:'#fff', pointBorderColor:'#3b82f6', pointBorderWidth:2 },
+          { label:'Redeemed', data:trendRedeemed, borderColor:'#10b981', backgroundColor:gradRedeem,
+            borderWidth:2.5, tension:0.4, fill:true, pointRadius:3, pointHoverRadius:6,
+            pointBackgroundColor:'#fff', pointBorderColor:'#10b981', pointBorderWidth:2 }
+        ]},
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ position:'bottom', labels:{ usePointStyle:true, padding:16, font:{size:12} } } },
+          scales: {
+            y:{ beginAtZero:true, grid:{borderDash:[4,4], color:'#f1f5f9'}, border:{display:false}, ticks:{precision:0} },
+            x:{ grid:{display:false}, border:{display:false} }
+          }
+        }
+      });
+    }
+
+    // ── 4. Province Bar ────────────────────────────────────────────────────
+    if (roiCharts.locations) roiCharts.locations.destroy();
+    document.getElementById('locationChartContainer').innerHTML = '<canvas id="locationChart"></canvas>';
+    const locCtx = document.getElementById('locationChart').getContext('2d');
+    const provinceData = {};
+    (data.locations || []).forEach(loc => {
+      const prov = loc.province || 'Unknown';
+      provinceData[prov] = (provinceData[prov] || 0) + Number(loc.redemption_count);
+    });
+    const sortedProvs = Object.entries(provinceData).sort((a,b) => b[1]-a[1]);
+    if (sortedProvs.length === 0) {
+      document.getElementById('locationChartContainer').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:0.9rem;"><i class="ph ph-map-pin" style="margin-right:8px;font-size:1.3rem;"></i>No regional data yet</div>';
+    } else {
+      const blues = ['#1d4ed8','#2563eb','#3b82f6','#60a5fa','#93c5fd','#bfdbfe','#dbeafe'];
+      const provColors = sortedProvs.map((_,i) => blues[Math.min(i, blues.length-1)]);
+      roiCharts.locations = new Chart(locCtx, {
+        type: 'bar',
+        data: { labels: sortedProvs.map(([p])=>p),
+          datasets: [{ label:'Redemptions', data:sortedProvs.map(([,v])=>v),
+            backgroundColor: provColors, borderRadius:10, borderSkipped:false }] },
+        options: {
+          indexAxis:'y', responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false} },
+          scales: {
+            x:{ beginAtZero:true, grid:{borderDash:[4,4], color:'#f1f5f9'}, border:{display:false}, ticks:{precision:0} },
+            y:{ grid:{display:false}, border:{display:false} }
+          }
+        }
+      });
+    }
+
+    // ── 5. Platform Table ──────────────────────────────────────────────────
+    const platTable = document.getElementById('platformTable');
+    if (!channels || channels.length === 0) {
+      platTable.innerHTML = '<p style="color:var(--text-secondary); padding:8px 0;">No platform data yet — share your embedded campaign links to start tracking.</p>';
+    } else {
+      let html = "<table class='modern-table'><thead><tr><th>Platform</th><th>Claims</th><th>Redeemed</th><th>Pending</th><th>Conversion Rate</th></tr></thead><tbody>";
+      channels.forEach(c => {
+        const icon    = PLAT_ICONS[c.platform] || '🔗';
+        const pending = parseInt(c.claim_count, 10) - parseInt(c.redeemed_count, 10);
+        const rate    = parseFloat(c.conversion_rate) || 0;
+        const color   = getPlatformColor(c.platform);
         html += `<tr>
-          <td>${campaign.campaign_id}</td>
-          <td>${campaign.campaign_name}</td>
-          <td>${startDate}</td>
-          <td>${endDate}</td>
-          <td>${statusBadge}</td>
-          <td><button class="action-button" onclick="viewCampaignStats('${campaign.campaign_id}')">View Stats</button>
-              ${campaign.status === 'active' ? `<button class="action-button danger" onclick="expireCampaignNow('${campaign.campaign_id}')">End Now</button>` : ''}</td>
+          <td><span style="display:inline-flex;align-items:center;gap:8px;font-weight:600;">
+            ${icon} ${c.platform.charAt(0).toUpperCase()+c.platform.slice(1)}
+          </span></td>
+          <td><strong>${parseInt(c.claim_count).toLocaleString()}</strong></td>
+          <td style="color:#059669;font-weight:600;">${parseInt(c.redeemed_count).toLocaleString()}</td>
+          <td style="color:#64748b;">${pending.toLocaleString()}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="flex:1;background:#f1f5f9;border-radius:99px;height:8px;overflow:hidden;">
+                <div style="width:${Math.min(rate,100)}%;height:100%;background:${color};border-radius:99px;"></div>
+              </div>
+              <span style="font-weight:700;color:${color};min-width:42px;text-align:right;">${rate}%</span>
+            </div>
+          </td>
         </tr>`;
       });
       html += "</tbody></table>";
-      campaignsList.innerHTML = html;
+      platTable.innerHTML = html;
     }
+    // Update the Sri Lanka choropleth map with the current location data
+    updateSriLankaMap(data.locations || []);
+    // Campaign comparison table handled externally by renderCampaignCompTable
+  }
 
-    async function expireCampaignNow(campaignId) {
-      if (!confirm(`Manually end campaign ${campaignId} and disable all vouchers?`)) return;
-      const token = localStorage.getItem("token");
-      try {
-        const response = await fetch(`${API_BASE}/api/campaigns/expire`, {
-          method: 'POST',
-          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ campaign_id: campaignId })
-        });
-        if (response.ok) {
-          alert('Campaign ended successfully');
-          loadCampaigns();
-        } else {
-          alert('Error ending campaign');
+
+
+  function renderCampaignCompTable(campaigns) {
+    const campTable = document.getElementById('campaignPerfTable');
+    if (!campaigns || campaigns.length === 0) {
+      campTable.innerHTML = '<p style="color:var(--text-secondary); padding:12px 0;">No campaign data available yet.</p>';
+      return;
+    }
+    let html = "<table class='modern-table'><thead><tr><th>Campaign ID</th><th>Campaign Name</th><th>Status</th><th>Investment (Budget)</th><th>Claims</th><th>Redeemed</th><th>Pending</th><th>Conversion Rate</th><th>Drill Down</th></tr></thead><tbody>";
+    campaigns.forEach(c => {
+      const rate = parseFloat(c.conversion_rate) || 0;
+      const barColor = rate >= 50 ? '#10b981' : rate >= 20 ? '#f59e0b' : '#ef4444';
+      const badge = c.status === 'active' ? 'active' : 'expired';
+      const pending = (parseInt(c.total_claims) || 0) - (parseInt(c.redeemed_count) || 0);
+      const cidSafe = (c.campaign_id || '').replace(/'/g, "\\'");
+      html += `<tr style="cursor:pointer;" title="Click to drill into ${c.campaign_id}" onclick="drillIntoCampaign('${cidSafe}')">
+        <td><strong>${c.campaign_id || '—'}</strong></td>
+        <td>${c.campaign_name || '—'}</td>
+        <td><span class="badge ${badge}">${(c.status||'—').toUpperCase()}</span></td>
+        <td><strong style="color:var(--text-secondary);">LKR ${(parseFloat(c.budget)||0).toLocaleString(undefined, {minimumFractionDigits: 2})}</strong></td>
+        <td><strong>${(parseInt(c.total_claims)||0).toLocaleString()}</strong></td>
+        <td style="color:#059669; font-weight:600;">${(parseInt(c.redeemed_count)||0).toLocaleString()}</td>
+        <td style="color:#64748b;">${pending.toLocaleString()}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="flex:1; background:#f1f5f9; border-radius:99px; height:7px; overflow:hidden; min-width:60px;">
+              <div style="width:${Math.min(rate,100)}%; height:100%; background:${barColor}; border-radius:99px;"></div>
+            </div>
+            <span style="font-weight:700; color:${barColor}; min-width:38px;">${rate}%</span>
+          </div>
+        </td>
+        <td><button class="btn-secondary" style="padding:5px 12px; font-size:0.8rem;" onclick="event.stopPropagation(); drillIntoCampaign('${cidSafe}')"><i class="ph ph-arrow-square-in"></i> Analyse</button></td>
+      </tr>`;
+    });
+    html += "</tbody></table>";
+    campTable.innerHTML = html;
+  }
+
+  window.drillIntoCampaign = function(campaignId) {
+    const sel = document.getElementById('campaignFilterSelect');
+    sel.value = campaignId;
+    sel.dispatchEvent(new Event('change'));
+    document.getElementById('roiTab').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Sri Lanka D3 SVG Choropleth Map
+  // ─────────────────────────────────────────────────────────────────────────
+  let _slGeoJSON = null;
+  let _slLocations = [];
+  let _mapInited = false;
+
+  // Maps Highcharts Sinhala province name → canonical English key
+  const HC_PROV = {
+    'basnāhira paḷāta':   'western',
+    'madhyama paḷāta':    'central',
+    'dakuṇu paḷāta':      'southern',
+    'uturu paḷāta':       'northern',
+    'næ̆gĕnahira paḷāta': 'eastern',
+    'vayamba paḷāta':     'north western',
+    'uturumæda paḷāta':   'north central',
+    'ūva paḷāta':         'uva',
+    'sabaragamuva paḷāta':'sabaragamuwa'
+  };
+
+  // Maps DB province text → canonical key
+  const SL_PROVINCE_ALIASES = {
+    'western':      ['western','west','colombo'],
+    'central':      ['central','kandy'],
+    'southern':     ['southern','south','galle'],
+    'northern':     ['northern','north','jaffna'],
+    'eastern':      ['eastern','east','trincomalee','batticaloa'],
+    'north western':['north western','northwestern','kurunegala','puttalam'],
+    'north central':['north central','northcentral','anuradhapura','polonnaruwa'],
+    'uva':          ['uva','badulla','monaragala'],
+    'sabaragamuwa': ['sabaragamuwa','sabaragamuva','ratnapura','kegalle']
+  };
+
+  function normProv(name) {
+    if (!name) return null;
+    const l = name.toLowerCase().trim();
+    // try Highcharts Sinhala key first
+    if (HC_PROV[l]) return HC_PROV[l];
+    for (const [canon, aliases] of Object.entries(SL_PROVINCE_ALIASES)) {
+      if (aliases.some(a => l.includes(a) || a.includes(l))) return canon;
+    }
+    return l.replace(/\s*province$/i,'').trim();
+  }
+
+  function normDistrict(name) {
+    return (name || '').toLowerCase().trim();
+  }
+
+  function getChoroColor(t) {
+    if (t === 0)     return '#e2e8f0';
+    if (t < 0.15)    return '#bfdbfe';
+    if (t < 0.35)    return '#93c5fd';
+    if (t < 0.55)    return '#60a5fa';
+    if (t < 0.75)    return '#3b82f6';
+    if (t < 0.90)    return '#2563eb';
+    return '#1d4ed8';
+  }
+
+  function updateSriLankaMap(locations) {
+    _slLocations = locations || [];
+    if (_slGeoJSON) _renderSLMap();
+  }
+
+  async function initSriLankaMap() {
+    if (_mapInited) { _renderSLMap(); return; }
+    _mapInited = true;
+
+    document.getElementById('mapLevelSelect').addEventListener('change', () => _renderSLMap());
+
+    try {
+      // Load GeoJSON from local asset (no network dependency)
+      const res = await fetch('./assets/lk-districts.geo.json');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      _slGeoJSON = await res.json();
+      console.log('[SriLankaMap] GeoJSON loaded:', _slGeoJSON.features.length, 'districts');
+      _renderSLMap();
+    } catch(e) {
+      console.error('[SriLankaMap] Failed to load GeoJSON:', e);
+      const c = document.getElementById('sriLankaMap');
+      if (c) c.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;gap:8px;color:#64748b;"><i class="ph ph-wifi-x" style="font-size:2rem;"></i>&nbsp;Map file not found — ensure server is running</div>';
+    }
+  }
+
+  function _renderSLMap() {
+    const container = document.getElementById('sriLankaMap');
+    if (!container || !_slGeoJSON) return;
+
+    const level = (document.getElementById('mapLevelSelect')?.value) || 'province';
+
+    // -- Area view: show ranked table instead of map --
+    if (level === 'area') {
+      const aD = {};
+      _slLocations.forEach(l => {
+        if (l.area && l.area.trim()) {
+          const k = l.area.trim();
+          aD[k] = (aD[k]||0) + Number(l.redemption_count);
         }
-      } catch (error) {
-        alert('Error ending campaign');
-      }
+      });
+      const sorted = Object.entries(aD).sort((a,b)=>b[1]-a[1]);
+      const maxV = sorted[0]?.[1] || 1;
+      container.innerHTML = `
+        <div style="padding:24px;width:100%;height:100%;overflow-y:auto;background:#fff;box-sizing:border-box;">
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);margin-bottom:16px;">Area-Level Campaign Spread</div>
+          ${sorted.length === 0
+            ? `<p style="color:#64748b;">No area data yet — ensure reps enter Area when registering shops.</p>`
+            : sorted.map(([a,c]) => `
+              <div style="margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:4px;">
+                  <span style="font-weight:600;color:var(--text-primary);">${a}</span>
+                  <span style="font-weight:700;color:#059669;">${c}</span>
+                </div>
+                <div style="background:#f1f5f9;border-radius:99px;height:6px;overflow:hidden;">
+                  <div style="width:${((c/maxV)*100).toFixed(1)}%;height:100%;background:#3b82f6;border-radius:99px;"></div>
+                </div>
+              </div>`).join('')
+          }
+        </div>`;
+      document.getElementById('mapLegend').innerHTML = '';
+      return;
     }
 
-    async function viewCampaignStats(campaignId) {
-      const token = localStorage.getItem("token");
-      try {
-        const response = await fetch(`${API_BASE}/api/campaigns/${campaignId}/stats`, {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-        const stats = await response.json();
-        alert(`Campaign Stats for ${campaignId}\nTotal Claimed (Vouchers): ${stats.total_vouchers}\nPending Redemption: ${stats.claimed_count}\nRedeemed: ${stats.redeemed_count}\nExpired: ${stats.expired_count}`);
-      } catch (error) {
-        alert('Error loading campaign stats');
-      }
+    // -- Province / District choropleth via D3 SVG --
+    const aggData = {};
+    _slLocations.forEach(loc => {
+      const key = level === 'province'
+        ? normProv(loc.province)
+        : normDistrict(loc.region);
+      if (key) aggData[key] = (aggData[key]||0) + Number(loc.redemption_count);
+    });
+    const maxVal = Math.max(...Object.values(aggData), 1);
+
+    // Read dimensions BEFORE clearing container content
+    const W = container.offsetWidth  || 600;
+    const H = container.offsetHeight || 480;
+    console.log('[SriLankaMap] Rendering', level, 'view, container:', W, 'x', H);
+
+    // Clear & create SVG
+    container.innerHTML = '';
+    const svg = d3.select(container)
+      .append('svg')
+      .attr('width', W)
+      .attr('height', H)
+      .style('display', 'block')
+      .style('background', '#f0f4fa');
+
+    const padding = 20;
+    // Highcharts GeoJSON uses pre-projected integer coords, not lat/lon.
+    // geoIdentity + reflectY flips Y axis (geographic Y increases up, SVG Y increases down)
+    const projection = d3.geoIdentity().reflectY(true).fitExtent([[padding, padding], [W - padding, H - padding]], _slGeoJSON);
+    const pathGen = d3.geoPath().projection(projection);
+
+
+    // Tooltip div
+    let tip = document.getElementById('slMapTip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.id = 'slMapTip';
+      tip.style.cssText = 'position:fixed;pointer-events:none;display:none;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.12);font-family:Plus Jakarta Sans,sans-serif;font-size:0.82rem;z-index:9999;min-width:170px;';
+      document.body.appendChild(tip);
     }
 
-    createCampaignForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const token = localStorage.getItem("token");
-      const campaignData = {
-        campaign_id: document.getElementById("campaignId").value,
-        campaign_name: document.getElementById("campaignName").value,
-        description: document.getElementById("campaignDesc").value,
-        start_date: document.getElementById("startDate").value,
-        end_date: document.getElementById("endDate").value
+    svg.selectAll('path')
+      .data(_slGeoJSON.features)
+      .join('path')
+      .attr('d', pathGen)
+      .attr('fill', f => {
+        const key = level === 'province'
+          ? normProv(f.properties.region)
+          : normDistrict(f.properties['alt-name'] || f.properties.name);
+        return getChoroColor((aggData[key]||0) / maxVal);
+      })
+      .attr('stroke', '#fff')
+      .attr('stroke-width', level === 'province' ? 1.5 : 0.8)
+      .style('cursor','pointer')
+      .style('transition','fill .2s')
+      .on('mouseover', function(event, f) {
+        d3.select(this).attr('stroke','#1d4ed8').attr('stroke-width',2.5);
+        const label  = level === 'province'
+          ? (normProv(f.properties.region) || f.properties.region || '').replace(/\b\w/g,c=>c.toUpperCase()) + ' Province'
+          : (f.properties['alt-name'] || f.properties.name || '') + ' District';
+        const key = level === 'province'
+          ? normProv(f.properties.region)
+          : normDistrict(f.properties['alt-name'] || f.properties.name);
+        const cnt = aggData[key] || 0;
+        const pct = ((cnt/maxVal)*100).toFixed(1);
+        tip.innerHTML = `
+          <div style="font-weight:700;margin-bottom:6px;color:#1e293b;">${label}</div>
+          <div style="display:flex;justify-content:space-between;gap:20px;margin-bottom:4px;">
+            <span style="color:#64748b;">Redemptions</span><span style="font-weight:700;color:#059669;">${cnt.toLocaleString()}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:20px;">
+            <span style="color:#64748b;">Intensity</span><span style="font-weight:600;color:#3b82f6;">${pct}%</span>
+          </div>
+          <div style="margin-top:8px;background:#f1f5f9;border-radius:99px;height:5px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:#3b82f6;border-radius:99px;"></div>
+          </div>`;
+        tip.style.display = 'block';
+        tip.style.left = (event.clientX + 14) + 'px';
+        tip.style.top  = (event.clientY - 10) + 'px';
+      })
+      .on('mousemove', event => {
+        tip.style.left = (event.clientX + 14) + 'px';
+        tip.style.top  = (event.clientY - 10) + 'px';
+      })
+      .on('mouseout', function() {
+        d3.select(this).attr('stroke','#fff').attr('stroke-width', level==='province'?1.5:0.8);
+        tip.style.display = 'none';
+      });
+
+    // Province labels at each province's merged centroid
+    if (level === 'province') {
+      // Manual offsets (dx, dy in SVG pixels) for labels that are too close together
+      const LABEL_OFFSETS = {
+        'western':       { dx: -38, dy:  0, label: 'Western' },
+        'sabaragamuwa':  { dx:  18, dy: 18, label: 'Sabar.' },
+        'north western': { dx: -20, dy:  0, label: 'N.Western' },
+        'north central': { dx:  10, dy:  0, label: 'N.Central' },
+        'northern':      { dx:   0, dy:  0, label: 'Northern' },
+        'eastern':       { dx:  20, dy:  0, label: 'Eastern' },
+        'central':       { dx:   0, dy:  0, label: 'Central' },
+        'uva':           { dx:   0, dy:  0, label: 'Uva' },
+        'southern':      { dx:   0, dy:  0, label: 'Southern' }
       };
 
-      try {
-        const response = await fetch(`${API_BASE}/api/campaigns`, {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify(campaignData)
-        });
-
-        if (response.ok) {
-          alert("Campaign created successfully");
-          createCampaignForm.reset();
-          loadCampaigns();
-        } else {
-          const error = await response.json();
-          alert(error.message || "Error creating campaign");
+      const provCentroids = {};
+      _slGeoJSON.features.forEach(f => {
+        const k = normProv(f.properties.region);
+        if (!k) return;
+        const c = pathGen.centroid(f);
+        if (!isNaN(c[0])) {
+          if (!provCentroids[k]) provCentroids[k] = { key: k, xs:[], ys:[] };
+          provCentroids[k].xs.push(c[0]);
+          provCentroids[k].ys.push(c[1]);
         }
-      } catch (error) {
-        alert("Error creating campaign");
+      });
+      const labelData = Object.values(provCentroids).map(p => {
+        const off = LABEL_OFFSETS[p.key] || {};
+        return {
+          name: off.label || p.key.replace(/\b\w/g, ch => ch.toUpperCase()),
+          cx: (p.xs.reduce((a,b)=>a+b,0) / p.xs.length) + (off.dx || 0),
+          cy: (p.ys.reduce((a,b)=>a+b,0) / p.ys.length) + (off.dy || 0)
+        };
+      });
+      svg.selectAll('text')
+        .data(labelData)
+        .join('text')
+        .attr('x', d=>d.cx).attr('y', d=>d.cy)
+        .attr('text-anchor','middle').attr('dominant-baseline','middle')
+        .style('font-size','10px').style('font-weight','700')
+        .style('fill','#1e293b').style('pointer-events','none')
+        .style('font-family','Plus Jakarta Sans,sans-serif')
+        .attr('stroke','#fff').attr('stroke-width','3px')
+        .attr('paint-order','stroke')
+        .text(d => d.name);
+    }
+
+
+    // Legend
+    const steps = [0,0.15,0.35,0.55,0.75,0.90,1];
+    document.getElementById('mapLegend').innerHTML = `
+      <span style="font-size:0.75rem;color:var(--text-secondary);">None</span>
+      ${steps.map(s=>`<div style="width:22px;height:10px;background:${getChoroColor(s===0?0:s+0.01)};border-radius:3px;"></div>`).join('')}
+      <span style="font-size:0.75rem;color:var(--text-secondary);">Max&nbsp;(${maxVal.toLocaleString()})</span>`;
+  }
+
+
+  document.getElementById('exportRoiBtn').addEventListener('click', () => {
+    const token = localStorage.getItem("token");
+    fetch(`${API_BASE}/api/roi/export`, {
+      headers: { "Authorization": `Bearer ${token}` },
+    })
+    .then(res => {
+      // Try to get filename from Content-Disposition header
+      const disposition = res.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      const filename = match ? match[1] : `Nestle_Connect_ROI_Report_${new Date().toISOString().slice(0,10)}.csv`;
+      return res.blob().then(blob => ({ blob, filename }));
+    })
+    .then(({ blob, filename }) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    })
+    .catch(() => alert("Error exporting report"));
+  });
+
+  document.getElementById('exportRoiPdfBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('exportRoiPdfBtn');
+    btn.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> Generating…';
+    btn.disabled = true;
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const roiSection = document.getElementById('roiTab');
+
+      // Scroll-capture-friendly: temporarily expand the tab
+      const origStyle = roiSection.style.cssText;
+      roiSection.style.display = 'block';
+      roiSection.style.height = 'auto';
+      roiSection.style.overflow = 'visible';
+
+      const now = new Date();
+      const reportDate = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+      const reportTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+      const canvas = await html2canvas(roiSection, {
+        scale: 1.8,
+        useCORS: true,
+        logging: false,
+        allowTaint: true,
+        backgroundColor: '#f0f4fa',
+        windowWidth: roiSection.scrollWidth,
+        windowHeight: roiSection.scrollHeight
+      });
+
+      // Restore original styles
+      roiSection.style.cssText = origStyle;
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      const pageW  = pdf.internal.pageSize.getWidth();
+      const pageH  = pdf.internal.pageSize.getHeight();
+      const margin = 12;
+      const headerH = 24;    // height of branded header strip
+      const contentW = pageW - margin * 2;
+      const contentH = pageH - headerH - margin - 8; // usable area per page
+
+      // Scale image to page width
+      const imgH = (canvas.height / canvas.width) * contentW;
+      const totalPages = Math.ceil(imgH / contentH);
+
+      const drawHeader = (pageNum) => {
+        // Nestlé blue strip
+        pdf.setFillColor(15, 76, 129);
+        pdf.rect(0, 0, pageW, headerH, 'F');
+        // Brand name
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(12);
+        pdf.setTextColor(255, 255, 255);
+        pdf.text('NESTLÉ CONNECT', margin, headerH - 9);
+        // Report title
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8);
+        pdf.setTextColor(180, 210, 240);
+        pdf.text('Marketing ROI Performance Report — Confidential', margin, headerH - 3);
+        // Right: date + page
+        pdf.setTextColor(200, 225, 245);
+        pdf.setFontSize(7.5);
+        pdf.text(`Generated: ${reportDate} at ${reportTime}`, pageW - margin, headerH - 9, { align: 'right' });
+        pdf.text(`Page ${pageNum} of ${totalPages}`, pageW - margin, headerH - 3, { align: 'right' });
+      };
+
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) pdf.addPage();
+
+        drawHeader(page + 1);
+
+        const srcY  = page * contentH * (canvas.height / imgH);
+        const srcH  = Math.min(contentH * (canvas.height / imgH), canvas.height - srcY);
+        const sliceH = (srcH / canvas.height) * imgH;
+
+        // Crop canvas slice
+        const slice = document.createElement('canvas');
+        slice.width  = canvas.width;
+        slice.height = srcH;
+        const ctx = slice.getContext('2d');
+        ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+        pdf.addImage(slice.toDataURL('image/png'), 'PNG', margin, headerH + 4, contentW, sliceH);
+
+        // Footer line
+        pdf.setDrawColor(220, 230, 240);
+        pdf.setLineWidth(0.3);
+        pdf.line(margin, pageH - 8, pageW - margin, pageH - 8);
+        pdf.setFont('helvetica', 'italic');
+        pdf.setFontSize(6.5);
+        pdf.setTextColor(150, 160, 175);
+        pdf.text('This document is auto-generated by Nestlé Connect Analytics Engine. For internal use only.', pageW / 2, pageH - 4, { align: 'center' });
+      }
+
+      const filename = `Nestle_Connect_ROI_Report_${now.toISOString().slice(0,10)}.pdf`;
+      pdf.save(filename);
+
+    } catch (err) {
+      console.error('PDF export error:', err);
+      alert('Error generating PDF. Please try again.');
+    } finally {
+      btn.innerHTML = '<i class="ph ph-file-pdf"></i> Export PDF';
+      btn.disabled = false;
+    }
+  });
+
+  checkAuth();
+
+  function setupCascadingDropdowns(prefix) {
+    const provinceSelect = document.getElementById(`${prefix}Province`);
+    const regionSelect = document.getElementById(`${prefix}Region`);
+    const areaSelect = document.getElementById(`${prefix}Area`);
+    
+    if (!window.SRI_LANKA_LOCATIONS) return;
+
+    provinceSelect.innerHTML = '<option value="">Select Province</option>';
+    Object.keys(window.SRI_LANKA_LOCATIONS).forEach(p => {
+      provinceSelect.add(new Option(p, p));
+    });
+
+    provinceSelect.addEventListener('change', () => {
+      const p = provinceSelect.value;
+      regionSelect.innerHTML = '<option value="">Select Region</option>';
+      areaSelect.innerHTML = '<option value="">Select Area</option>';
+      if (p && window.SRI_LANKA_LOCATIONS[p]) {
+        Object.keys(window.SRI_LANKA_LOCATIONS[p]).forEach(r => {
+          regionSelect.add(new Option(r, r));
+        });
       }
     });
 
-    checkAuth();
+    regionSelect.addEventListener('change', () => {
+      const p = provinceSelect.value;
+      const r = regionSelect.value;
+      areaSelect.innerHTML = '<option value="">Select Area</option>';
+      if (p && r && window.SRI_LANKA_LOCATIONS[p][r]) {
+        window.SRI_LANKA_LOCATIONS[p][r].forEach(a => {
+          areaSelect.add(new Option(a, a));
+        });
+      }
+    });
+  }
 
-    switchTab('reps');
-  </script>
+  setupCascadingDropdowns('rep');
+  setupCascadingDropdowns('shop');
+
+  // ── Search Filters ────────────────────────────────────────────────────────
+  function filterTable(inputId, listId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      const rows = document.querySelectorAll(`#${listId} table tbody tr`);
+      rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+  }
+
+  filterTable('searchReps', 'repsList');
+  filterTable('searchShops', 'shopsList');
+  filterTable('searchLog', 'logList');
+  filterTable('searchActivity', 'activityList');
+  filterTable('searchStats', 'statsList');
+  filterTable('searchCampaigns', 'campaignsList');
+
+  // ─── Mobile Menu Toggle ───────────────────────────────────────────────────
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+  function toggleMobileMenu() {
+    sidebar.classList.toggle('open');
+    sidebarOverlay.classList.toggle('open');
+  }
+
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+  }
+  if (sidebarOverlay) {
+    sidebarOverlay.addEventListener('click', toggleMobileMenu);
+  }
+  
+  // Close menu when clicking a nav item on mobile
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (window.innerWidth <= 1024) {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('open');
+      }
+    });
+  });
+
+  switchTab('reps', 'Manage Reps');
+
+  // ── Profile Panel ─────────────────────────────────────────────────────────
+  let _profileOpen = false;
+  let _profileData = null;
+
+  window.toggleEditProfile = function() {
+    const acc   = document.getElementById('editProfileAccordion');
+    const caret = document.getElementById('editProfileCaret');
+    const open  = acc.style.maxHeight && acc.style.maxHeight !== '0px';
+    acc.style.maxHeight = open ? '0' : acc.scrollHeight + 300 + 'px';
+    if (caret) caret.style.transform = open ? '' : 'rotate(180deg)';
+    // Close password sub-section when collapsing
+    if (open) {
+      const pwdAcc = document.getElementById('pwdAccordion');
+      if (pwdAcc) pwdAcc.style.maxHeight = '0';
+      const pwdCaret = document.getElementById('pwdCaret');
+      if (pwdCaret) pwdCaret.style.transform = '';
+    }
+  };
+
+  window.togglePwdSection = function() {
+    const acc   = document.getElementById('pwdAccordion');
+    const caret = document.getElementById('pwdCaret');
+    const open  = acc.style.maxHeight && acc.style.maxHeight !== '0px';
+    acc.style.maxHeight = open ? '0' : acc.scrollHeight + 50 + 'px';
+    if (caret) caret.style.transform = open ? '' : 'rotate(180deg)';
+    // Expand parent accordion height to fit
+    if (!open) {
+      const parent = document.getElementById('editProfileAccordion');
+      if (parent) parent.style.maxHeight = parseInt(parent.style.maxHeight || 0) + 200 + 'px';
+    }
+  };
+
+  async function loadProfileData() {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_BASE}/api/users/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      const u = await res.json();
+      _profileData = u;
+
+      const initials = (u.username || 'AD').slice(0, 2).toUpperCase();
+      const roleLabel = u.role === 'admin' ? 'Administrator' : 'Sales Representative';
+      const region = u.role === 'admin'
+        ? 'Head Office'
+        : ([u.province, u.region, u.area].filter(Boolean).join(' › ') || '—');
+      const since = u.created_at ? new Date(u.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
+
+      document.getElementById('adminAvatarEl').textContent     = initials;
+      document.getElementById('adminNameEl').textContent       = u.username;
+      document.getElementById('adminRoleEl').textContent       = roleLabel;
+      document.getElementById('panelAvatarEl').textContent     = initials;
+      document.getElementById('panelNameEl').textContent       = u.username;
+      document.getElementById('panelRoleEl').textContent       = `${roleLabel}${u.employee_id ? ' · ' + u.employee_id : ''}`;
+      document.getElementById('panelEmpId').textContent        = u.employee_id || '—';
+      document.getElementById('panelRegion').textContent       = region;
+      document.getElementById('panelSince').textContent        = since;
+      document.getElementById('editDisplayName').value         = u.username;
+    } catch(e) { console.error('Profile load error', e); }
+  }
+
+  window.toggleProfilePanel = function() {
+    const panel   = document.getElementById('profileSidePanel');
+    const overlay = document.getElementById('profilePanelOverlay');
+    const caret   = document.getElementById('profileCaretIcon');
+    _profileOpen = !_profileOpen;
+    panel.style.right   = _profileOpen ? '0'   : '-340px';
+    overlay.style.display = _profileOpen ? 'block' : 'none';
+    if (caret) caret.style.transform = _profileOpen ? 'rotate(180deg)' : '';
+    if (_profileOpen && !_profileData) loadProfileData();
+  };
+
+  window.saveProfile = async function() {
+    const token   = localStorage.getItem('token');
+    const name    = document.getElementById('editDisplayName').value.trim();
+    const curPwd  = document.getElementById('editCurrentPwd').value;
+    const newPwd  = document.getElementById('editNewPwd').value;
+    const msgEl   = document.getElementById('profileEditMsg');
+    msgEl.style.color = '#94a3b8';
+    msgEl.textContent = 'Saving…';
+    try {
+      const body = { display_name: name };
+      if (newPwd) { body.current_password = curPwd; body.new_password = newPwd; }
+      const res = await fetch(`${API_BASE}/api/users/me`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msgEl.style.color = '#059669';
+        msgEl.textContent = '✓ Profile updated!';
+        _profileData = null; // force reload
+        loadProfileData();
+        document.getElementById('editCurrentPwd').value = '';
+        document.getElementById('editNewPwd').value = '';
+      } else {
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = data.message || 'Error updating profile';
+      }
+    } catch(e) {
+      msgEl.style.color = '#dc2626';
+      msgEl.textContent = 'Network error. Please try again.';
+    }
+  };
+
+  loadProfileData();
+</script>
 
 </body>
-
 </html>

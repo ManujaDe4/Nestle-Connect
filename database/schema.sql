@@ -9,6 +9,9 @@ CREATE TABLE users (
     employee_id VARCHAR(50) UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'rep')),
+    province VARCHAR(50),
+    region VARCHAR(50),
+    area VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -22,6 +25,9 @@ CREATE TABLE shops (
     rep_id INTEGER REFERENCES users(id),
     created_by_rep_id INTEGER REFERENCES users(id),
     qr_identifier VARCHAR(100) UNIQUE,
+    province VARCHAR(50),
+    region VARCHAR(50),
+    area VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -41,6 +47,12 @@ CREATE TABLE campaigns (
     description TEXT,
     start_date TIMESTAMP NOT NULL,
     end_date TIMESTAMP NOT NULL,
+    objective VARCHAR(50),
+    target_audience VARCHAR(50),
+    voucher_value VARCHAR(50),
+    voucher_limit INTEGER,
+    budget NUMERIC(10,2),
+    banner_url VARCHAR(255),
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('draft', 'active', 'expired', 'disabled')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -51,8 +63,9 @@ CREATE TABLE vouchers (
     claim_id VARCHAR(30) UNIQUE NOT NULL,
     campaign_id VARCHAR(20) NOT NULL,
     ad_id VARCHAR(20) NOT NULL,
+    platform VARCHAR(20),
     customer_mobile VARCHAR(15) NOT NULL,
-    voucher_code VARCHAR(10) NOT NULL,
+    voucher_code VARCHAR(20) NOT NULL,
     claim_status VARCHAR(20) DEFAULT 'claimed' CHECK (claim_status IN ('claimed', 'redeemed', 'expired', 'disabled')),
     expiry_status VARCHAR(20) DEFAULT 'active' CHECK (expiry_status IN ('active', 'expired')),
     sms_sent BOOLEAN DEFAULT FALSE,

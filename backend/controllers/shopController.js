@@ -2,6 +2,7 @@ const pool = require("../config/db");
 const QRCode = require("qrcode");
 const { logActivity } = require("../controllers/activityController");
 const sendSMS = require("../services/sms");
+const { getLocationPrefix } = require('../utils/locationCodes');
 
 const getShopBySlug = async (req, res) => {
   try {
@@ -42,17 +43,24 @@ const getAllShops = async (req, res) => {
 
 const createShop = async (req, res) => {
   try {
-    const { shop_name, owner_mobile, nic_number } = req.body;
+    const { shop_name, owner_mobile, nic_number, province, region, area, br_number, address } = req.body;
 
     if (!shop_name || !owner_mobile || !nic_number) {
       return res.status(400).json({ message: "Shop name, owner mobile, and NIC number are required" });
     }
 
-    // Generate shop_id
-    const result = await pool.query("SELECT MAX(CAST(SUBSTRING(shop_id FROM 5) AS INTEGER)) as max_id FROM shops");
-    const maxId = result.rows[0].max_id || 0;
-    const newId = maxId + 1;
-    const shop_id = `SHOP${String(newId).padStart(3, '0')}`;
+    // Generate shop_id using SHP-[PROV]-[REG]-000001 format
+    const locPrefix = getLocationPrefix(province, region);
+    const shopPrefix = `SHP-${locPrefix}-`;
+
+    const lastShop = await pool.query("SELECT shop_id FROM shops WHERE shop_id LIKE $1 ORDER BY shop_id DESC LIMIT 1", [`${shopPrefix}%`]);
+    let nextNum = 1;
+    if (lastShop.rows.length > 0) {
+      const lastId = lastShop.rows[0].shop_id;
+      const numPart = lastId.replace(shopPrefix, '');
+      nextNum = parseInt(numPart, 10) + 1;
+    }
+    const shop_id = `${shopPrefix}${String(nextNum).padStart(6, '0')}`;
 
     // Generate qr_slug
     const qr_slug = shop_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -72,8 +80,8 @@ const createShop = async (req, res) => {
     const repId = req.user.role === 'rep' ? req.user.id : null;
 
     const insertResult = await pool.query(
-      "INSERT INTO shops (shop_id, shop_name, owner_mobile, nic_number, qr_slug, rep_id, created_by_rep_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
-      [shop_id, shop_name, owner_mobile, nic_number, uniqueSlug, repId, createdByRepId]
+      "INSERT INTO shops (shop_id, shop_name, owner_mobile, nic_number, qr_slug, rep_id, created_by_rep_id, province, region, area, br_number, address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
+      [shop_id, shop_name, owner_mobile, nic_number, uniqueSlug, repId, createdByRepId, province || null, region || null, area || null, br_number || null, address || null]
     );
 
     const shopRowId = insertResult.rows[0].id;
@@ -97,7 +105,7 @@ const createShop = async (req, res) => {
 
     res.status(201).json({
       message: "Shop registered successfully",
-      shop: { shop_id, shop_name, owner_mobile, nic_number, qr_slug: uniqueSlug },
+      shop: { shop_id, shop_name, owner_mobile, nic_number, br_number, address, qr_slug: uniqueSlug },
       qrCode: qrCodeDataURL
     });
   } catch (error) {
@@ -203,5 +211,61 @@ const getRegistrationLog = async (req, res) => {
     res.status(500).json({ message: "Server error while fetching registration log" });
   }
 };
+const exportShopsCSV = async (req, res) => {
+  try {
+    let query = "SELECT * FROM shops";
+    let params = [];
+    if (req.user.role === 'rep') {
+      query += " WHERE rep_id = $1";
+      params = [req.user.id];
+    }
+    query += " ORDER BY created_at DESC";
+    const result = await pool.query(query, params);
+    const shops = result.rows;
 
-module.exports = { getShopBySlug, getAllShops, createShop, deleteShop, mapQRCode, getRegistrationLog };
+    const now = new Date();
+    const reportDate = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+    const reportTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-GB') : 'N/A';
+
+    let csv = '';
+
+    // Header
+    csv += `"NESTLÉ CONNECT"\r\n`;
+    csv += `"Sales Representative — Shop Portfolio Report"\r\n`;
+    csv += `"Confidential — For Internal Use Only"\r\n`;
+    csv += `"Generated On:","${reportDate} at ${reportTime}"\r\n`;
+    csv += `"Total Shops:","${shops.length}"\r\n`;
+    csv += `\r\n`;
+
+    // Data table
+    csv += ["Shop ID", "Shop Name", "Owner Mobile", "NIC Number", "BR Number", "Address",
+            "Province", "Region", "Area", "QR Identifier", "QR Slug", "QR Linked", "Registered Date"
+    ].map(q).join(',') + '\r\n';
+
+    shops.forEach(s => {
+      csv += [
+        s.shop_id, s.shop_name || '', s.owner_mobile || '', s.nic_number || '',
+        s.br_number || '', s.address || '',
+        s.province || '', s.region || '', s.area || '',
+        s.qr_identifier || '', s.qr_slug || '',
+        s.qr_identifier ? 'Yes' : 'No',
+        fmtDate(s.created_at)
+      ].map(q).join(',') + '\r\n';
+    });
+
+    csv += `\r\n"━━━ END OF REPORT ━━━"\r\n`;
+    csv += `"This report is auto-generated by Nestlé Connect."\r\n`;
+
+    const fileTs = now.toISOString().slice(0, 10);
+    res.header('Content-Type', 'text/csv; charset=utf-8');
+    res.header('Content-Disposition', `attachment; filename="Nestle_Connect_My_Shops_${fileTs}.csv"`);
+    return res.send('\uFEFF' + csv);
+  } catch (error) {
+    console.error('exportShopsCSV error:', error);
+    res.status(500).json({ message: 'Server error while exporting shops' });
+  }
+};
+
+module.exports = { getShopBySlug, getAllShops, createShop, deleteShop, mapQRCode, getRegistrationLog, exportShopsCSV };

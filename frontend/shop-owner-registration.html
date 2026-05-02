@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shop Owner Registration</title>
   <link rel="stylesheet" href="./css/styles.css" />
+  <script src="./js/locations.js"></script>
 </head>
 <body>
 
@@ -43,6 +44,19 @@
           <input type="text" id="nicNumber" placeholder="Enter owner NIC number" required />
         </div>
 
+        <div class="form-group">
+          <label for="shopProvince">Province</label>
+          <select id="shopProvince" required><option value="">Select Province</option></select>
+        </div>
+        <div class="form-group">
+          <label for="shopRegion">Region (District)</label>
+          <select id="shopRegion" required><option value="">Select Region</option></select>
+        </div>
+        <div class="form-group">
+          <label for="shopArea">Area</label>
+          <select id="shopArea" required><option value="">Select Area</option></select>
+        </div>
+
         <button type="submit" id="registerBtn" class="btn-primary"><span>Register Shop</span></button>
       </form>
 
@@ -71,15 +85,19 @@
   </div>
 
   <script>
-    const API_BASE = window.location.origin;
+    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:5000' : 'https://nestle-connect.onrender.com';
 
     function checkAuth() {
       const token = localStorage.getItem("token");
       const user = JSON.parse(localStorage.getItem("user"));
       if (!token || !user || user.role !== "rep") {
         window.location.href = "login.html";
+        return null;
       }
+      return user;
     }
+
+    const currentUser = checkAuth();
 
     const form = document.getElementById("registrationForm");
     const registerBtn = document.getElementById("registerBtn");
@@ -110,6 +128,9 @@
       const shopName = document.getElementById("shopName").value.trim();
       const ownerMobile = document.getElementById("ownerMobile").value.trim();
       const nicNumber = document.getElementById("nicNumber").value.trim();
+      const province = document.getElementById("shopProvince").value;
+      const region = document.getElementById("shopRegion").value;
+      const area = document.getElementById("shopArea").value;
 
       if (!shopName || !ownerMobile || !nicNumber) {
         setMessage("Please fill in all fields.", "error");
@@ -131,6 +152,9 @@
             shop_name: shopName,
             owner_mobile: ownerMobile,
             nic_number: nicNumber,
+            province: province,
+            region: region,
+            area: area
           }),
         });
 
@@ -167,7 +191,63 @@
       document.body.removeChild(link);
     });
 
-    checkAuth();
+    function setupCascadingDropdowns() {
+      const provinceSelect = document.getElementById('shopProvince');
+      const regionSelect   = document.getElementById('shopRegion');
+      const areaSelect     = document.getElementById('shopArea');
+
+      if (!window.SRI_LANKA_LOCATIONS) return;
+
+      const repProvince = currentUser && currentUser.province;
+      const repRegion   = currentUser && currentUser.region;
+
+      if (repProvince && repRegion) {
+        // Lock province & region to the rep's assigned values
+        provinceSelect.innerHTML = `<option value="${repProvince}">${repProvince}</option>`;
+        provinceSelect.disabled = true;
+
+        regionSelect.innerHTML = `<option value="${repRegion}">${repRegion}</option>`;
+        regionSelect.disabled = true;
+
+        // Show lock notice
+        const notice = document.createElement('div');
+        notice.style.cssText = 'background:rgba(15,76,129,0.07);border:1px solid rgba(15,76,129,0.18);border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:0.9rem;color:#0f172a;display:flex;align-items:center;gap:8px;';
+        notice.innerHTML = `<span>🔒</span><span>Location locked to your assigned region: <strong>${repProvince} › ${repRegion}</strong></span>`;
+        provinceSelect.closest('form').insertBefore(notice, provinceSelect.closest('.form-group').parentNode);
+
+        // Populate area dropdown
+        areaSelect.innerHTML = '<option value="">Select Area</option>';
+        const areas = (window.SRI_LANKA_LOCATIONS[repProvince] || {})[repRegion] || [];
+        areas.forEach(a => areaSelect.add(new Option(a, a)));
+      } else {
+        // No assigned region — full free selection
+        provinceSelect.innerHTML = '<option value="">Select Province</option>';
+        Object.keys(window.SRI_LANKA_LOCATIONS).forEach(p => {
+          provinceSelect.add(new Option(p, p));
+        });
+
+        provinceSelect.addEventListener('change', () => {
+          const p = provinceSelect.value;
+          regionSelect.innerHTML = '<option value="">Select Region</option>';
+          areaSelect.innerHTML = '<option value="">Select Area</option>';
+          if (p && window.SRI_LANKA_LOCATIONS[p]) {
+            Object.keys(window.SRI_LANKA_LOCATIONS[p]).forEach(r => regionSelect.add(new Option(r, r)));
+          }
+        });
+
+        regionSelect.addEventListener('change', () => {
+          const p = provinceSelect.value;
+          const r = regionSelect.value;
+          areaSelect.innerHTML = '<option value="">Select Area</option>';
+          if (p && r && window.SRI_LANKA_LOCATIONS[p][r]) {
+            window.SRI_LANKA_LOCATIONS[p][r].forEach(a => areaSelect.add(new Option(a, a)));
+          }
+        });
+      }
+    }
+
+    setupCascadingDropdowns();
+
   </script>
 
 </body>

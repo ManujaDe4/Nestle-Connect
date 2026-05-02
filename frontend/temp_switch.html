@@ -1,0 +1,18 @@
+﻿    if (tab === 'reps') loadReps();
+    if (tab === 'shops') loadShops();
+    if (tab === 'log') loadRegistrationLog();
+    if (tab === 'activity') loadActivityLog();
+    if (tab === 'campaigns') loadCampaigns();
+    if (tab === 'stats') loadStats();
+    
+    // Explicit fail-safe: Ensure chart grids are hidden when leaving ROI tab
+    if (tab !== 'roi') {
+      document.querySelectorAll('.charts-grid').forEach(el => el.style.display = 'none');
+      const intelPanel = document.getElementById('campaignIntelPanel');
+      if (intelPanel) intelPanel.style.display = 'none';
+    } else {
+      document.querySelectorAll('.charts-grid').forEach(el => el.style.display = 'grid');
+      loadRoiAnalytics(); 
+      setTimeout(initSriLankaMap, 200); 
+    }
+  }

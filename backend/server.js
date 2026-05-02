@@ -12,6 +12,7 @@ const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 const activityRoutes = require("./routes/activity");
 const campaignRoutes = require("./routes/campaigns");
+const roiRoutes = require("./routes/roi");
 const { checkAndExpireCampaigns } = require("./controllers/campaignController");
 const pool = require("./config/db");
 const bcrypt = require("bcrypt");
@@ -43,6 +44,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/campaigns", campaignRoutes);
+app.use("/api/roi", roiRoutes);
 
 /* =========================
    FRONTEND STATIC FILES
@@ -84,20 +86,21 @@ async function initDatabase() {
       )
     `);
 
-    await pool.query(`
-      ALTER TABLE shops
-      ADD COLUMN IF NOT EXISTS rep_id INTEGER REFERENCES users(id)
-    `);
+    // Users table columns
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS employee_id VARCHAR(50) UNIQUE`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS province VARCHAR(100)`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS region VARCHAR(100)`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS area VARCHAR(100)`);
 
-    await pool.query(`
-      ALTER TABLE shops
-      ADD COLUMN IF NOT EXISTS created_by_rep_id INTEGER REFERENCES users(id)
-    `);
-
-    await pool.query(`
-      ALTER TABLE shops
-      ADD COLUMN IF NOT EXISTS qr_identifier VARCHAR(100) UNIQUE
-    `);
+    // Shops table columns
+    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS rep_id INTEGER REFERENCES users(id)`);
+    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS created_by_rep_id INTEGER REFERENCES users(id)`);
+    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS qr_identifier VARCHAR(100) UNIQUE`);
+    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS province VARCHAR(100)`);
+    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS region VARCHAR(100)`);
+    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS area VARCHAR(100)`);
+    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS br_number VARCHAR(100)`);
+    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS address TEXT`);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS activity_logs (
@@ -119,6 +122,7 @@ async function initDatabase() {
       );
       console.log('Created default admin user: admin / password');
     }
+    console.log('✓ Database schema up to date');
   } catch (error) {
     console.error('Database initialization failed:', error);
     process.exit(1);

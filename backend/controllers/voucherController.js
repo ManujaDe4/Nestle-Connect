@@ -5,7 +5,7 @@ const sendSMS = require("../services/sms");
 
 const claimVoucher = async (req, res) => {
   try {
-    let { customer_mobile, campaign_id, ad_id } = req.body;
+    let { customer_mobile, campaign_id, ad_id, platform } = req.body;
 
     if (!customer_mobile || !campaign_id || !ad_id) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -57,17 +57,17 @@ const claimVoucher = async (req, res) => {
       });
     }
 
-    const claimId = generateClaimId();
-    const voucherCode = generateVoucherCode();
+    const claimId = generateClaimId(platform);
+    const voucherCode = generateVoucherCode(platform);
 
     const insertQuery = `
       INSERT INTO vouchers
-      (claim_id, campaign_id, ad_id, customer_mobile, voucher_code, claim_status, expiry_status, sms_sent)
-      VALUES ($1, $2, $3, $4, $5, 'claimed', 'active', true)
+      (claim_id, campaign_id, ad_id, platform, customer_mobile, voucher_code, claim_status, expiry_status, sms_sent)
+      VALUES ($1, $2, $3, $4, $5, $6, 'claimed', 'active', true)
       RETURNING *;
     `;
 
-    const values = [claimId, campaign_id, ad_id, customer_mobile, voucherCode];
+    const values = [claimId, campaign_id, ad_id, platform || null, customer_mobile, voucherCode];
     const result = await pool.query(insertQuery, values);
 
     await sendSMS(

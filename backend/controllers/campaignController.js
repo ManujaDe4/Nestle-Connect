@@ -3,7 +3,10 @@ const pool = require("../config/db");
 // Create a new campaign and disable old ones
 const createCampaign = async (req, res) => {
   try {
-    const { campaign_id, campaign_name, description, start_date, end_date } = req.body;
+    const { 
+      campaign_id, campaign_name, description, start_date, end_date,
+      objective, target_audience, voucher_value, voucher_limit, budget, banner_url
+    } = req.body;
 
     if (!campaign_id || !campaign_name || !start_date || !end_date) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -19,16 +22,16 @@ const createCampaign = async (req, res) => {
       return res.status(409).json({ message: "Campaign ID already exists" });
     }
 
-    // Disable all previously active campaigns when a new one is created
-    await pool.query(
-      "UPDATE campaigns SET status = $1 WHERE status = $2",
-      ["disabled", "active"]
-    );
+    // Removed the constraint that disabled previous active campaigns.
+    // Multiple campaigns can now run concurrently.
 
     // Insert new campaign
     const insertQuery = `
-      INSERT INTO campaigns (campaign_id, campaign_name, description, start_date, end_date, status)
-      VALUES ($1, $2, $3, $4, $5, 'active')
+      INSERT INTO campaigns (
+        campaign_id, campaign_name, description, start_date, end_date, status,
+        objective, target_audience, voucher_value, voucher_limit, budget, banner_url
+      )
+      VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8, $9, $10, $11)
       RETURNING *;
     `;
 
@@ -37,17 +40,87 @@ const createCampaign = async (req, res) => {
       campaign_name,
       description || null,
       start_date,
-      end_date
+      end_date,
+      objective || null,
+      target_audience || null,
+      voucher_value || null,
+      voucher_limit || null,
+      budget || null,
+      banner_url || null
     ]);
 
     res.status(201).json({
-      message: "Campaign created successfully. Previous campaigns disabled.",
+      message: "Campaign created successfully.",
       campaign: result.rows[0]
     });
   } catch (error) {
     console.error("createCampaign error:", error);
     res.status(500).json({ message: "Server error while creating campaign" });
   }
+};
+
+// Update an existing campaign
+const updateCampaign = async (req, res) => {
+  try {
+    const { id } = req.params; // this is the campaign_id string, not the integer PK
+    const { 
+      campaign_name, description, start_date, end_date,
+      objective, target_audience, voucher_value, voucher_limit, budget, banner_url, status
+    } = req.body;
+
+    // Check if campaign exists
+    const existingCheck = await pool.query(
+      "SELECT * FROM campaigns WHERE campaign_id = $1",
+      [id]
+    );
+
+    if (existingCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Campaign not found" });
+    }
+
+    const updateQuery = `
+      UPDATE campaigns 
+      SET 
+        campaign_name = $1, 
+        description = $2, 
+        start_date = $3, 
+        end_date = $4,
+        objective = $5,
+        target_audience = $6,
+        voucher_value = $7,
+        voucher_limit = $8,
+        budget = $9,
+        banner_url = $10,
+        status = $11,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE campaign_id = $12
+      RETURNING *;
+    `;
+
+    const result = await pool.query(updateQuery, [
+      campaign_name || existingCheck.rows[0].campaign_name,
+      description !== undefined ? description : existingCheck.rows[0].description,
+      start_date || existingCheck.rows[0].start_date,
+      end_date || existingCheck.rows[0].end_date,
+      objective !== undefined ? objective : existingCheck.rows[0].objective,
+      target_audience !== undefined ? target_audience : existingCheck.rows[0].target_audience,
+      voucher_value !== undefined ? voucher_value : existingCheck.rows[0].voucher_value,
+      voucher_limit !== undefined ? voucher_limit : existingCheck.rows[0].voucher_limit,
+      budget !== undefined ? budget : existingCheck.rows[0].budget,
+      banner_url !== undefined ? banner_url : existingCheck.rows[0].banner_url,
+      status || existingCheck.rows[0].status,
+      id
+    ]);
+
+    res.status(200).json({
+      message: "Campaign updated successfully",
+      campaign: result.rows[0]
+    });
+  } catch (error) {
+    console.error("updateCampaign error:", error);
+    res.status(500).json({ message: "Server error while updating campaign" });
+  }
+
 };
 
 // Get all campaigns
@@ -166,6 +239,46 @@ const getCampaignStats = async (req, res) => {
   }
 };
 
+// Delete a campaign (with admin password verification)
+const deleteCampaign = async (req, res) => {
+  try {
+    const { campaign_id } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: "Admin password required to delete a campaign" });
+    }
+
+    // Verify admin password
+    const bcrypt = require('bcrypt');
+    const adminResult = await pool.query('SELECT * FROM users WHERE id = $1 AND role = $2', [req.user.id, 'admin']);
+    if (adminResult.rows.length === 0) {
+      return res.status(403).json({ message: "Admin account not found" });
+    }
+    const isMatch = await bcrypt.compare(password, adminResult.rows[0].password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Incorrect password. Deletion cancelled." });
+    }
+
+    // Check campaign exists
+    const campaignCheck = await pool.query('SELECT * FROM campaigns WHERE campaign_id = $1', [campaign_id]);
+    if (campaignCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Campaign not found" });
+    }
+
+    // Delete associated vouchers first
+    await pool.query('DELETE FROM vouchers WHERE campaign_id = $1', [campaign_id]);
+
+    // Delete the campaign
+    await pool.query('DELETE FROM campaigns WHERE campaign_id = $1', [campaign_id]);
+
+    res.json({ message: `Campaign ${campaign_id} and all associated vouchers deleted successfully.` });
+  } catch (error) {
+    console.error("deleteCampaign error:", error);
+    res.status(500).json({ message: "Server error while deleting campaign" });
+  }
+};
+
 // Auto-expire campaigns that have reached their end_date
 const checkAndExpireCampaigns = async () => {
   try {
@@ -197,10 +310,13 @@ const checkAndExpireCampaigns = async () => {
 
 module.exports = {
   createCampaign,
+  updateCampaign,
   getAllCampaigns,
   getActiveCampaigns,
   getCampaignById,
   expireCampaign,
   getCampaignStats,
+  deleteCampaign,
   checkAndExpireCampaigns
 };
+

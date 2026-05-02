@@ -6,16 +6,29 @@ function randomDigits(length = 4) {
   return result;
 }
 
-function generateClaimId() {
-  return `CLM${Date.now()}`;
+function getPlatformPrefix(platform) {
+  if (!platform) return '';
+  const p = platform.toLowerCase();
+  if (p === 'instagram') return 'IG';
+  if (p === 'facebook') return 'FB';
+  if (p === 'tiktok') return 'TT';
+  if (p === 'twitter' || p === 'x') return 'X';
+  if (p === 'youtube') return 'YT';
+  return 'OTH'; // Other
+}
+
+function generateClaimId(platform = '') {
+  const prefix = platform ? getPlatformPrefix(platform) + '-' : '';
+  return `${prefix}CLM${Date.now()}`;
 }
 
 function generateRedemptionId() {
   return `RED${Date.now()}`;
 }
 
-function generateVoucherCode() {
-  return randomDigits(6);
+function generateVoucherCode(platform = '') {
+  const prefix = platform ? getPlatformPrefix(platform) + '-' : '';
+  return `${prefix}${randomDigits(6)}`;
 }
 
 function generateOtpCode() {

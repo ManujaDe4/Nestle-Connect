@@ -733,16 +733,35 @@ tr:hover {
 }
 
 @media (max-width: 720px) {
+  body {
+    padding: 20px 12px;
+  }
+
   .brand {
-    gap: 12px;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .brand-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .brand-name {
+    font-size: 1rem;
   }
 
   .card {
-    padding: 28px 20px;
+    padding: 24px 18px;
+    border-radius: 16px;
+  }
+
+  .card-title {
+    font-size: 1.4rem;
   }
 
   .qr-mapping-container {
-    padding: 28px 20px;
+    padding: 20px 16px;
   }
 
   .qr-input-group {
@@ -751,5 +770,27 @@ tr:hover {
 
   .action-buttons {
     flex-direction: column;
+  }
+
+  .shop-selector select {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 12px 8px;
+  }
+
+  .card {
+    padding: 18px 14px;
+  }
+
+  .brand-divider, .brand-sub {
+    display: none;
+  }
+
+  .qr-mapping-container {
+    padding: 14px 10px;
   }
 }
