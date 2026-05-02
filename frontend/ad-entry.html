@@ -64,14 +64,26 @@
 
     // Show campaign & platform info on the entry page if available
     if (platform && platform !== 'other') {
-      const platformNames = { instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok', youtube: 'YouTube' };
-      const pLabel = platformNames[platform.toLowerCase()] || platform;
+      const pKey = platform.toLowerCase();
+      const platformDetails = { 
+        instagram: { name: 'Instagram', icon: 'ph-instagram-logo' },
+        facebook: { name: 'Facebook', icon: 'ph-facebook-logo' },
+        tiktok: { name: 'TikTok', icon: 'ph-tiktok-logo' },
+        youtube: { name: 'YouTube', icon: 'ph-youtube-logo' }
+      };
+      
+      const details = platformDetails[pKey] || { name: platform, icon: 'ph-sparkle' };
       
       const badge = document.getElementById('platformBadge');
-      badge.innerHTML = `★ Exclusive ${pLabel} Offer`;
-      document.getElementById('platformBadgeContainer').style.display = 'block';
+      badge.innerHTML = `<i class="ph ${details.icon}"></i> Exclusive ${details.name} Offer`;
       
-      document.getElementById('footerText').textContent = `You arrived via ${pLabel}. Click below to claim your exclusive offer.`;
+      // Add platform-specific CSS class if it exists (e.g. badge-instagram)
+      if (platformDetails[pKey]) {
+        badge.classList.add(`badge-${pKey}`);
+      }
+      
+      document.getElementById('platformBadgeContainer').style.display = 'block';
+      document.getElementById('footerText').textContent = `You arrived via ${details.name}. Click below to claim your exclusive offer.`;
     }
   </script>
 
