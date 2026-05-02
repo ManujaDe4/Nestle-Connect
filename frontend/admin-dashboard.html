@@ -144,9 +144,6 @@
       <button class="nav-item" data-tab="roi">
         <i class="ph ph-trend-up"></i> ROI Analytics
       </button>
-      <button class="nav-item" onclick="window.location.href='corporate-users.html'">
-        <i class="ph ph-briefcase"></i> Corporate Roles
-      </button>
     </nav>
     
     <div class="sidebar-footer">
@@ -2664,7 +2661,7 @@
       _profileData = u;
 
       const initials = (u.username || 'AD').slice(0, 2).toUpperCase();
-      const roleLabel = u.role === 'admin' ? (u.company_role || 'Head Office Admin') : 'Sales Representative';
+      const roleLabel = u.role === 'admin' ? 'Administrator' : 'Sales Representative';
       const region = u.role === 'admin'
         ? 'Head Office'
         : ([u.province, u.region, u.area].filter(Boolean).join(' › ') || '—');
