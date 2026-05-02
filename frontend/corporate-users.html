@@ -77,47 +77,54 @@
       </div>
 
       <!-- Registration Form -->
-      <div class="card" style="margin-bottom: 24px;">
-        <div class="card-header">
-          <h3 class="card-title">Register Corporate User</h3>
-        </div>
-        <form id="addCorporateForm" class="form-grid">
-          <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" id="corpName" placeholder="John Doe" required />
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Register Corporate User</h2>
+            <p class="panel-desc">Create a new head office or corporate role account.</p>
           </div>
-          
-          <div class="form-group">
-            <label>Corporate Role</label>
-            <div class="custom-select-wrapper">
-              <select id="corpRole" required>
-                <option value="Head Office Admin">Head Office Admin</option>
-                <option value="Marketing Manager">Marketing Manager</option>
-                <option value="Integrated Marketing Services Supervisor">Integrated Marketing Services Supervisor</option>
-                <option value="Performance Marketing Specialist">Performance Marketing Specialist</option>
-                <option value="CRM & Data Analyst">CRM & Data Analyst</option>
-              </select>
+        </div>
+        <form id="addCorporateForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="corpName" placeholder="John Doe" required />
+            </div>
+            
+            <div class="form-group">
+              <label>Corporate Role</label>
+              <div class="custom-select-wrapper">
+                <select id="corpRole" required>
+                  <option value="Head Office Admin">Head Office Admin</option>
+                  <option value="Marketing Manager">Marketing Manager</option>
+                  <option value="Integrated Marketing Services Supervisor">Integrated Marketing Services Supervisor</option>
+                  <option value="Performance Marketing Specialist">Performance Marketing Specialist</option>
+                  <option value="CRM & Data Analyst">CRM & Data Analyst</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="corpPassword" placeholder="Secure password" required />
             </div>
           </div>
-
-          <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="corpPassword" placeholder="Secure password" required />
-          </div>
           
-          <div class="form-actions" style="grid-column: 1 / -1;">
-            <button type="submit" class="btn-primary" id="addCorpBtn">
-              <i class="ph ph-user-plus"></i> Register User
-            </button>
-          </div>
+          <button type="submit" class="btn-primary" id="addCorpBtn" style="margin-top: 16px;">
+            <i class="ph ph-user-plus"></i> Register User
+          </button>
         </form>
         <div id="corpErrorMsg" class="error-text" style="display: none; margin-top: 10px;"></div>
       </div>
 
       <!-- Corporate Users Table -->
-      <div class="card table-card">
-        <div class="card-header flex-between">
-          <h3 class="card-title">Corporate Directory</h3>
+      <div class="panel">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <h2 class="panel-title">Corporate Directory</h2>
+          <div style="position:relative;">
+            <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
+            <input type="text" id="searchCorp" placeholder="Search directory..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
+          </div>
         </div>
         <div class="table-responsive">
           <table class="data-table">
@@ -205,6 +212,17 @@
     document.getElementById("logoutBtn").addEventListener("click", () => {
       localStorage.removeItem("token");
       window.location.href = "login.html";
+    });
+
+    // Search functionality
+    document.getElementById("searchCorp").addEventListener("input", function() {
+      const q = this.value.toLowerCase();
+      const rows = document.querySelectorAll("#corporateTableBody tr");
+      rows.forEach(row => {
+        if (row.cells.length > 1) { // Skip "Loading" or "No data" rows
+          row.style.display = row.textContent.toLowerCase().includes(q) ? "" : "none";
+        }
+      });
     });
   });
 
