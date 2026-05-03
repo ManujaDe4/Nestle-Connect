@@ -560,8 +560,10 @@ h1, h2, h3, h4, h5, h6 {
   .stat-grid {
     grid-template-columns: 1fr;
   }
-  .form-grid {
-    grid-template-columns: 1fr;
+  .form-grid,
+  .form-grid[style*="repeat(2"],
+  .form-grid[style*="repeat(3"] {
+    grid-template-columns: 1fr !important;
   }
   .modern-table th, .modern-table td {
     padding: 12px 8px;
