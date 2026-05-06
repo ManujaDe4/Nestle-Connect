@@ -23,6 +23,9 @@ test.describe('Module 2: Shop Registration', () => {
     
     await page.fill('input[id="nicNumber"]', '198512345678'); 
     
+    // Select an area (required field)
+    await page.selectOption('select[id="shopArea"]', { index: 1 });
+
     // Click the submit button
     await page.click('button[id="registerBtn"]');
 
