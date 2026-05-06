@@ -203,6 +203,19 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    
+    // 7. SMS Logs table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sms_logs (
+        id SERIAL PRIMARY KEY,
+        recipient_mobile VARCHAR(15) NOT NULL,
+        message TEXT NOT NULL,
+        sms_type VARCHAR(30),
+        related_id VARCHAR(50),
+        status VARCHAR(20) DEFAULT 'sent',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
     const existingAdmin = await pool.query("SELECT id FROM users WHERE username = 'admin'");
     if (existingAdmin.rows.length === 0) {

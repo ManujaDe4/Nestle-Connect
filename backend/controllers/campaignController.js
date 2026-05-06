@@ -1,4 +1,7 @@
 const pool = require("../config/db");
+const { generateClaimId, generateVoucherCode } = require("../utils/generateCodes");
+const normalizeMobile = require("../utils/normalizeMobile");
+const sendSMS = require("../services/sms");
 
 // Create a new campaign and disable old ones
 const createCampaign = async (req, res) => {
@@ -286,6 +289,99 @@ const deleteCampaign = async (req, res) => {
   }
 };
 
+// Bulk register numbers to a campaign
+const registerNumbersToCampaign = async (req, res) => {
+  try {
+    const { campaign_id } = req.params;
+    let { numbers, ad_id, platform } = req.body;
+
+    if (!numbers || !campaign_id) {
+      return res.status(400).json({ message: "Numbers and campaign_id are required" });
+    }
+
+    // Default values
+    ad_id = ad_id || "MANUAL";
+    platform = platform || "manual";
+
+    // Ensure numbers is an array
+    if (typeof numbers === "string") {
+      numbers = numbers.split(/[\n,]+/).map(n => n.trim()).filter(n => n.length > 0);
+    }
+
+    if (!Array.isArray(numbers) || numbers.length === 0) {
+      return res.status(400).json({ message: "Invalid numbers format" });
+    }
+
+    // Check if campaign exists and is active
+    const campaignCheck = await pool.query(
+      "SELECT * FROM campaigns WHERE campaign_id = $1 AND status = 'active'",
+      [campaign_id]
+    );
+
+    if (campaignCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Active campaign not found" });
+    }
+
+    const results = {
+      total: numbers.length,
+      success: 0,
+      skipped: 0,
+      errors: []
+    };
+
+    for (const rawNumber of numbers) {
+      try {
+        const normalized = normalizeMobile(rawNumber);
+
+        // Check if already exists for THIS campaign and THIS ad_id
+        const existingCheck = await pool.query(
+          "SELECT id FROM vouchers WHERE customer_mobile = $1 AND campaign_id = $2 AND ad_id = $3",
+          [normalized, campaign_id, ad_id]
+        );
+
+        if (existingCheck.rows.length > 0) {
+          results.skipped++;
+          continue;
+        }
+
+        const claimId = generateClaimId(platform);
+        const voucherCode = generateVoucherCode(platform);
+
+        const insertQuery = `
+          INSERT INTO vouchers
+          (claim_id, campaign_id, ad_id, platform, customer_mobile, voucher_code, claim_status, expiry_status, sms_sent)
+          VALUES ($1, $2, $3, $4, $5, $6, 'claimed', 'active', true)
+          RETURNING *;
+        `;
+
+        const values = [claimId, campaign_id, ad_id, platform, normalized, voucherCode];
+        await pool.query(insertQuery, values);
+
+        // Send SMS
+        await sendSMS(
+          normalized,
+          `Your Nestlé voucher code is ${voucherCode}. Enjoy your offer!`,
+          "voucher_customer",
+          claimId
+        );
+
+        results.success++;
+      } catch (err) {
+        console.error(`Error registering ${rawNumber}:`, err.message);
+        results.errors.push({ number: rawNumber, error: err.message });
+      }
+    }
+
+    res.status(200).json({
+      message: "Registration process completed",
+      results
+    });
+  } catch (error) {
+    console.error("registerNumbersToCampaign error:", error);
+    res.status(500).json({ message: "Server error while registering numbers" });
+  }
+};
+
 // Auto-expire campaigns that have reached their end_date
 const checkAndExpireCampaigns = async () => {
   try {
@@ -324,6 +420,7 @@ module.exports = {
   expireCampaign,
   getCampaignStats,
   deleteCampaign,
-  checkAndExpireCampaigns
+  checkAndExpireCampaigns,
+  registerNumbersToCampaign
 };
 
