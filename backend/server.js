@@ -76,38 +76,112 @@ app.get("/claim", (req, res) => {
 ========================= */
 async function initDatabase() {
   try {
+    // 1. Users table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(50) UNIQUE NOT NULL,
+        employee_id VARCHAR(50) UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
         role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'rep')),
+        province VARCHAR(100),
+        region VARCHAR(100),
+        area VARCHAR(100),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    // Users table columns
+    // 2. Campaigns table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS campaigns (
+        id SERIAL PRIMARY KEY,
+        campaign_id VARCHAR(20) UNIQUE NOT NULL,
+        campaign_name VARCHAR(100) NOT NULL,
+        description TEXT,
+        start_date TIMESTAMP NOT NULL,
+        end_date TIMESTAMP NOT NULL,
+        objective VARCHAR(50),
+        target_audience VARCHAR(50),
+        voucher_value VARCHAR(50),
+        voucher_limit INTEGER,
+        budget NUMERIC(10,2),
+        banner_url VARCHAR(255),
+        status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('draft', 'active', 'expired', 'disabled')),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 3. Shops table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS shops (
+        id SERIAL PRIMARY KEY,
+        shop_id VARCHAR(20) UNIQUE NOT NULL,
+        shop_name VARCHAR(100) NOT NULL,
+        owner_mobile VARCHAR(15) NOT NULL,
+        nic_number VARCHAR(20),
+        qr_slug VARCHAR(50) UNIQUE NOT NULL,
+        rep_id INTEGER REFERENCES users(id),
+        created_by_rep_id INTEGER REFERENCES users(id),
+        qr_identifier VARCHAR(100) UNIQUE,
+        province VARCHAR(100),
+        region VARCHAR(100),
+        area VARCHAR(100),
+        br_number VARCHAR(100),
+        address TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Ensure all users columns exist
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS employee_id VARCHAR(50) UNIQUE`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS province VARCHAR(100)`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS region VARCHAR(100)`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS area VARCHAR(100)`);
 
-    // Shops table columns
-    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS rep_id INTEGER REFERENCES users(id)`);
-    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS created_by_rep_id INTEGER REFERENCES users(id)`);
-    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS qr_identifier VARCHAR(100) UNIQUE`);
+    // Ensure all campaigns columns exist
+    await pool.query(`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS objective VARCHAR(50)`);
+    await pool.query(`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS target_audience VARCHAR(50)`);
+    await pool.query(`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS voucher_value VARCHAR(50)`);
+    await pool.query(`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS voucher_limit INTEGER`);
+    await pool.query(`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS budget NUMERIC(10,2)`);
+    await pool.query(`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS banner_url VARCHAR(255)`);
+
+    // Ensure all shops columns exist (for migration)
+    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS br_number VARCHAR(100)`);
+    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS address TEXT`);
     await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS province VARCHAR(100)`);
     await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS region VARCHAR(100)`);
     await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS area VARCHAR(100)`);
-    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS br_number VARCHAR(100)`);
-    await pool.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS address TEXT`);
 
+    // 4. Vouchers table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS vouchers (
+        id SERIAL PRIMARY KEY,
+        claim_id VARCHAR(30) UNIQUE NOT NULL,
+        campaign_id VARCHAR(20) NOT NULL REFERENCES campaigns(campaign_id) ON DELETE CASCADE,
+        ad_id VARCHAR(20) NOT NULL,
+        platform VARCHAR(20),
+        customer_mobile VARCHAR(15) NOT NULL,
+        voucher_code VARCHAR(20) NOT NULL,
+        claim_status VARCHAR(20) DEFAULT 'claimed' CHECK (claim_status IN ('claimed', 'redeemed', 'expired', 'disabled')),
+        expiry_status VARCHAR(20) DEFAULT 'active' CHECK (expiry_status IN ('active', 'expired')),
+        sms_sent BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Ensure all vouchers columns exist
+    await pool.query(`ALTER TABLE vouchers ADD COLUMN IF NOT EXISTS platform VARCHAR(20)`);
+    await pool.query(`ALTER TABLE vouchers ADD COLUMN IF NOT EXISTS sms_sent BOOLEAN DEFAULT FALSE`);
+
+    // 5. Redemptions table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS redemptions (
         id SERIAL PRIMARY KEY,
         redemption_id VARCHAR(30) UNIQUE NOT NULL,
-        claim_id VARCHAR(30) NOT NULL,
-        shop_id VARCHAR(20) NOT NULL,
+        claim_id VARCHAR(30) NOT NULL REFERENCES vouchers(claim_id) ON DELETE CASCADE,
+        shop_id VARCHAR(20) NOT NULL REFERENCES shops(shop_id) ON DELETE CASCADE,
         otp_code VARCHAR(10) NOT NULL,
         otp_status VARCHAR(20) DEFAULT 'pending',
         final_status VARCHAR(20) DEFAULT 'pending',
@@ -117,6 +191,8 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // 6. Activity Logs table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS activity_logs (
         id SERIAL PRIMARY KEY,

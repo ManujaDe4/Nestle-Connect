@@ -3,12 +3,16 @@ const pool = require("../config/db");
 // Create a new campaign and disable old ones
 const createCampaign = async (req, res) => {
   try {
+    console.log("createCampaign called with:", JSON.stringify(req.body, null, 2));
+    console.log("User role:", req.user?.role);
+
     const { 
       campaign_id, campaign_name, description, start_date, end_date,
       objective, target_audience, voucher_value, voucher_limit, budget, banner_url
     } = req.body;
 
     if (!campaign_id || !campaign_name || !start_date || !end_date) {
+      console.log("Validation failed: Missing required fields");
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -19,11 +23,12 @@ const createCampaign = async (req, res) => {
     );
 
     if (existingCheck.rows.length > 0) {
+      console.log("Validation failed: Campaign ID already exists:", campaign_id);
       return res.status(409).json({ message: "Campaign ID already exists" });
     }
 
-    // Removed the constraint that disabled previous active campaigns.
     // Multiple campaigns can now run concurrently.
+    console.log("Proceeding to insert campaign...");
 
     // Insert new campaign
     const insertQuery = `
@@ -49,12 +54,14 @@ const createCampaign = async (req, res) => {
       banner_url || null
     ]);
 
+    console.log("Campaign created successfully:", result.rows[0].campaign_id);
+
     res.status(201).json({
       message: "Campaign created successfully.",
       campaign: result.rows[0]
     });
   } catch (error) {
-    console.error("createCampaign error:", error);
+    console.error("createCampaign error details:", error);
     res.status(500).json({ message: "Server error while creating campaign" });
   }
 };
