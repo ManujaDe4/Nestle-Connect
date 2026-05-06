@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 test.describe('Module 4: Consumer Claim Flow', () => {
 
   test('TC_40: Valid Mobile Number Claim', async ({ page }) => {
-    await page.goto('https://nestle-connect.onrender.com/claim-offer.html'); 
+    await page.goto('/claim-offer.html'); 
     
     // Injecting the actual mobile number instead of a dummy variable
     await page.fill('input[id="mobileNumber"]', '0773369997');
@@ -21,7 +21,7 @@ test.describe('Module 4: Consumer Claim Flow', () => {
   });
 
   test('TC_41: Invalid Mobile Number Format', async ({ page }) => {
-    await page.goto('https://nestle-connect.onrender.com/claim-offer.html'); 
+    await page.goto('/claim-offer.html'); 
     
     await page.fill('input[id="mobileNumber"]', '12345');
     await page.click('button[id="claimBtn"]');

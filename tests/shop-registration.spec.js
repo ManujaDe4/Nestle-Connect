@@ -4,7 +4,7 @@ test.describe('Module 2: Shop Registration', () => {
 
   test.beforeEach(async ({ page }) => {
     // 1. Go to the live login page
-    await page.goto('https://nestle-connect.onrender.com/login.html'); 
+    await page.goto('/login.html'); 
     
     // 2. Log in as the Delivery Partner (Rep)
     await page.fill('input[id="username"]', 'manu'); 
@@ -13,7 +13,7 @@ test.describe('Module 2: Shop Registration', () => {
 
     // 3. Wait until the dashboard loads, then manually go to the registration page
     await page.waitForURL(/.*rep-dashboard.html/);
-    await page.goto('https://nestle-connect.onrender.com/shop-owner-registration.html');
+    await page.goto('/shop-owner-registration.html');
   });
 
   test('TC_14: Shop Reg - Valid Submit', async ({ page }) => {
