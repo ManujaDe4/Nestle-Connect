@@ -962,37 +962,6 @@
   </div>
 </div>
 
-<!-- ── Register Numbers Modal ── -->
-<div class="modal-overlay" id="registerNumbersModal" style="display:none; align-items:center; justify-content:center;">
-  <div class="modal-box" style="max-width: 500px; width: 100%;">
-    <div class="modal-title"><i class="ph ph-user-plus" style="color:#3b82f6;"></i> Register Numbers</div>
-    <p class="modal-desc">Add phone numbers to campaign <strong id="regCampaignIdLabel"></strong>. Each number will receive a voucher SMS.</p>
-    
-    <div style="margin-top:20px;">
-      <label style="font-size:0.85rem; font-weight:600; color:#64748b; display:block; margin-bottom:8px;">Phone Numbers (Comma or Newline separated)</label>
-      <textarea id="regNumbersInput" rows="6" class="modal-input" style="resize:none; padding:12px; width: 100%; box-sizing: border-box;" placeholder="0771234567&#10;0719876543"></textarea>
-      <span class="helper-text" style="font-size:0.75rem; color:#94a3b8; margin-top:6px; display:block;">Enter multiple numbers to register them in bulk.</span>
-    </div>
-
-    <div id="regSummary" style="display:none; margin-top:20px; padding:14px; border-radius:10px; background:#f0f9ff; border:1px solid #bae6fd;">
-      <div style="font-weight:700; font-size:0.9rem; color:#0369a1; margin-bottom:6px;">Process Complete</div>
-      <div style="font-size:0.85rem; color:#0c4a6e; display:flex; flex-direction:column; gap:4px;">
-        <div id="regSummaryTotal">Total: 0</div>
-        <div id="regSummarySuccess" style="color:#059669;">Success: 0</div>
-        <div id="regSummarySkipped" style="color:#b45309;">Skipped (Already registered): 0</div>
-        <div id="regSummaryErrors" style="color:#dc2626; display:none;">Errors: 0</div>
-      </div>
-    </div>
-
-    <div class="modal-actions" style="margin-top: 24px;">
-      <button class="btn-cancel-modal" id="regCancelBtn" onclick="closeRegisterModal()">Cancel</button>
-      <button class="btn-primary" id="confirmRegBtn" onclick="confirmRegisterNumbers()" style="flex:1;">
-        <i class="ph ph-paper-plane-tilt"></i> Send Vouchers
-      </button>
-    </div>
-  </div>
-</div>
-
 <!-- Scripts -->
 <script>
   const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://localhost:5000' : 'https://nestle-connect.onrender.com';
@@ -1299,7 +1268,7 @@
           'Content-Type': 'application/json',
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ username, password, role: 'rep', province, region, area }),
+        body: JSON.stringify({ username, password, role: 'sales_distributor', province, region, area }),
       });
       if (response.ok) {
         addRepForm.reset();
@@ -1434,9 +1403,6 @@
             <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="viewCampaignStats('${cid}')">
               <i class="ph ph-chart-bar"></i> Stats
             </button>
-            ${campaign.status === 'active' ? `<button class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-color: #3b82f6; color: #1d4ed8;" onclick="openRegisterModal('${cid}')">
-              <i class="ph ph-user-plus"></i> Register
-            </button>` : ''}
             <button class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-color: var(--accent-color); color: var(--accent-color);" onclick="openEditModal('${cid}')">
               <i class="ph ph-pencil-simple"></i> Edit
             </button>
@@ -1632,86 +1598,6 @@
 
     const btn = createCampaignForm.querySelector('button');
     const originalText = btn.innerHTML;
-
-    // ── Manual Registration ──
-    let _regCampaignId = null;
-
-    window.openRegisterModal = function(campaignId) {
-      _regCampaignId = campaignId;
-      document.getElementById('regCampaignIdLabel').textContent = campaignId;
-      document.getElementById('regNumbersInput').value = '';
-      document.getElementById('regSummary').style.display = 'none';
-      document.getElementById('regNumbersInput').disabled = false;
-      document.getElementById('confirmRegBtn').style.display = 'inline-flex';
-      document.getElementById('regCancelBtn').textContent = 'Cancel';
-      
-      document.getElementById('registerNumbersModal').style.display = 'flex';
-    };
-
-    window.closeRegisterModal = function() {
-      document.getElementById('registerNumbersModal').style.display = 'none';
-      _regCampaignId = null;
-    };
-
-    window.confirmRegisterNumbers = async function() {
-      const numbersText = document.getElementById('regNumbersInput').value.trim();
-      const btn = document.getElementById('confirmRegBtn');
-      const input = document.getElementById('regNumbersInput');
-      const cancelBtn = document.getElementById('regCancelBtn');
-
-      if (!numbersText) {
-        alert('Please enter at least one phone number.');
-        return;
-      }
-
-      const numbers = numbersText.split(/[\n,]+/).map(n => n.trim()).filter(n => n.length > 0);
-      
-      btn.disabled = true;
-      btn.innerHTML = '<i class="ph ph-circle-notch animate-spin"></i> Processing...';
-      input.disabled = true;
-
-      const token = localStorage.getItem('token');
-      try {
-        const response = await fetch(`${API_BASE}/api/campaigns/${encodeURIComponent(_regCampaignId)}/register`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ numbers })
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          // Show summary
-          document.getElementById('regSummaryTotal').textContent = `Total: ${data.results.total}`;
-          document.getElementById('regSummarySuccess').textContent = `Success: ${data.results.success}`;
-          document.getElementById('regSummarySkipped').textContent = `Skipped (Already registered): ${data.results.skipped}`;
-          
-          if (data.results.errors.length > 0) {
-            document.getElementById('regSummaryErrors').textContent = `Errors: ${data.results.errors.length}`;
-            document.getElementById('regSummaryErrors').style.display = 'block';
-          } else {
-            document.getElementById('regSummaryErrors').style.display = 'none';
-          }
-
-          document.getElementById('regSummary').style.display = 'block';
-          btn.style.display = 'none';
-          cancelBtn.textContent = 'Close';
-        } else {
-          alert(data.message || 'Registration failed.');
-          btn.disabled = false;
-          btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Send Vouchers';
-          input.disabled = false;
-        }
-      } catch (err) {
-        console.error('Registration error:', err);
-        alert('Network error. Please try again.');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Send Vouchers';
-        input.disabled = false;
-      }
-    };
     btn.innerHTML = 'Launching...';
     btn.disabled = true;
 

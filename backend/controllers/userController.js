@@ -65,25 +65,25 @@ const createUser = async (req, res) => {
   if (!username || !password || !role) {
     return res.status(400).json({ message: 'Username, password, and role are required' });
   }
-  if (!['admin', 'rep'].includes(role)) {
+  if (!['admin', 'sales_distributor'].includes(role)) {
     return res.status(400).json({ message: 'Invalid role' });
   }
   try {
     let newEmployeeId = null;
 
-    if (role === 'rep') {
+    if (role === 'sales_distributor') {
       const locPrefix = getLocationPrefix(province, region);
-      const repPrefix = `REP-${locPrefix}-`;
+      const sdPrefix = `SD-${locPrefix}-`;
       
-      // Find the latest REP ID for THIS specific prefix
-      const lastRep = await pool.query("SELECT employee_id FROM users WHERE employee_id LIKE $1 ORDER BY employee_id DESC LIMIT 1", [`${repPrefix}%`]);
+      // Find the latest SD ID for THIS specific prefix
+      const lastSD = await pool.query("SELECT employee_id FROM users WHERE employee_id LIKE $1 ORDER BY employee_id DESC LIMIT 1", [`${sdPrefix}%`]);
       let nextNum = 1;
-      if (lastRep.rows.length > 0) {
-        const lastId = lastRep.rows[0].employee_id;
-        const numPart = lastId.replace(repPrefix, '');
+      if (lastSD.rows.length > 0) {
+        const lastId = lastSD.rows[0].employee_id;
+        const numPart = lastId.replace(sdPrefix, '');
         nextNum = parseInt(numPart, 10) + 1;
       }
-      newEmployeeId = `${repPrefix}${String(nextNum).padStart(6, '0')}`;
+      newEmployeeId = `${sdPrefix}${String(nextNum).padStart(6, '0')}`;
     }
 
     const existing = await pool.query('SELECT id FROM users WHERE username = $1', [username]);

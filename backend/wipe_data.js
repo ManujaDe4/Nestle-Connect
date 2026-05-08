@@ -8,8 +8,8 @@ async function wipeData() {
     await pool.query('DELETE FROM shops;');
     console.log('✅ All shops deleted.');
 
-    await pool.query("DELETE FROM users WHERE role = 'rep';");
-    console.log('✅ All representatives deleted.');
+    await pool.query("DELETE FROM users WHERE role = 'sales_distributor';");
+    console.log('✅ All sales distributors deleted.');
 
     console.log('Database wipe complete.');
     process.exit(0);

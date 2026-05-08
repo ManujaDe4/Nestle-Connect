@@ -28,7 +28,7 @@ const getAllShops = async (req, res) => {
   try {
     let query = "SELECT * FROM shops";
     let params = [];
-    if (req.user.role === 'rep') {
+    if (req.user.role === 'sales_distributor') {
       query += " WHERE rep_id = $1";
       params = [req.user.id];
     }
@@ -75,9 +75,9 @@ const createShop = async (req, res) => {
       counter++;
     }
 
-    // Track which rep created this shop
-    const createdByRepId = req.user.role === 'rep' ? req.user.id : null;
-    const repId = req.user.role === 'rep' ? req.user.id : null;
+    // Track which sales distributor created this shop
+    const createdByRepId = req.user.role === 'sales_distributor' ? req.user.id : null;
+    const repId = req.user.role === 'sales_distributor' ? req.user.id : null;
 
     const insertResult = await pool.query(
       "INSERT INTO shops (shop_id, shop_name, owner_mobile, nic_number, qr_slug, rep_id, created_by_rep_id, province, region, area, br_number, address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
@@ -215,7 +215,7 @@ const exportShopsCSV = async (req, res) => {
   try {
     let query = "SELECT * FROM shops";
     let params = [];
-    if (req.user.role === 'rep') {
+    if (req.user.role === 'sales_distributor') {
       query += " WHERE rep_id = $1";
       params = [req.user.id];
     }

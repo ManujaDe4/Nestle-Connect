@@ -305,7 +305,7 @@
   function checkAuth() {
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user"));
-    if (!token || !user || user.role !== "rep" || !user.province) {
+    if (!token || !user || user.role !== "sales_distributor" || !user.province) {
       // If province is missing, the cache is outdated. Force re-login.
       localStorage.removeItem("token");
       localStorage.removeItem("user");

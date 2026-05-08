@@ -90,7 +90,7 @@
     function checkAuth() {
       const token = localStorage.getItem("token");
       const user = JSON.parse(localStorage.getItem("user"));
-      if (!token || !user || user.role !== "rep") {
+      if (!token || !user || user.role !== "sales_distributor") {
         window.location.href = "login.html";
         return null;
       }

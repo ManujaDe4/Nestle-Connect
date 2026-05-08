@@ -76,6 +76,72 @@ app.get("/claim", (req, res) => {
 ========================= */
 async function initDatabase() {
   try {
+    /* =========================================================
+       PHASE 1 — ROLE MIGRATION  (rep → sales_distributor)
+       Runs idempotently: safe to execute on every startup.
+       ========================================================= */
+
+    // 1a. Drop the old CHECK constraint on users.role (if it still allows 'rep')
+    const constraintResult = await pool.query(`
+      SELECT con.conname
+      FROM pg_constraint con
+      JOIN pg_class rel ON rel.oid = con.conrelid
+      JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
+      WHERE rel.relname = 'users'
+        AND con.contype = 'c'
+        AND pg_get_constraintdef(con.oid) ILIKE '%rep%'
+    `);
+
+    if (constraintResult.rows.length > 0) {
+      for (const row of constraintResult.rows) {
+        await pool.query(`ALTER TABLE users DROP CONSTRAINT "${row.conname}"`);
+        console.log(`  ↳ Dropped old constraint: ${row.conname}`);
+      }
+      // Convert rep rows BEFORE adding the new constraint
+      const repConvert = await pool.query(`
+        UPDATE users SET role = 'sales_distributor' WHERE role = 'rep'
+      `);
+      if (repConvert.rowCount > 0) {
+        console.log(`✓ Converted ${repConvert.rowCount} rep row(s) to sales_distributor`);
+      }
+      // Now add the new constraint
+      await pool.query(`
+        ALTER TABLE users ADD CONSTRAINT users_role_check
+        CHECK (role IN ('admin', 'sales_distributor'))
+      `);
+      console.log('✓ Role constraint migrated (admin, sales_distributor)');
+    }
+
+    // 1c. Rename REP-… employee IDs to SD-…
+    const idRename = await pool.query(`
+      UPDATE users SET employee_id = 'SD-' || SUBSTRING(employee_id FROM 5)
+      WHERE employee_id LIKE 'REP-%'
+    `);
+    if (idRename.rowCount > 0) {
+      console.log(`✓ Renamed ${idRename.rowCount} REP- employee ID(s) to SD-`);
+    }
+
+    // 1d. Rename the legacy 'admin' username to 'sysadmin'
+    const adminRename = await pool.query(`
+      UPDATE users SET username = 'sysadmin' WHERE username = 'admin'
+    `);
+    if (adminRename.rowCount > 0) {
+      console.log('✓ Renamed admin user → sysadmin');
+    }
+
+    // 1e. Assign SYS-000001 to any admin missing an employee_id
+    const sysIdAssign = await pool.query(`
+      UPDATE users SET employee_id = 'SYS-000001'
+      WHERE role = 'admin' AND (employee_id IS NULL OR employee_id = '')
+    `);
+    if (sysIdAssign.rowCount > 0) {
+      console.log(`✓ Assigned SYS-000001 to ${sysIdAssign.rowCount} admin(s)`);
+    }
+
+    /* =========================================================
+       PHASE 2 — TABLE CREATION  (CREATE IF NOT EXISTS)
+       ========================================================= */
+
     // 1. Users table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -83,7 +149,7 @@ async function initDatabase() {
         username VARCHAR(50) UNIQUE NOT NULL,
         employee_id VARCHAR(50) UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
-        role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'rep')),
+        role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'sales_distributor')),
         province VARCHAR(100),
         region VARCHAR(100),
         area VARCHAR(100),
@@ -203,28 +269,18 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    
-    // 7. SMS Logs table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS sms_logs (
-        id SERIAL PRIMARY KEY,
-        recipient_mobile VARCHAR(15) NOT NULL,
-        message TEXT NOT NULL,
-        sms_type VARCHAR(30),
-        related_id VARCHAR(50),
-        status VARCHAR(20) DEFAULT 'sent',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
 
-    const existingAdmin = await pool.query("SELECT id FROM users WHERE username = 'admin'");
+    /* =========================================================
+       PHASE 3 — SEED DEFAULT ADMIN
+       ========================================================= */
+    const existingAdmin = await pool.query("SELECT id FROM users WHERE role = 'admin'");
     if (existingAdmin.rows.length === 0) {
       const passwordHash = await bcrypt.hash('password', 10);
       await pool.query(
-        "INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3)",
-        ['admin', passwordHash, 'admin']
+        "INSERT INTO users (username, password_hash, role, employee_id) VALUES ($1, $2, $3, $4)",
+        ['sysadmin', passwordHash, 'admin', 'SYS-000001']
       );
-      console.log('Created default admin user: admin / password');
+      console.log('Created default admin user: sysadmin / password  (change this immediately!)');
     }
     console.log('✓ Database schema up to date');
   } catch (error) {

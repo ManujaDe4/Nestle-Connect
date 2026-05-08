@@ -8,8 +8,7 @@ const {
   getCampaignById,
   expireCampaign,
   getCampaignStats,
-  deleteCampaign,
-  registerNumbersToCampaign
+  deleteCampaign
 } = require('../controllers/campaignController');
 
 const { authenticate, authorize } = require('../middleware/auth');
@@ -22,7 +21,6 @@ router.get('/active', getActiveCampaigns);
 router.get('/:campaign_id', getCampaignById);
 router.post('/expire', authenticate, authorize(['admin']), expireCampaign);
 router.get('/:campaign_id/stats', authenticate, authorize(['admin']), getCampaignStats);
-router.post('/:campaign_id/register', authenticate, authorize(['admin']), registerNumbersToCampaign);
 router.delete('/:campaign_id', authenticate, authorize(['admin']), deleteCampaign);
 
 
