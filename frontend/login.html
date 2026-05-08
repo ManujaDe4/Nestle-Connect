@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login - Nestlé Connect</title>
   <link rel="stylesheet" href="./css/styles.css" />
+  <script src="./js/config.js"></script>
 </head>
 <body>
 
@@ -22,14 +23,14 @@
 
       <div class="card-header">
         <h1 class="card-title">Login</h1>
-        <p>Access your Nestlé Connect admin or rep workspace securely.</p>
+        <p>Access your Nestlé Connect admin or Sales Distributor workspace securely.</p>
       </div>
 
       <hr class="divider" />
 
       <form id="loginForm">
         <div class="form-group">
-          <label for="username">Username / Rep ID</label>
+          <label for="username">Username / Employee ID</label>
           <input type="text" id="username" placeholder="Enter username or ID" required />
         </div>
 
@@ -50,14 +51,12 @@
       <hr class="divider" />
 
       <div id="responseMsg">Please log in to continue.</div>
-      <p class="card-footer">If you are an admin, use <strong>admin</strong> / <strong>password</strong>. Reps can log in with their assigned credentials.</p>
+      <p class="card-footer">Sales Distributors and admins log in with their assigned credentials.</p>
     </div>
 
   </div>
 
   <script>
-    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://localhost:5000' : 'https://nestle-connect.onrender.com';
-
     const form = document.getElementById("loginForm");
     const loginBtn = document.getElementById("loginBtn");
     const responseMsg = document.getElementById("responseMsg");

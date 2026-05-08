@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Claim Offer</title>
   <link rel="stylesheet" href="./css/styles.css" />
+  <script src="./js/config.js"></script>
 </head>
 
 <body class="offer-body">
@@ -75,11 +76,6 @@
   </div>
 
   <script>
-    // Use localhost for development, production URL for deployed version
-    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') 
-      ? 'http://localhost:5000' 
-      : 'https://nestle-connect.onrender.com';
-
     const claimBtn = document.getElementById("claimBtn");
     const mobileInput = document.getElementById("mobileNumber");
     const responseMsg = document.getElementById("responseMsg");
@@ -97,20 +93,29 @@
     const adId = urlParams.get('ad_id') || 'AD001';
     const platform = urlParams.get('platform') || urlParams.get('src') || 'other';
 
-    // Fetch active campaign on load so we use the correct one
-    if (!campaignId) {
+    // Disable claim until we have a verified active campaign so a fast
+    // click can't submit before the active-campaign fetch resolves.
+    let campaignReady = !!campaignId;
+    if (!campaignReady) {
+      claimBtn.disabled = true;
+      const span = claimBtn.querySelector("span");
+      if (span) span.innerText = "Loading offer...";
+
       fetch(`${API_BASE}/api/campaigns/active`)
         .then(res => res.json())
         .then(data => {
-          if (data && data.length > 0) {
+          if (Array.isArray(data) && data.length > 0) {
             campaignId = data[0].campaign_id;
-          } else {
-            campaignId = 'CMP001'; // Fallback
           }
         })
         .catch(err => {
           console.error("Error fetching active campaign:", err);
-          campaignId = 'CMP001';
+        })
+        .finally(() => {
+          campaignReady = true;
+          claimBtn.disabled = false;
+          const span2 = claimBtn.querySelector("span");
+          if (span2) span2.innerText = "Generate Voucher";
         });
     }
 
@@ -188,7 +193,7 @@
           },
           body: JSON.stringify({
             customer_mobile: customerMobile,
-            campaign_id: campaignId || 'CMP001',
+            campaign_id: campaignId,
             ad_id: adId,
             platform: platform
           })

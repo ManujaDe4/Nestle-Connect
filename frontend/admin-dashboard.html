@@ -106,6 +106,7 @@
     .modal-error { color: #dc2626; font-size: 0.85rem; margin-top: 8px; display: none; }
   </style>
 
+  <script src="./js/config.js"></script>
 </head>
 <body>
 
@@ -124,7 +125,7 @@
     
     <nav class="sidebar-nav">
       <button class="nav-item active" data-tab="reps">
-        <i class="ph ph-users"></i> Reps
+        <i class="ph ph-users"></i> Sales Distributors
       </button>
       <button class="nav-item" data-tab="shops">
         <i class="ph ph-storefront"></i> Shops
@@ -160,7 +161,7 @@
       <button class="mobile-menu-toggle" id="mobileMenuBtn">
         <i class="ph ph-list"></i>
       </button>
-      <h1 class="topbar-title" id="pageTitle">Manage Reps</h1>
+      <h1 class="topbar-title" id="pageTitle">Manage Sales Distributors</h1>
       <div class="user-profile" id="profileToggleBtn" onclick="toggleProfilePanel()" style="cursor:pointer; position:relative;" title="View profile">
         <div class="user-avatar" id="adminAvatarEl">AD</div>
         <div>
@@ -275,8 +276,8 @@
         <div class="panel">
           <div class="panel-header">
             <div>
-              <h2 class="panel-title">Add New Representative</h2>
-              <p class="panel-desc">Create a new field representative account.</p>
+              <h2 class="panel-title">Add New Sales Distributor</h2>
+              <p class="panel-desc">Create a new Sales Distributor account.</p>
             </div>
           </div>
           <form id="addRepForm">
@@ -304,20 +305,20 @@
                 <select id="repArea" required><option value="">Select Area</option></select>
               </div>
             </div>
-            <button type="submit" class="btn-primary"><i class="ph ph-plus-circle"></i> Add Representative</button>
+            <button type="submit" class="btn-primary"><i class="ph ph-plus-circle"></i> Add Sales Distributor</button>
           </form>
         </div>
 
         <div class="panel">
           <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-            <h2 class="panel-title">Existing Representatives</h2>
+            <h2 class="panel-title">Existing Sales Distributors</h2>
             <div style="position:relative;">
               <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
-              <input type="text" id="searchReps" placeholder="Search reps..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
+              <input type="text" id="searchReps" placeholder="Search sales distributors..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
             </div>
           </div>
           <div class="table-responsive" id="repsList">
-            <p>Loading reps...</p>
+            <p>Loading sales distributors...</p>
           </div>
         </div>
       </div>
@@ -391,7 +392,7 @@
         <div class="panel">
           <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
             <div>
-              <h2 class="panel-title">Field Representative Activity Log</h2>
+              <h2 class="panel-title">Field Sales Distributor Activity Log</h2>
               <p class="panel-desc">Monitor campaign rollout progress across regions.</p>
             </div>
             <div style="position:relative;">
@@ -468,7 +469,7 @@
                 <div class="form-group">
                   <label for="campaignName"><i class="ph ph-text-t"></i> Campaign Name</label>
                   <input type="text" id="campaignName" placeholder="e.g. Summer Offer 2026" required />
-                  <span class="helper-text">The display name visible to reps and shop owners.</span>
+                  <span class="helper-text">The display name visible to sales distributors and shop owners.</span>
                 </div>
                 <div class="form-group">
                   <label for="campaignObjective"><i class="ph ph-target"></i> Objective</label>
@@ -964,8 +965,6 @@
 
 <!-- Scripts -->
 <script>
-  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://localhost:5000' : 'https://nestle-connect.onrender.com';
-
   const logoutBtn = document.getElementById("logoutBtn");
   const tabBtns = document.querySelectorAll('.nav-item');
   const tabContents = document.querySelectorAll('.tab-content');
@@ -1026,6 +1025,11 @@
     if (tab === 'campaigns') loadCampaigns();
     if (tab === 'stats') loadStats();
     if (tab === 'roi') { loadRoiAnalytics(); setTimeout(initSriLankaMap, 200); }
+
+    // Always refresh ALL three global summary cards on every tab switch,
+    // regardless of which tab is active. Otherwise users see stale numbers
+    // for any card whose source tab they haven't visited yet.
+    refreshGlobalSummary();
   }
 
   tabBtns.forEach(btn => {
@@ -1035,9 +1039,43 @@
   });
 
   function updateSummary(users, shops, scans) {
-    totalUsers.textContent = users;
-    totalShops.textContent = shops;
-    totalScans.textContent = scans;
+    if (users  !== null && users  !== undefined) totalUsers.textContent = users;
+    if (shops  !== null && shops  !== undefined) totalShops.textContent = shops;
+    if (scans  !== null && scans  !== undefined) totalScans.textContent = scans;
+  }
+
+  /**
+   * Refresh all three global stat cards (Total Users / Registered Shops /
+   * Total QR Scans) in parallel. Called on initial page load AND on every
+   * tab switch so the numbers stay correct everywhere.
+   *
+   * Each card is updated independently — if one of the three endpoints
+   * fails we still update the others.
+   */
+  async function refreshGlobalSummary() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    const auth = { headers: { "Authorization": `Bearer ${token}` } };
+
+    const [usersRes, shopsRes, statsRes] = await Promise.allSettled([
+      fetch(`${API_BASE}/api/users`,           auth).then(r => r.ok ? r.json() : null),
+      fetch(`${API_BASE}/api/shops`,           auth).then(r => r.ok ? r.json() : null),
+      fetch(`${API_BASE}/api/dashboard/admin`, auth).then(r => r.ok ? r.json() : null),
+    ]);
+
+    if (usersRes.status === 'fulfilled' && Array.isArray(usersRes.value)) {
+      totalUsers.textContent = usersRes.value.length;
+    }
+    if (shopsRes.status === 'fulfilled' && Array.isArray(shopsRes.value)) {
+      totalShops.textContent = shopsRes.value.length;
+      shopsList.dataset.count = shopsRes.value.length;
+    }
+    if (statsRes.status === 'fulfilled' && Array.isArray(statsRes.value)) {
+      const totalScansCount = statsRes.value.reduce(
+        (sum, item) => sum + (Number(item.scan_count) || 0), 0
+      );
+      totalScans.textContent = totalScansCount;
+    }
   }
 
   async function loadReps() {
@@ -1048,20 +1086,21 @@
       });
       const reps = await response.json();
       displayReps(reps);
-      updateSummary(reps.length, shopsList.dataset.count || 0, totalScans.textContent || 0);
+      // Refresh ALL summary cards (not just users) so totals stay in sync.
+      refreshGlobalSummary();
     } catch (error) {
-      repsList.innerHTML = "<p>Error loading reps.</p>";
+      repsList.innerHTML = "<p>Error loading sales distributors.</p>";
     }
   }
 
   function displayReps(reps) {
-    let html = "<table class='modern-table'><thead><tr><th>Rep ID</th><th>Name</th><th>Role</th><th>Location</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
+    let html = "<table class='modern-table'><thead><tr><th>Employee ID</th><th>Name</th><th>Role</th><th>Location</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
     reps.forEach(rep => {
       const loc = rep.role === 'admin' ? 'Head Office' : [rep.province, rep.region, rep.area].filter(Boolean).join(', ') || 'Unassigned';
       html += `<tr>
         <td><strong>${rep.employee_id || '-'}</strong></td>
         <td>${rep.username}</td>
-        <td><span class="badge ${rep.role === 'admin' ? 'expired' : 'active'}">${rep.role}</span></td>
+        <td><span class="badge ${rep.role === 'admin' ? 'expired' : 'active'}">${rep.role === 'admin' ? 'Admin' : 'Sales Distributor'}</span></td>
         <td>${loc}</td>
         <td>${new Date(rep.created_at).toLocaleDateString()}</td>
         <td><button class="btn-danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="deleteRep(${rep.id})"><i class="ph ph-trash"></i></button></td>
@@ -1072,7 +1111,7 @@
   }
 
   async function deleteRep(id) {
-    if (!confirm('Delete this rep?')) return;
+    if (!confirm('Delete this user?')) return;
     const token = localStorage.getItem("token");
     try {
       const response = await fetch(`${API_BASE}/api/users/${id}`, {
@@ -1082,10 +1121,10 @@
       if (response.ok) {
         loadReps();
       } else {
-        alert('Error deleting rep');
+        alert('Error deleting user');
       }
     } catch (error) {
-      alert('Error deleting rep');
+      alert('Error deleting user');
     }
   }
 
@@ -1098,7 +1137,7 @@
       const shops = await response.json();
       displayShops(shops);
       shopsList.dataset.count = shops.length;
-      updateSummary(document.querySelectorAll('#repsList table tbody tr').length, shops.length, totalScans.textContent || 0);
+      refreshGlobalSummary();
     } catch (error) {
       shopsList.innerHTML = "<p>Error loading shops.</p>";
     }
@@ -1224,7 +1263,7 @@
       });
       const stats = await response.json();
       displayStats(stats);
-      updateSummary(document.querySelectorAll('#repsList table tbody tr').length, shopsList.dataset.count || 0, stats.reduce((sum, item) => sum + Number(item.scan_count), 0));
+      refreshGlobalSummary();
     } catch (error) {
       statsList.innerHTML = "<p>Error loading stats.</p>";
     }
@@ -1274,10 +1313,10 @@
         addRepForm.reset();
         loadReps();
       } else {
-        alert('Error adding rep');
+        alert('Error adding sales distributor');
       }
     } catch (error) {
-      alert('Error adding rep');
+      alert('Error adding sales distributor');
     } finally {
       btn.innerHTML = originalText;
       btn.disabled = false;
@@ -2235,7 +2274,7 @@
         <div style="padding:24px;width:100%;height:100%;overflow-y:auto;background:#fff;box-sizing:border-box;">
           <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:1rem;color:var(--text-primary);margin-bottom:16px;">Area-Level Campaign Spread</div>
           ${sorted.length === 0
-            ? `<p style="color:#64748b;">No area data yet — ensure reps enter Area when registering shops.</p>`
+            ? `<p style="color:#64748b;">No area data yet — ensure sales distributors enter Area when registering shops.</p>`
             : sorted.map(([a,c]) => `
               <div style="margin-bottom:12px;">
                 <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:4px;">
@@ -2441,17 +2480,77 @@
       const reportDate = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
       const reportTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
+      // Inject a one-off stylesheet that forces PDF-friendly colors during
+      // capture. html2canvas stumbles on modern CSS (oklch/lab, gradients,
+      // backdrop-filter, dark badges over light bg) and that's what makes
+      // text look "highlighted" or invisible in the export. We force every
+      // element to dark-on-light + remove shadows/filters during capture.
+      const exportStyle = document.createElement('style');
+      exportStyle.id = 'pdf-export-style';
+      exportStyle.textContent = `
+        #roiTab, #roiTab * {
+          color: #0f172a !important;
+          text-shadow: none !important;
+          filter: none !important;
+          backdrop-filter: none !important;
+          box-shadow: none !important;
+        }
+        #roiTab .stat-card,
+        #roiTab .panel,
+        #roiTab .modern-table,
+        #roiTab .modern-table th,
+        #roiTab .modern-table td {
+          background: #ffffff !important;
+          border-color: #e2e8f0 !important;
+        }
+        #roiTab .badge {
+          background: #f1f5f9 !important;
+          color: #0f172a !important;
+          border: 1px solid #cbd5e1 !important;
+        }
+        #roiTab .badge.active   { background:#dcfce7 !important; color:#166534 !important; border-color:#86efac !important; }
+        #roiTab .badge.expired  { background:#fee2e2 !important; color:#991b1b !important; border-color:#fecaca !important; }
+        #roiTab a { color: #0f4c81 !important; }
+        #roiTab .stat-icon { background: #eef2ff !important; color: #4338ca !important; }
+        #roiTab .charts-grid { display: grid !important; }
+      `;
+      document.head.appendChild(exportStyle);
+
+      // Wait for fonts AND a layout frame before capturing — otherwise
+      // html2canvas may snapshot before Chart.js / web fonts settle.
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
       const canvas = await html2canvas(roiSection, {
-        scale: 1.8,
+        scale: 2,
         useCORS: true,
         logging: false,
-        allowTaint: true,
-        backgroundColor: '#f0f4fa',
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        imageTimeout: 0,
         windowWidth: roiSection.scrollWidth,
-        windowHeight: roiSection.scrollHeight
+        windowHeight: roiSection.scrollHeight,
+        onclone: (clonedDoc) => {
+          // Belt and braces: re-assert white backgrounds inside the clone.
+          const root = clonedDoc.getElementById('roiTab');
+          if (root) {
+            root.style.background = '#ffffff';
+            root.querySelectorAll('*').forEach(el => {
+              const cs = clonedDoc.defaultView.getComputedStyle(el);
+              // If a node has a transparent / unset bg but its computed bg
+              // would be a CSS variable that fails to resolve, force white.
+              if (cs && cs.backgroundColor === 'rgba(0, 0, 0, 0)') {
+                // leave it — transparency is fine over white
+              }
+            });
+          }
+        }
       });
 
-      // Restore original styles
+      // Remove our injected style + restore original styles
+      exportStyle.remove();
       roiSection.style.cssText = origStyle;
 
       const imgData = canvas.toDataURL('image/png');
@@ -2524,6 +2623,9 @@
       console.error('PDF export error:', err);
       alert('Error generating PDF. Please try again.');
     } finally {
+      // Always tidy up our injected style sheet, even if capture threw.
+      const leftover = document.getElementById('pdf-export-style');
+      if (leftover) leftover.remove();
       btn.innerHTML = '<i class="ph ph-file-pdf"></i> Export PDF';
       btn.disabled = false;
     }
@@ -2616,7 +2718,7 @@
     });
   });
 
-  switchTab('reps', 'Manage Reps');
+  switchTab('reps', 'Manage Sales Distributors');
 
   // ── Profile Panel ─────────────────────────────────────────────────────────
   let _profileOpen = false;
@@ -2661,7 +2763,7 @@
       _profileData = u;
 
       const initials = (u.username || 'AD').slice(0, 2).toUpperCase();
-      const roleLabel = u.role === 'admin' ? 'Administrator' : 'Sales Representative';
+      const roleLabel = u.role === 'admin' ? 'Administrator' : 'Sales Distributor';
       const region = u.role === 'admin'
         ? 'Head Office'
         : ([u.province, u.region, u.area].filter(Boolean).join(' › ') || '—');

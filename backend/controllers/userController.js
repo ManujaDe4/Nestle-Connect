@@ -2,6 +2,24 @@ const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 const { getLocationPrefix } = require('../utils/locationCodes');
 
+/**
+ * Generate the next sequential employee_id for a given prefix.
+ * Used for both Sales Distributors (SD-{loc}-) and admins (SYS-).
+ */
+async function nextEmployeeId(prefix) {
+  const last = await pool.query(
+    "SELECT employee_id FROM users WHERE employee_id LIKE $1 ORDER BY employee_id DESC LIMIT 1",
+    [`${prefix}%`]
+  );
+  let nextNum = 1;
+  if (last.rows.length > 0 && last.rows[0].employee_id) {
+    const numPart = last.rows[0].employee_id.replace(prefix, '');
+    const parsed = parseInt(numPart, 10);
+    if (!Number.isNaN(parsed)) nextNum = parsed + 1;
+  }
+  return `${prefix}${String(nextNum).padStart(6, '0')}`;
+}
+
 const getMyProfile = async (req, res) => {
   try {
     const result = await pool.query(
@@ -73,17 +91,9 @@ const createUser = async (req, res) => {
 
     if (role === 'sales_distributor') {
       const locPrefix = getLocationPrefix(province, region);
-      const sdPrefix = `SD-${locPrefix}-`;
-      
-      // Find the latest SD ID for THIS specific prefix
-      const lastSD = await pool.query("SELECT employee_id FROM users WHERE employee_id LIKE $1 ORDER BY employee_id DESC LIMIT 1", [`${sdPrefix}%`]);
-      let nextNum = 1;
-      if (lastSD.rows.length > 0) {
-        const lastId = lastSD.rows[0].employee_id;
-        const numPart = lastId.replace(sdPrefix, '');
-        nextNum = parseInt(numPart, 10) + 1;
-      }
-      newEmployeeId = `${sdPrefix}${String(nextNum).padStart(6, '0')}`;
+      newEmployeeId = await nextEmployeeId(`SD-${locPrefix}-`);
+    } else if (role === 'admin') {
+      newEmployeeId = await nextEmployeeId('SYS-');
     }
 
     const existing = await pool.query('SELECT id FROM users WHERE username = $1', [username]);

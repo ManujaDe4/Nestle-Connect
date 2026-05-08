@@ -10,6 +10,7 @@
         .search-bar { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9rem; }
         #reader { width: 100%; max-width: 400px; margin: 0 auto 16px auto; display: none; }
     </style>
+  <script src="./js/config.js"></script>
 </head>
 <body>
     <div class="qr-mapping-container">
@@ -82,7 +83,6 @@
     </div>
 
     <script>
-        const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') ? 'http://localhost:5000' : 'https://nestle-connect.onrender.com';
         const token = localStorage.getItem('token');
         let shops = [];
         let selectedShop = null;

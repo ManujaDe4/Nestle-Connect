@@ -1,18 +1,21 @@
 import { test, expect } from '@playwright/test';
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
-
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
+test('login page loads', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveTitle(/Login.*Nestl/i);
+  await expect(page.locator('#loginForm')).toBeVisible();
 });
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test('claim entry page is reachable', async ({ page }) => {
+  await page.goto('/claim');
+  await expect(page.locator('a#claimLink')).toBeVisible();
+});
 
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
-
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+test('admin can log in with seeded credentials', async ({ page }) => {
+  await page.goto('/');
+  await page.fill('#username', 'sysadmin');
+  await page.fill('#password', 'password');
+  await page.click('#loginBtn');
+  await page.waitForURL(/admin-dashboard\.html/);
+  await expect(page).toHaveURL(/admin-dashboard\.html/);
 });

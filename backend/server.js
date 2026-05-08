@@ -81,7 +81,7 @@ async function initDatabase() {
        Runs idempotently: safe to execute on every startup.
        ========================================================= */
 
-    // 1a. Drop the old CHECK constraint on users.role (if it still allows 'rep')
+    // 1a. Handle constraints
     const constraintResult = await pool.query(`
       SELECT con.conname
       FROM pg_constraint con
@@ -97,19 +97,19 @@ async function initDatabase() {
         await pool.query(`ALTER TABLE users DROP CONSTRAINT "${row.conname}"`);
         console.log(`  ↳ Dropped old constraint: ${row.conname}`);
       }
-      // Convert rep rows BEFORE adding the new constraint
-      const repConvert = await pool.query(`
-        UPDATE users SET role = 'sales_distributor' WHERE role = 'rep'
-      `);
-      if (repConvert.rowCount > 0) {
-        console.log(`✓ Converted ${repConvert.rowCount} rep row(s) to sales_distributor`);
-      }
-      // Now add the new constraint
       await pool.query(`
         ALTER TABLE users ADD CONSTRAINT users_role_check
         CHECK (role IN ('admin', 'sales_distributor'))
       `);
-      console.log('✓ Role constraint migrated (admin, sales_distributor)');
+      console.log('✓ Role constraint updated (admin, sales_distributor)');
+    }
+
+    // 1b. Convert existing rep rows (Ensures this runs even if constraint was already gone)
+    const repConvert = await pool.query(`
+      UPDATE users SET role = 'sales_distributor' WHERE role = 'rep'
+    `);
+    if (repConvert.rowCount > 0) {
+      console.log(`✓ Converted ${repConvert.rowCount} rep row(s) to sales_distributor`);
     }
 
     // 1c. Rename REP-… employee IDs to SD-…
@@ -121,12 +121,16 @@ async function initDatabase() {
       console.log(`✓ Renamed ${idRename.rowCount} REP- employee ID(s) to SD-`);
     }
 
-    // 1d. Rename the legacy 'admin' username to 'sysadmin'
-    const adminRename = await pool.query(`
-      UPDATE users SET username = 'sysadmin' WHERE username = 'admin'
-    `);
-    if (adminRename.rowCount > 0) {
-      console.log('✓ Renamed admin user → sysadmin');
+    // 1d. Handle admin -> sysadmin rename (with conflict check)
+    const sysadminCheck = await pool.query("SELECT id FROM users WHERE username = 'sysadmin'");
+    if (sysadminCheck.rows.length > 0) {
+      // sysadmin already exists, if 'admin' also exists, remove it
+      const deleteAdmin = await pool.query("DELETE FROM users WHERE username = 'admin'");
+      if (deleteAdmin.rowCount > 0) console.log('✓ Removed redundant admin user (sysadmin already exists)');
+    } else {
+      // sysadmin doesn't exist, try to rename admin
+      const adminRename = await pool.query("UPDATE users SET username = 'sysadmin' WHERE username = 'admin'");
+      if (adminRename.rowCount > 0) console.log('✓ Renamed admin user → sysadmin');
     }
 
     // 1e. Assign SYS-000001 to any admin missing an employee_id

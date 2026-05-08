@@ -1,6 +1,5 @@
 const axios = require("axios");
 const pool = require("../config/db");
-const { response } = require("express");
 
 async function sendSMS(to, message, smsType = "general", relatedId = null) {
   const token = process.env.TEXTLK_API_TOKEN;
@@ -14,14 +13,8 @@ async function sendSMS(to, message, smsType = "general", relatedId = null) {
   try {
     const res = await axios.post(
       "https://app.text.lk/api/v3/sms/send",
+      { recipient, sender_id: senderId, type: "plain", message },
       {
-        recipient,
-        sender_id: senderId,
-        type: "plain",
-        message
-      },
-      {
-
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -30,33 +23,23 @@ async function sendSMS(to, message, smsType = "general", relatedId = null) {
       }
     );
 
-    // log sent SMS
     await pool.query(
       `INSERT INTO sms_logs (recipient_mobile, message, sms_type, related_id, status)
        VALUES ($1, $2, $3, $4, $5)`,
-      [to, message, smsType, relatedId, "sent"]
+      [recipient, message, smsType, relatedId, "sent"]
     );
 
-    return {
-      success: true,
-      provider: "textlk",
-      response: res.data  
-    };
+    return { success: true, provider: "textlk", response: res.data };
   } catch (error) {
     console.error("Text.lk SMS error:", error.response?.data || error.message);
 
-    // fallback log
     await pool.query(
       `INSERT INTO sms_logs (recipient_mobile, message, sms_type, related_id, status)
        VALUES ($1, $2, $3, $4, $5)`,
-      [to, message, smsType, relatedId, "failed"]
+      [recipient, message, smsType, relatedId, "failed"]
     );
 
-    return {
-      success: false,
-      provider: "textlk",
-      error: error.response?.data || error.message
-    };
+    return { success: false, provider: "textlk", error: error.response?.data || error.message };
   }
 }
 

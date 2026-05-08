@@ -1,7 +1,10 @@
+const crypto = require("crypto");
+
 function randomDigits(length = 4) {
+  // crypto.randomInt is uniform; Math.random is not.
   let result = "";
   for (let i = 0; i < length; i++) {
-    result += Math.floor(Math.random() * 10);
+    result += crypto.randomInt(0, 10);
   }
   return result;
 }
@@ -14,7 +17,7 @@ function getPlatformPrefix(platform) {
   if (p === 'tiktok') return 'TT';
   if (p === 'twitter' || p === 'x') return 'X';
   if (p === 'youtube') return 'YT';
-  return 'OTH'; // Other
+  return 'OTH';
 }
 
 function generateClaimId(platform = '') {
@@ -32,7 +35,7 @@ function generateVoucherCode(platform = '') {
 }
 
 function generateOtpCode() {
-  return randomDigits(4);
+  return randomDigits(6);
 }
 
 module.exports = {

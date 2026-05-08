@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Store Verification</title>
   <link rel="stylesheet" href="./css/styles.css" />
+  <script src="./js/config.js"></script>
 </head>
 <body>
 
@@ -70,8 +71,6 @@
   </div>
 
   <script>
-    const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://nestle-connect.onrender.com';
-
     let shopSlug = "";
     let hasActiveCampaigns = false;
 
@@ -211,17 +210,25 @@
         }
 
         const redemptionId = data.redemption?.redemption_id || data.redemption_id || null;
-        const otpCode = data.redemption?.otp_code || data.otp_code || "(hidden)";
+        const otpCode = data.redemption?.otp_code || data.otp_code || null;
 
-        // store for owner verification
         if (redemptionId) {
           localStorage.setItem("latestRedemptionId", redemptionId);
         }
 
-        setMessage(
-          `OTP sent successfully.<br><br><b>Demo OTP:</b> ${otpCode}`,
-          "success"
-        );
+        // Backend only returns the OTP when DEMO_MODE=true. In production
+        // the OTP is sent only by SMS, never echoed in the API response.
+        if (data.demo_mode && otpCode) {
+          setMessage(
+            `OTP sent successfully.<br><br><b>Demo OTP:</b> ${otpCode}`,
+            "success"
+          );
+        } else {
+          setMessage(
+            "OTP sent successfully via SMS to the customer and shop owner.",
+            "success"
+          );
+        }
 
         successSection.style.display = "block";
       } catch (err) {

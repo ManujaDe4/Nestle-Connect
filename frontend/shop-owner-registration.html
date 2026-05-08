@@ -6,6 +6,7 @@
   <title>Shop Owner Registration</title>
   <link rel="stylesheet" href="./css/styles.css" />
   <script src="./js/locations.js"></script>
+  <script src="./js/config.js"></script>
 </head>
 <body>
 
@@ -15,7 +16,7 @@
       <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" class="brand-logo" />
       <span class="brand-name">Nestlé Connect</span>
       <span class="brand-divider">·</span>
-      <span class="brand-sub">Rep Portal</span>
+      <span class="brand-sub">Sales Distributor Portal</span>
     </div>
 
     <div class="card">
@@ -85,8 +86,6 @@
   </div>
 
   <script>
-    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:5000' : 'https://nestle-connect.onrender.com';
-
     function checkAuth() {
       const token = localStorage.getItem("token");
       const user = JSON.parse(localStorage.getItem("user"));
