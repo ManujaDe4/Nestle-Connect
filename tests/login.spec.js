@@ -4,7 +4,7 @@ test.describe('Module 1: Authentication', () => {
 
   // Runs before every single test to ensure we start at the login page
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://nestle-connect.onrender.com/login.html');
+    await page.goto('/login.html');
   });
 
   test('TC_01: Admin Login Success', async ({ page }) => {

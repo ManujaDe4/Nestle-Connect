@@ -4,7 +4,7 @@ test.describe('Module 3: QR Mapping & Linking', () => {
 
   test.beforeEach(async ({ page }) => {
     // 1. Go to the live login page
-    await page.goto('https://nestle-connect.onrender.com/login.html'); 
+    await page.goto('/login.html'); 
     
     // 2. Log in using the Rep credentials
     await page.fill('input[id="username"]', 'manu'); 
@@ -13,7 +13,7 @@ test.describe('Module 3: QR Mapping & Linking', () => {
 
     // 3. Wait until the dashboard loads, then go to the QR mapping page
     await page.waitForURL(/.*rep-dashboard.html/);
-    await page.goto('https://nestle-connect.onrender.com/qr-mapping.html');
+    await page.goto('/qr-mapping.html');
   });
 
   test('TC_25: QR Map - Single Valid Link', async ({ page }) => {

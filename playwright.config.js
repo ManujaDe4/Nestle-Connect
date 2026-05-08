@@ -26,10 +26,18 @@ export default defineConfig({
   /* Shared settings for all the projects below. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'https://nestle-connect.onrender.com',
+    baseURL: 'http://localhost:5000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+  },
+
+  /* Run your local dev server before starting the tests */
+  webServer: {
+    command: 'npm start',
+    cwd: './backend',
+    url: 'http://localhost:5000',
+    reuseExistingServer: !process.env.CI,
   },
 
   /* Configure projects for major browsers */
