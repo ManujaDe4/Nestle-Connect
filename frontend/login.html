@@ -122,7 +122,12 @@
           localStorage.setItem("user", JSON.stringify(data.user));
           setMessage("Login successful! Redirecting...", "success");
           setTimeout(() => {
-            if (data.user.role === "admin") {
+            const staffRoles = [
+              "admin", "sys_admin", "digital_marketing_manager",
+              "digital_content_specialist", "digital_media_performance_manager",
+              "social_media_influencer_strategist", "crm_data_analyst", "digital_marketing_intern"
+            ];
+            if (staffRoles.includes(data.user.role)) {
               window.location.href = "admin-dashboard.html";
             } else if (data.user.role === "sales_distributor") {
               window.location.href = "rep-dashboard.html";

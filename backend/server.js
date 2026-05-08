@@ -138,6 +138,23 @@ async function initDatabase() {
       console.log(`✓ Assigned SYS-000001 to ${sysIdAssign.rowCount} admin(s)`);
     }
 
+    // 1f. Expand role constraint to include all digital marketing staff roles
+    try {
+      await pool.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`);
+      await pool.query(`
+        ALTER TABLE users ADD CONSTRAINT users_role_check
+        CHECK (role IN (
+          'admin', 'sys_admin', 'sales_distributor',
+          'digital_marketing_manager', 'digital_content_specialist',
+          'digital_media_performance_manager', 'social_media_influencer_strategist',
+          'crm_data_analyst', 'digital_marketing_intern'
+        ))
+      `);
+      console.log('✓ Role constraint updated with all staff roles');
+    } catch (e) {
+      console.log('Role constraint update skipped:', e.message);
+    }
+
     /* =========================================================
        PHASE 2 — TABLE CREATION  (CREATE IF NOT EXISTS)
        ========================================================= */
@@ -149,10 +166,11 @@ async function initDatabase() {
         username VARCHAR(50) UNIQUE NOT NULL,
         employee_id VARCHAR(50) UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
-        role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'sales_distributor')),
+        role VARCHAR(50) NOT NULL,
         province VARCHAR(100),
         region VARCHAR(100),
         area VARCHAR(100),
+        permissions JSONB DEFAULT '{}',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -204,6 +222,7 @@ async function initDatabase() {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS province VARCHAR(100)`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS region VARCHAR(100)`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS area VARCHAR(100)`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions JSONB DEFAULT '{}'`);
 
     // Ensure all campaigns columns exist
     await pool.query(`ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS objective VARCHAR(50)`);

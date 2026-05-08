@@ -104,6 +104,50 @@
     }
     .btn-cancel-modal:hover { background: #e2e8f0; }
     .modal-error { color: #dc2626; font-size: 0.85rem; margin-top: 8px; display: none; }
+
+    /* ── Users / Permissions UI ─────────────────────────────────────────── */
+    .role-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+    }
+    .role-admin       { background: #dbeafe; color: #1d4ed8; }
+    .role-sys_admin   { background: #dbeafe; color: #1d4ed8; }
+    .role-sd          { background: #d1fae5; color: #065f46; }
+    .role-marketing   { background: #fef3c7; color: #92400e; }
+    .role-intern      { background: #f3e8ff; color: #6d28d9; }
+    .role-digital     { background: #ffe4e6; color: #9f1239; }
+    .role-crm         { background: #e0f2fe; color: #075985; }
+
+    .permissions-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+      margin: 12px 0 20px;
+    }
+    @media (max-width: 768px) { .permissions-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .perm-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border: 1.5px solid var(--border-color);
+      border-radius: 10px; cursor: pointer; transition: all 0.2s;
+      background: #f8fafc; user-select: none;
+    }
+    .perm-item:hover { border-color: #3b82f6; background: #eff6ff; }
+    .perm-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: #3b82f6; cursor: pointer; }
+    .perm-item input[type="checkbox"]:checked + .perm-label { color: #1d4ed8; }
+    .perm-item:has(input:checked) { border-color: #3b82f6; background: #eff6ff; }
+    .perm-label { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
+    .perm-label i { font-size: 1rem; color: #64748b; }
+
+    .perm-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+    .perm-badge {
+      font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 12px;
+      background: #e0f2fe; color: #0369a1;
+    }
+    .perm-badge.denied { background: #f1f5f9; color: #94a3b8; text-decoration: line-through; }
+
+    .permissions-section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0 8px; border-top: 1px solid var(--border-color); margin-top: 16px;
+    }
   </style>
 
   <script src="./js/config.js"></script>
@@ -124,8 +168,8 @@
     </div>
     
     <nav class="sidebar-nav">
-      <button class="nav-item active" data-tab="reps">
-        <i class="ph ph-users"></i> Sales Distributors
+      <button class="nav-item active" data-tab="users">
+        <i class="ph ph-user-gear"></i> Users
       </button>
       <button class="nav-item" data-tab="shops">
         <i class="ph ph-storefront"></i> Shops
@@ -271,54 +315,173 @@
 
       <!-- Tab Contents -->
       
-      <!-- Reps Tab -->
-      <div id="repsTab" class="tab-content">
+      <!-- Users Tab -->
+      <div id="usersTab" class="tab-content">
+
+        <!-- Add New User Panel -->
         <div class="panel">
           <div class="panel-header">
             <div>
-              <h2 class="panel-title">Add New Sales Distributor</h2>
-              <p class="panel-desc">Create a new Sales Distributor account.</p>
+              <h2 class="panel-title">Add New User</h2>
+              <p class="panel-desc">Create a user account and assign a role with specific dashboard access.</p>
             </div>
           </div>
-          <form id="addRepForm">
+          <form id="addUserForm">
             <div class="form-grid" style="grid-template-columns: repeat(2, 1fr);">
               <div class="form-group">
-                <label for="repUsername">Name</label>
-                <input type="text" id="repUsername" placeholder="Full name" required />
+                <label for="userUsername">Full Name / Username</label>
+                <input type="text" id="userUsername" placeholder="Enter name or username" required />
               </div>
               <div class="form-group">
-                <label for="repPassword">Password</label>
-                <input type="password" id="repPassword" placeholder="Secure password" required />
+                <label for="userPassword">Password</label>
+                <input type="password" id="userPassword" placeholder="Secure password" required />
               </div>
             </div>
-            <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
-              <div class="form-group">
-                <label for="repProvince">Province</label>
-                <select id="repProvince" required><option value="">Select Province</option></select>
-              </div>
-              <div class="form-group">
-                <label for="repRegion">Region (District)</label>
-                <select id="repRegion" required><option value="">Select Region</option></select>
-              </div>
-              <div class="form-group">
-                <label for="repArea">Area</label>
-                <select id="repArea" required><option value="">Select Area</option></select>
+
+            <div class="form-group">
+              <label for="userRole">Role</label>
+              <select id="userRole" required onchange="onUserRoleChange()">
+                <option value="">— Select Role —</option>
+                <optgroup label="Administration">
+                  <option value="sys_admin">System Administrator</option>
+                </optgroup>
+                <optgroup label="Digital Marketing Team">
+                  <option value="digital_marketing_manager">Digital Marketing Manager</option>
+                  <option value="digital_content_specialist">Digital Content Specialist</option>
+                  <option value="digital_media_performance_manager">Digital Media &amp; Performance Manager</option>
+                  <option value="social_media_influencer_strategist">Social Media &amp; Influencer Strategist</option>
+                  <option value="crm_data_analyst">CRM &amp; Data Analyst</option>
+                  <option value="digital_marketing_intern">Digital Marketing Intern</option>
+                </optgroup>
+                <optgroup label="Field">
+                  <option value="sales_distributor">Sales Distributor</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <!-- Location (Sales Distributor only) -->
+            <div id="userLocationFields" style="display:none;">
+              <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="form-group">
+                  <label for="userProvince">Province</label>
+                  <select id="userProvince"><option value="">Select Province</option></select>
+                </div>
+                <div class="form-group">
+                  <label for="userRegion">Region (District)</label>
+                  <select id="userRegion"><option value="">Select Region</option></select>
+                </div>
+                <div class="form-group">
+                  <label for="userArea">Area</label>
+                  <select id="userArea"><option value="">Select Area</option></select>
+                </div>
               </div>
             </div>
-            <button type="submit" class="btn-primary"><i class="ph ph-plus-circle"></i> Add Sales Distributor</button>
+
+            <!-- Dashboard Access Permissions (non-admin roles) -->
+            <div id="userPermissionsSection" style="display:none;">
+              <div class="permissions-section-header">
+                <div>
+                  <span style="font-weight:700; font-size:0.92rem; color:var(--text-primary);">Dashboard Access</span>
+                  <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;">Check the sections this user is allowed to access.</p>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <button type="button" onclick="setAllPerms(true)" style="font-size:0.75rem; padding:4px 10px; background:#eff6ff; color:#3b82f6; border:1px solid #bfdbfe; border-radius:6px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; font-weight:600;">All</button>
+                  <button type="button" onclick="setAllPerms(false)" style="font-size:0.75rem; padding:4px 10px; background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; font-weight:600;">None</button>
+                </div>
+              </div>
+              <div class="permissions-grid">
+                <label class="perm-item">
+                  <input type="checkbox" id="perm_users" value="users" />
+                  <span class="perm-label"><i class="ph ph-user-gear"></i> Users</span>
+                </label>
+                <label class="perm-item">
+                  <input type="checkbox" id="perm_shops" value="shops" />
+                  <span class="perm-label"><i class="ph ph-storefront"></i> Shops</span>
+                </label>
+                <label class="perm-item">
+                  <input type="checkbox" id="perm_activity" value="activity" />
+                  <span class="perm-label"><i class="ph ph-activity"></i> Activity Logs</span>
+                </label>
+                <label class="perm-item">
+                  <input type="checkbox" id="perm_campaigns" value="campaigns" />
+                  <span class="perm-label"><i class="ph ph-megaphone"></i> Campaigns</span>
+                </label>
+                <label class="perm-item">
+                  <input type="checkbox" id="perm_stats" value="stats" />
+                  <span class="perm-label"><i class="ph ph-chart-bar"></i> Scan Stats</span>
+                </label>
+                <label class="perm-item">
+                  <input type="checkbox" id="perm_roi" value="roi" />
+                  <span class="perm-label"><i class="ph ph-trend-up"></i> ROI Analytics</span>
+                </label>
+              </div>
+            </div>
+
+            <div id="addUserMsg" style="font-size:0.85rem; min-height:18px; margin-bottom:8px;"></div>
+            <button type="submit" class="btn-primary"><i class="ph ph-user-plus"></i> Add User</button>
           </form>
         </div>
 
+        <!-- Existing Users Panel -->
         <div class="panel">
           <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-            <h2 class="panel-title">Existing Sales Distributors</h2>
+            <div>
+              <h2 class="panel-title">All Users</h2>
+              <p class="panel-desc">Manage accounts and edit dashboard access permissions.</p>
+            </div>
             <div style="position:relative;">
               <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
-              <input type="text" id="searchReps" placeholder="Search sales distributors..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
+              <input type="text" id="searchUsers" placeholder="Search users..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
             </div>
           </div>
-          <div class="table-responsive" id="repsList">
-            <p>Loading sales distributors...</p>
+          <div class="table-responsive" id="usersList">
+            <p>Loading users...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Permissions Modal -->
+      <div id="permissionsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:10000; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:16px; padding:28px; width:100%; max-width:520px; margin:16px; box-shadow:0 20px 60px rgba(0,0,0,0.2); font-family:'Plus Jakarta Sans',sans-serif;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+            <div>
+              <h3 style="margin:0; font-size:1.1rem; color:var(--text-primary);">Edit Permissions</h3>
+              <p id="permModalSubtitle" style="margin:4px 0 0; font-size:0.82rem; color:var(--text-secondary);"></p>
+            </div>
+            <button onclick="closePermissionsModal()" style="background:none; border:none; cursor:pointer; font-size:1.3rem; color:#94a3b8;"><i class="ph ph-x"></i></button>
+          </div>
+          <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:14px;">Select which dashboard sections this user can access.</p>
+          <div class="permissions-grid" id="modalPermGrid">
+            <label class="perm-item">
+              <input type="checkbox" id="mperm_users" value="users" />
+              <span class="perm-label"><i class="ph ph-user-gear"></i> Users</span>
+            </label>
+            <label class="perm-item">
+              <input type="checkbox" id="mperm_shops" value="shops" />
+              <span class="perm-label"><i class="ph ph-storefront"></i> Shops</span>
+            </label>
+            <label class="perm-item">
+              <input type="checkbox" id="mperm_activity" value="activity" />
+              <span class="perm-label"><i class="ph ph-activity"></i> Activity Logs</span>
+            </label>
+            <label class="perm-item">
+              <input type="checkbox" id="mperm_campaigns" value="campaigns" />
+              <span class="perm-label"><i class="ph ph-megaphone"></i> Campaigns</span>
+            </label>
+            <label class="perm-item">
+              <input type="checkbox" id="mperm_stats" value="stats" />
+              <span class="perm-label"><i class="ph ph-chart-bar"></i> Scan Stats</span>
+            </label>
+            <label class="perm-item">
+              <input type="checkbox" id="mperm_roi" value="roi" />
+              <span class="perm-label"><i class="ph ph-trend-up"></i> ROI Analytics</span>
+            </label>
+          </div>
+          <input type="hidden" id="permModalUserId" />
+          <div id="permModalMsg" style="font-size:0.82rem; min-height:18px; margin-bottom:10px;"></div>
+          <div style="display:flex; gap:10px; margin-top:4px;">
+            <button onclick="closePermissionsModal()" class="btn-cancel-modal" style="flex:1;">Cancel</button>
+            <button onclick="savePermissionsModal()" class="btn-primary" style="flex:2;" id="savePermBtn"><i class="ph ph-floppy-disk"></i> Save Permissions</button>
           </div>
         </div>
       </div>
@@ -970,11 +1133,11 @@
   const tabContents = document.querySelectorAll('.tab-content');
   const pageTitle = document.getElementById('pageTitle');
   
-  const addRepForm = document.getElementById('addRepForm');
+  const addUserForm = document.getElementById('addUserForm');
   const addShopForm = document.getElementById('addShopForm');
   const createCampaignForm = document.getElementById('createCampaignForm');
-  
-  const repsList = document.getElementById('repsList');
+
+  const usersList = document.getElementById('usersList');
   const shopsList = document.getElementById('shopsList');
   const campaignsList = document.getElementById('campaignsList');
   const logList = document.getElementById('logList');
@@ -985,12 +1148,20 @@
   const totalShops = document.getElementById('totalShops');
   const totalScans = document.getElementById('totalScans');
 
+  const STAFF_ROLES = ['admin','sys_admin','digital_marketing_manager','digital_content_specialist',
+    'digital_media_performance_manager','social_media_influencer_strategist','crm_data_analyst','digital_marketing_intern'];
+
   function checkAuth() {
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user"));
-    if (!token || !user || user.role !== "admin") {
+    if (!token || !user || !STAFF_ROLES.includes(user.role)) {
       window.location.href = "login.html";
     }
+  }
+
+  function isManager() {
+    const user = JSON.parse(localStorage.getItem("user"));
+    return user && (user.role === 'admin' || user.role === 'sys_admin');
   }
 
   function logout() {
@@ -1018,7 +1189,7 @@
     const globalGrid = document.getElementById('globalStatGrid');
     if (globalGrid) globalGrid.style.display = tab === 'roi' ? 'none' : '';
     
-    if (tab === 'reps') loadReps();
+    if (tab === 'users') loadUsers();
     if (tab === 'shops') loadShops();
     if (tab === 'log') loadRegistrationLog();
     if (tab === 'activity') loadActivityLog();
@@ -1078,40 +1249,101 @@
     }
   }
 
-  async function loadReps() {
+  const ROLE_LABELS = {
+    admin: 'System Administrator', sys_admin: 'System Administrator',
+    sales_distributor: 'Sales Distributor',
+    digital_marketing_manager: 'Digital Marketing Manager',
+    digital_content_specialist: 'Digital Content Specialist',
+    digital_media_performance_manager: 'Digital Media & Performance Manager',
+    social_media_influencer_strategist: 'Social Media & Influencer Strategist',
+    crm_data_analyst: 'CRM & Data Analyst',
+    digital_marketing_intern: 'Digital Marketing Intern',
+  };
+
+  const ROLE_CSS = {
+    admin: 'role-admin', sys_admin: 'role-sys_admin',
+    sales_distributor: 'role-sd',
+    digital_marketing_manager: 'role-marketing',
+    digital_content_specialist: 'role-digital',
+    digital_media_performance_manager: 'role-digital',
+    social_media_influencer_strategist: 'role-marketing',
+    crm_data_analyst: 'role-crm',
+    digital_marketing_intern: 'role-intern',
+  };
+
+  const PERM_KEYS = ['users','shops','activity','campaigns','stats','roi'];
+  const PERM_LABELS = { users:'Users', shops:'Shops', activity:'Activity Logs', campaigns:'Campaigns', stats:'Scan Stats', roi:'ROI Analytics' };
+
+  async function loadUsers() {
     const token = localStorage.getItem("token");
     try {
       const response = await fetch(`${API_BASE}/api/users`, {
         headers: { "Authorization": `Bearer ${token}` },
       });
-      const reps = await response.json();
-      displayReps(reps);
-      // Refresh ALL summary cards (not just users) so totals stay in sync.
+      const users = await response.json();
+      displayUsers(users);
       refreshGlobalSummary();
     } catch (error) {
-      repsList.innerHTML = "<p>Error loading sales distributors.</p>";
+      usersList.innerHTML = "<p>Error loading users.</p>";
     }
   }
 
-  function displayReps(reps) {
-    let html = "<table class='modern-table'><thead><tr><th>Employee ID</th><th>Name</th><th>Role</th><th>Location</th><th>Created At</th><th>Actions</th></tr></thead><tbody>";
-    reps.forEach(rep => {
-      const loc = rep.role === 'admin' ? 'Head Office' : [rep.province, rep.region, rep.area].filter(Boolean).join(', ') || 'Unassigned';
+  function displayUsers(users) {
+    const canManage = isManager();
+    let html = `<table class='modern-table'>
+      <thead><tr>
+        <th>Employee ID</th><th>Name</th><th>Role</th>
+        <th>Dashboard Access</th><th>Location</th><th>Created</th><th>Actions</th>
+      </tr></thead><tbody>`;
+
+    users.forEach(u => {
+      const label = ROLE_LABELS[u.role] || u.role;
+      const css   = ROLE_CSS[u.role] || 'role-marketing';
+      const loc   = (u.role === 'admin' || u.role === 'sys_admin')
+        ? 'Head Office'
+        : [u.province, u.region, u.area].filter(Boolean).join(', ') || '—';
+
+      const perms = u.permissions || {};
+      const isFullAccess = u.role === 'admin' || u.role === 'sys_admin';
+
+      let permHtml = '<div class="perm-badges">';
+      if (isFullAccess) {
+        permHtml += '<span class="perm-badge" style="background:#d1fae5;color:#065f46;">Full Access</span>';
+      } else {
+        PERM_KEYS.forEach(k => {
+          const granted = perms[k] === true;
+          permHtml += `<span class="perm-badge ${granted ? '' : 'denied'}">${PERM_LABELS[k]}</span>`;
+        });
+      }
+      permHtml += '</div>';
+
+      const editBtn = canManage && u.role !== 'admin'
+        ? `<button class="btn-secondary" style="padding:5px 10px;font-size:0.78rem;margin-right:4px;"
+             onclick='openPermissionsModal(${u.id}, "${u.username}", "${u.role}", ${JSON.stringify(JSON.stringify(perms))})'>
+             <i class="ph ph-sliders"></i></button>`
+        : '';
+
+      const delBtn = canManage && u.role !== 'admin'
+        ? `<button class="btn-danger" style="padding:5px 10px;font-size:0.78rem;" onclick="deleteUser(${u.id})"><i class="ph ph-trash"></i></button>`
+        : '';
+
       html += `<tr>
-        <td><strong>${rep.employee_id || '-'}</strong></td>
-        <td>${rep.username}</td>
-        <td><span class="badge ${rep.role === 'admin' ? 'expired' : 'active'}">${rep.role === 'admin' ? 'Admin' : 'Sales Distributor'}</span></td>
-        <td>${loc}</td>
-        <td>${new Date(rep.created_at).toLocaleDateString()}</td>
-        <td><button class="btn-danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="deleteRep(${rep.id})"><i class="ph ph-trash"></i></button></td>
+        <td><strong>${u.employee_id || '—'}</strong></td>
+        <td>${u.username}</td>
+        <td><span class="role-badge ${css}">${label}</span></td>
+        <td>${permHtml}</td>
+        <td style="font-size:0.82rem;">${loc}</td>
+        <td>${new Date(u.created_at).toLocaleDateString()}</td>
+        <td style="white-space:nowrap;">${editBtn}${delBtn}</td>
       </tr>`;
     });
-    html += "</tbody></table>";
-    repsList.innerHTML = html;
+
+    html += '</tbody></table>';
+    usersList.innerHTML = html;
   }
 
-  async function deleteRep(id) {
-    if (!confirm('Delete this user?')) return;
+  async function deleteUser(id) {
+    if (!confirm('Delete this user? This cannot be undone.')) return;
     const token = localStorage.getItem("token");
     try {
       const response = await fetch(`${API_BASE}/api/users/${id}`, {
@@ -1119,13 +1351,129 @@
         headers: { "Authorization": `Bearer ${token}` },
       });
       if (response.ok) {
-        loadReps();
+        loadUsers();
       } else {
-        alert('Error deleting user');
+        const err = await response.json();
+        alert(err.message || 'Error deleting user');
       }
     } catch (error) {
       alert('Error deleting user');
     }
+  }
+
+  // ── Role change: show/hide location + permissions sections ──────────────────
+  window.onUserRoleChange = function() {
+    const role = document.getElementById('userRole').value;
+    const locFields  = document.getElementById('userLocationFields');
+    const permSec    = document.getElementById('userPermissionsSection');
+    const isSd       = role === 'sales_distributor';
+    const isAdmin    = role === 'admin' || role === 'sys_admin';
+
+    locFields.style.display  = isSd ? '' : 'none';
+    permSec.style.display    = (!isSd && !isAdmin && role) ? '' : 'none';
+
+    if (role && !isAdmin && !isSd) {
+      const defaults = {
+        digital_marketing_manager:         { users:false, shops:true,  activity:true,  campaigns:true,  stats:true,  roi:true  },
+        digital_content_specialist:        { users:false, shops:false, activity:false, campaigns:true,  stats:true,  roi:false },
+        digital_media_performance_manager: { users:false, shops:false, activity:false, campaigns:true,  stats:true,  roi:true  },
+        social_media_influencer_strategist:{ users:false, shops:false, activity:false, campaigns:true,  stats:false, roi:false },
+        crm_data_analyst:                  { users:false, shops:true,  activity:true,  campaigns:false, stats:true,  roi:true  },
+        digital_marketing_intern:          { users:false, shops:false, activity:false, campaigns:false, stats:true,  roi:false },
+      };
+      const def = defaults[role] || {};
+      PERM_KEYS.forEach(k => {
+        const cb = document.getElementById('perm_' + k);
+        if (cb) cb.checked = def[k] === true;
+      });
+    }
+  };
+
+  window.setAllPerms = function(val) {
+    PERM_KEYS.forEach(k => {
+      const cb = document.getElementById('perm_' + k);
+      if (cb) cb.checked = val;
+    });
+  };
+
+  // ── Permissions modal ────────────────────────────────────────────────────────
+  window.openPermissionsModal = function(userId, username, role, permJsonStr) {
+    const perms = JSON.parse(permJsonStr);
+    document.getElementById('permModalUserId').value   = userId;
+    document.getElementById('permModalSubtitle').textContent = `${username} · ${ROLE_LABELS[role] || role}`;
+    document.getElementById('permModalMsg').textContent = '';
+
+    PERM_KEYS.forEach(k => {
+      const cb = document.getElementById('mperm_' + k);
+      if (cb) cb.checked = perms[k] === true;
+    });
+
+    const modal = document.getElementById('permissionsModal');
+    modal.style.display = 'flex';
+  };
+
+  window.closePermissionsModal = function() {
+    document.getElementById('permissionsModal').style.display = 'none';
+  };
+
+  window.savePermissionsModal = async function() {
+    const id    = document.getElementById('permModalUserId').value;
+    const token = localStorage.getItem('token');
+    const msgEl = document.getElementById('permModalMsg');
+    const btn   = document.getElementById('savePermBtn');
+
+    const permissions = {};
+    PERM_KEYS.forEach(k => {
+      permissions[k] = document.getElementById('mperm_' + k).checked;
+    });
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner"></i> Saving…';
+    msgEl.style.color = '#94a3b8';
+    msgEl.textContent = 'Saving…';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/users/${id}/permissions`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ permissions }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msgEl.style.color = '#059669';
+        msgEl.textContent = '✓ Permissions updated!';
+        setTimeout(() => { closePermissionsModal(); loadUsers(); }, 800);
+      } else {
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = data.message || 'Error saving permissions';
+      }
+    } catch (e) {
+      msgEl.style.color = '#dc2626';
+      msgEl.textContent = 'Network error. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Save Permissions';
+    }
+  };
+
+  // ── Apply permission-based nav visibility for non-admin staff ────────────────
+  function applyNavPermissions(permissions, role) {
+    if (role === 'admin' || role === 'sys_admin') return;
+    const tabMap = { users:'users', shops:'shops', log:'activity', activity:'activity', campaigns:'campaigns', stats:'stats', roi:'roi' };
+    let firstAllowed = null;
+    document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
+      const tab  = btn.dataset.tab;
+      const pkey = tabMap[tab];
+      if (!pkey) return;
+      if (tab === 'log') {
+        btn.style.display = (permissions.activity === true) ? '' : 'none';
+        return;
+      }
+      const allowed = permissions[pkey] === true;
+      btn.style.display = allowed ? '' : 'none';
+      if (allowed && !firstAllowed) firstAllowed = tab;
+    });
+    if (firstAllowed) switchTab(firstAllowed);
   }
 
   async function loadShops() {
@@ -1285,41 +1633,62 @@
     statsList.innerHTML = html;
   }
 
-  addRepForm.addEventListener('submit', async (e) => {
+  addUserForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const username = document.getElementById('repUsername').value.trim();
-    const password = document.getElementById('repPassword').value.trim();
-    const province = document.getElementById('repProvince').value;
-    const region = document.getElementById('repRegion').value;
-    const area = document.getElementById('repArea').value;
-    const token = localStorage.getItem("token");
-    if (!username || !password) return;
-    
-    const btn = addRepForm.querySelector('button');
+    const username    = document.getElementById('userUsername').value.trim();
+    const password    = document.getElementById('userPassword').value.trim();
+    const role        = document.getElementById('userRole').value;
+    const province    = document.getElementById('userProvince').value;
+    const region      = document.getElementById('userRegion').value;
+    const area        = document.getElementById('userArea').value;
+    const token       = localStorage.getItem("token");
+    const msgEl       = document.getElementById('addUserMsg');
+
+    if (!username || !password || !role) {
+      msgEl.style.color = '#dc2626';
+      msgEl.textContent = 'Name, password, and role are required.';
+      return;
+    }
+
+    const permissions = {};
+    const isAdmin = role === 'admin' || role === 'sys_admin';
+    const isSd    = role === 'sales_distributor';
+    if (!isAdmin && !isSd) {
+      PERM_KEYS.forEach(k => {
+        permissions[k] = document.getElementById('perm_' + k)?.checked || false;
+      });
+    }
+
+    const btn = addUserForm.querySelector('button[type="submit"]');
     const originalText = btn.innerHTML;
-    btn.innerHTML = 'Adding...';
-    btn.disabled = true;
-    
+    btn.innerHTML = '<i class="ph ph-spinner"></i> Adding…';
+    btn.disabled  = true;
+    msgEl.textContent = '';
+
     try {
       const response = await fetch(`${API_BASE}/api/users`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ username, password, role: 'sales_distributor', province, region, area }),
+        headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ username, password, role, province, region, area, permissions }),
       });
+      const data = await response.json();
       if (response.ok) {
-        addRepForm.reset();
-        loadReps();
+        msgEl.style.color = '#059669';
+        msgEl.textContent = `✓ User created! Employee ID: ${data.employee_id || '—'}`;
+        addUserForm.reset();
+        document.getElementById('userLocationFields').style.display  = 'none';
+        document.getElementById('userPermissionsSection').style.display = 'none';
+        loadUsers();
       } else {
-        alert('Error adding sales distributor');
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = data.message || 'Error adding user';
       }
     } catch (error) {
-      alert('Error adding sales distributor');
+      msgEl.style.color = '#dc2626';
+      msgEl.textContent = 'Network error. Please try again.';
     } finally {
       btn.innerHTML = originalText;
-      btn.disabled = false;
+      btn.disabled  = false;
     }
   });
 
@@ -2668,7 +3037,7 @@
     });
   }
 
-  setupCascadingDropdowns('rep');
+  setupCascadingDropdowns('user');
   setupCascadingDropdowns('shop');
 
   // ── Search Filters ────────────────────────────────────────────────────────
@@ -2684,7 +3053,7 @@
     });
   }
 
-  filterTable('searchReps', 'repsList');
+  filterTable('searchUsers', 'usersList');
   filterTable('searchShops', 'shopsList');
   filterTable('searchLog', 'logList');
   filterTable('searchActivity', 'activityList');
@@ -2718,7 +3087,7 @@
     });
   });
 
-  switchTab('reps', 'Manage Sales Distributors');
+  switchTab('users', 'Manage Users');
 
   // ── Profile Panel ─────────────────────────────────────────────────────────
   let _profileOpen = false;
@@ -2762,11 +3131,14 @@
       const u = await res.json();
       _profileData = u;
 
-      const initials = (u.username || 'AD').slice(0, 2).toUpperCase();
-      const roleLabel = u.role === 'admin' ? 'Administrator' : 'Sales Distributor';
-      const region = u.role === 'admin'
+      const initials  = (u.username || 'AD').slice(0, 2).toUpperCase();
+      const roleLabel = ROLE_LABELS[u.role] || u.role;
+      const isStaff   = u.role !== 'admin' && u.role !== 'sys_admin';
+      const region    = isStaff && u.role !== 'sales_distributor'
         ? 'Head Office'
-        : ([u.province, u.region, u.area].filter(Boolean).join(' › ') || '—');
+        : (u.role === 'sales_distributor'
+            ? ([u.province, u.region, u.area].filter(Boolean).join(' › ') || '—')
+            : 'Head Office');
       const since = u.created_at ? new Date(u.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
 
       document.getElementById('adminAvatarEl').textContent     = initials;
@@ -2777,6 +3149,11 @@
       document.getElementById('panelRoleEl').textContent       = `${roleLabel}${u.employee_id ? ' · ' + u.employee_id : ''}`;
       document.getElementById('panelEmpId').textContent        = u.employee_id || '—';
       document.getElementById('panelRegion').textContent       = region;
+
+      // Apply permission-based nav for non-admin staff
+      if (u.role !== 'admin' && u.role !== 'sys_admin') {
+        applyNavPermissions(u.permissions || {}, u.role);
+      }
       document.getElementById('panelSince').textContent        = since;
       document.getElementById('editDisplayName').value         = u.username;
     } catch(e) { console.error('Profile load error', e); }
