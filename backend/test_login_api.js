@@ -13,7 +13,7 @@ async function testLogin(username, password) {
 }
 
 async function run() {
-  await testLogin('admin', 'password');
+  await testLogin('sysadmin', '123');
   await testLogin('manu', '123');
 }
 

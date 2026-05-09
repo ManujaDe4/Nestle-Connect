@@ -6,7 +6,7 @@ async function testAddRep() {
     const loginRes = await fetch('http://localhost:5000/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'admin', password: 'password' })
+      body: JSON.stringify({ username: 'sysadmin', password: '123' })
     });
     const loginData = await loginRes.json();
     const token = loginData.token;
@@ -21,9 +21,9 @@ async function testAddRep() {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
-        username: 'testrep',
-        password: 'password',
-        role: 'rep',
+        username: 'manu',
+        password: '123',
+        role: 'sales_distributor',
         province: 'Western',
         region: 'Colombo',
         area: 'Colombo 01'

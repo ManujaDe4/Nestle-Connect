@@ -122,11 +122,17 @@ async function initDatabase() {
     }
 
     // 1d. Rename the legacy 'admin' username to 'sysadmin'
-    const adminRename = await pool.query(`
-      UPDATE users SET username = 'sysadmin' WHERE username = 'admin'
-    `);
-    if (adminRename.rowCount > 0) {
-      console.log('✓ Renamed admin user → sysadmin');
+    const sysAdminExists = await pool.query("SELECT id FROM users WHERE username = 'sysadmin'");
+    if (sysAdminExists.rows.length === 0) {
+      const adminRename = await pool.query(`
+        UPDATE users SET username = 'sysadmin' WHERE username = 'admin'
+      `);
+      if (adminRename.rowCount > 0) {
+        console.log('✓ Renamed admin user → sysadmin');
+      }
+    } else {
+      // Delete legacy 'admin' to prevent duplicates or conflicts since 'sysadmin' exists
+      await pool.query("DELETE FROM users WHERE username = 'admin'");
     }
 
     // 1e. Assign SYS-000001 to any admin missing an employee_id

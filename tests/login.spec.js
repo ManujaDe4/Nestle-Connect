@@ -8,8 +8,8 @@ test.describe('Module 1: Authentication', () => {
   });
 
   test('TC_01: Admin Login Success', async ({ page }) => {
-    await page.fill('input[id="username"]', 'admin');
-    await page.fill('input[id="password"]', 'password');
+    await page.fill('input[id="username"]', 'sysadmin');
+    await page.fill('input[id="password"]', '123');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/.*admin-dashboard.html/);
   });
@@ -22,7 +22,7 @@ test.describe('Module 1: Authentication', () => {
   });
 
  test('TC_03: Login - Invalid Password', async ({ page }) => {
-    await page.fill('input[id="username"]', 'admin');
+    await page.fill('input[id="username"]', 'sysadmin');
     await page.fill('input[id="password"]', 'wrong_password_test');
     await page.click('button[type="submit"]');
     

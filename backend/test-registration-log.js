@@ -1,7 +1,7 @@
 const http = require('http');
 
 // First, login to get token
-const loginData = JSON.stringify({username:'admin', password:'password'});
+const loginData = JSON.stringify({username:'sysadmin', password:'123'});
 const loginOptions = {
   hostname: 'localhost',
   port: 5000,
