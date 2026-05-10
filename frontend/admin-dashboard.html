@@ -1584,32 +1584,32 @@
   function applyNavPermissions(permissions, role) {
     if (role === 'admin' || role === 'sys_admin') return;
     const isFieldMgr = role === 'area_sales_manager' || role === 'field_sales_manager';
-    const tabMap = { team:'users', reps:'users', shops:'shops', log:'activity', activity:'activity', campaigns:'campaigns', stats:'stats', roi:'roi' };
+
+    if (isFieldMgr) {
+      // Field managers ONLY see the Field Reps tab — hide everything else
+      document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
+        btn.style.display = btn.dataset.tab === 'reps' ? '' : 'none';
+      });
+      switchTab('reps', 'Field Reps');
+      return;
+    }
+
+    // Digital Marketing / other staff — show/hide based on permissions
+    const tabMap = { shops:'shops', log:'activity', activity:'activity', campaigns:'campaigns', stats:'stats', roi:'roi' };
     let firstAllowed = null;
     document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
-      const tab  = btn.dataset.tab;
-      // Field managers always see the Field Reps tab; never the Digital Marketing Team tab
-      if (tab === 'reps') {
-        btn.style.display = isFieldMgr ? '' : 'none';
-        if (isFieldMgr && !firstAllowed) firstAllowed = 'reps';
-        return;
-      }
-      if (tab === 'team') {
-        btn.style.display = isFieldMgr ? 'none' : '';
-        return;
-      }
+      const tab = btn.dataset.tab;
+      if (tab === 'reps') { btn.style.display = 'none'; return; }  // DM staff never see Field Reps
+      if (tab === 'team') { firstAllowed = firstAllowed || 'users'; return; } // always visible for DM staff
       const pkey = tabMap[tab];
       if (!pkey) return;
-      if (tab === 'log') {
-        btn.style.display = (permissions.activity === true) ? '' : 'none';
-        return;
-      }
-      const allowed = permissions[pkey] === true;
+      const allowed = tab === 'log' ? (permissions.activity === true) : (permissions[pkey] === true);
       btn.style.display = allowed ? '' : 'none';
       if (allowed && !firstAllowed) firstAllowed = tab;
     });
-    if (firstAllowed) switchTab(firstAllowed);
+    if (firstAllowed) switchTab(firstAllowed === 'users' ? 'team' : firstAllowed);
   }
+
 
   async function loadShops() {
     const token = localStorage.getItem("token");
