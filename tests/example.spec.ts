@@ -14,8 +14,8 @@ test('claim entry page is reachable', async ({ page }) => {
 
 test('admin can log in with seeded credentials', async ({ page }) => {
   await page.goto('/');
-  await page.fill('#username', 'sysadmin');
-  await page.fill('#password', '123');
+  await page.fill('#employeeId', 'SYS-000001');
+  await page.fill('#password', 'password');
   await page.click('#loginBtn');
   await page.waitForURL(/admin-dashboard\.html/);
   await expect(page).toHaveURL(/admin-dashboard\.html/);

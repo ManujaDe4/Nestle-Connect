@@ -7,7 +7,7 @@ test.describe('Module 3: QR Mapping & Linking', () => {
     await page.goto('/login.html'); 
     
     // 2. Log in using the Rep credentials
-    await page.fill('input[id="username"]', 'manu'); 
+    await page.fill('input[id="employeeId"]', 'manu');
     await page.fill('input[id="password"]', '123');
     await page.click('button[type="submit"]');
 
