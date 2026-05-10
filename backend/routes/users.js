@@ -3,7 +3,7 @@ const router = express.Router();
 const { getAllUsers, createUser, deleteUser, getMyProfile, updateMyProfile, updateUserPermissions } = require('../controllers/userController');
 const { authenticate, authorize } = require('../middleware/auth');
 
-const MANAGERS = ['admin', 'sys_admin'];
+const MANAGERS = ['admin', 'sys_admin', 'area_sales_manager', 'field_sales_manager'];
 
 router.get('/me', authenticate, getMyProfile);
 router.put('/me', authenticate, updateMyProfile);
