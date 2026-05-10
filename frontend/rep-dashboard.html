@@ -303,9 +303,20 @@
 <script>
   function checkAuth() {
     const token = localStorage.getItem("token");
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!token || !user || user.role !== "sales_distributor" || !user.province) {
-      // If province is missing, the cache is outdated. Force re-login.
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    
+    if (!token || !user) {
+      window.location.href = "login.html";
+      return null;
+    }
+
+    // Fallback: If browser cache sent an ASM/FSM here by mistake, forward them correctly
+    if (['area_sales_manager', 'field_sales_manager'].includes(user.role)) {
+      window.location.href = "field-manager-dashboard.html";
+      return null;
+    }
+
+    if (user.role !== "sales_distributor" || !user.province) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "login.html";
