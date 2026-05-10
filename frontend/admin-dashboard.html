@@ -3077,7 +3077,10 @@
       exportStyle.id = 'pdf-export-style';
       exportStyle.textContent = `
         #roiTab, #roiTab * {
-          color: #0f172a !important;
+          animation: none !important;
+          transition: none !important;
+          opacity: 1 !important;
+          transform: none !important;
           text-shadow: none !important;
           filter: none !important;
           backdrop-filter: none !important;
@@ -3093,12 +3096,10 @@
         }
         #roiTab .badge {
           background: #f1f5f9 !important;
-          color: #0f172a !important;
           border: 1px solid #cbd5e1 !important;
         }
         #roiTab .badge.active   { background:#dcfce7 !important; color:#166534 !important; border-color:#86efac !important; }
         #roiTab .badge.expired  { background:#fee2e2 !important; color:#991b1b !important; border-color:#fecaca !important; }
-        #roiTab a { color: #0f4c81 !important; }
         #roiTab .stat-icon { background: #eef2ff !important; color: #4338ca !important; }
         #roiTab .charts-grid { display: grid !important; }
       `;
