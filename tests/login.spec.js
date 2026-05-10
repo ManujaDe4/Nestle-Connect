@@ -9,14 +9,14 @@ test.describe('Module 1: Authentication', () => {
 
   test('TC_01: Admin Login Success', async ({ page }) => {
     await page.fill('input[id="employeeId"]', 'sysadmin');
-    await page.fill('input[id="password"]', '123');
+    await page.fill('input[id="password"]', 'password');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/.*admin-dashboard.html/);
   });
 
   test('TC_02: Rep Login Success', async ({ page }) => {
-    await page.fill('input[id="employeeId"]', 'manu');
-    await page.fill('input[id="password"]', '123');
+    await page.fill('input[id="employeeId"]', 'sd1');
+    await page.fill('input[id="password"]', 'password');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/.*rep-dashboard.html/);
   });

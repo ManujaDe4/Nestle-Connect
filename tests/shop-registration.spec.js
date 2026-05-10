@@ -4,8 +4,8 @@ test.describe('Module 2: Shop Registration', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/login.html'); 
-    await page.fill('input[id="employeeId"]', 'manu');
-    await page.fill('input[id="password"]', '123');
+    await page.fill('input[id="employeeId"]', 'sd1');
+    await page.fill('input[id="password"]', 'password');
     await page.click('button[type="submit"]');
     await page.waitForURL(/.*rep-dashboard.html/);
     await page.goto('/shop-owner-registration.html');
