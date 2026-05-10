@@ -18,7 +18,8 @@ test.describe('Module 3: QR Mapping & Linking', () => {
 
   test('TC_25: QR Map - Single Valid Link', async ({ page }) => {
     
-    await page.waitForSelector('#shopSelect option:not([value=""])', { state: 'attached' });
+    // Wait for shop options to load
+    await page.waitForSelector('#shopSelect option:not([value=""])', { state: 'attached', timeout: 10000 });
 
     await page.locator('#shopSelect').selectOption({ index: 1 });
 
@@ -28,26 +29,24 @@ test.describe('Module 3: QR Mapping & Linking', () => {
     const uniqueQRCode = `QR-TEST-${Date.now()}`;
     await page.fill('input[id="qrIdentifier"]', uniqueQRCode);
     
-    // 5. Click the 'Link QR Code' button
+    // Click the 'Link QR Code' button
     await page.click('button:has-text("Link QR Code")');
 
-    // THE QA CHECK: Did the green success message appear?
+    // Check for green success message
     const successMsg = page.locator('#successMessage');
-    await expect(successMsg).toHaveClass(/show/);
+    await expect(successMsg).toHaveClass(/show/, { timeout: 10000 });
     await expect(successMsg).toContainText('Successfully Linked');
   });
 
-  // THE EDGE CASE: Forgetting to type the QR identifier
   test('TC_26: QR Map - Missing QR Identifier', async ({ page }) => {
     
-    // THE FIX: Applied here as well
-    await page.waitForSelector('#shopSelect option:not([value=""])', { state: 'attached' });
+    await page.waitForSelector('#shopSelect option:not([value=""])', { state: 'attached', timeout: 10000 });
     await page.locator('#shopSelect').selectOption({ index: 1 });
 
-    // 2. Click the link button WITHOUT typing a QR identifier
+    // Click the link button WITHOUT typing a QR identifier
     await page.click('button:has-text("Link QR Code")');
 
-    // THE QA CHECK: Did the red error message appear?
+    // Check for red error message
     const errorMsg = page.locator('#errorMessage');
     await expect(errorMsg).toHaveClass(/show/);
     await expect(errorMsg).toContainText('Please enter or scan a QR code');

@@ -15,7 +15,8 @@ const ANY_STAFF = [
   "admin", "sys_admin", "sales_distributor",
   "digital_marketing_manager", "digital_content_specialist",
   "digital_media_performance_manager", "social_media_influencer_strategist",
-  "crm_data_analyst", "digital_marketing_intern"
+  "crm_data_analyst", "digital_marketing_intern",
+  "area_sales_manager", "field_sales_manager"
 ];
 
 router.get("/", authenticate, getAllShops);

@@ -144,7 +144,7 @@ async function initDatabase() {
       console.log(`✓ Assigned SYS-000001 to ${sysIdAssign.rowCount} admin(s)`);
     }
 
-    // 1f. Expand role constraint to include all digital marketing staff roles
+    // 1f. Expand role constraint to include all digital marketing staff roles + field management roles
     try {
       await pool.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`);
       await pool.query(`
@@ -153,7 +153,8 @@ async function initDatabase() {
           'admin', 'sys_admin', 'sales_distributor',
           'digital_marketing_manager', 'digital_content_specialist',
           'digital_media_performance_manager', 'social_media_influencer_strategist',
-          'crm_data_analyst', 'digital_marketing_intern'
+          'crm_data_analyst', 'digital_marketing_intern',
+          'area_sales_manager', 'field_sales_manager'
         ))
       `);
       console.log('✓ Role constraint updated with all staff roles');

@@ -117,6 +117,8 @@
     .role-intern      { background: #f3e8ff; color: #6d28d9; }
     .role-digital     { background: #ffe4e6; color: #9f1239; }
     .role-crm         { background: #e0f2fe; color: #075985; }
+    .role-asm         { background: #fde68a; color: #92400e; }
+    .role-fsm         { background: #fed7aa; color: #9a3412; }
 
     .permissions-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
@@ -168,8 +170,11 @@
     </div>
     
     <nav class="sidebar-nav">
-      <button class="nav-item active" data-tab="users">
-        <i class="ph ph-user-gear"></i> Users
+      <button class="nav-item active" data-tab="team">
+        <i class="ph ph-users"></i> Digital Marketing Team
+      </button>
+      <button class="nav-item" data-tab="reps">
+        <i class="ph ph-user-list"></i> Field Reps
       </button>
       <button class="nav-item" data-tab="shops">
         <i class="ph ph-storefront"></i> Shops
@@ -205,7 +210,7 @@
       <button class="mobile-menu-toggle" id="mobileMenuBtn">
         <i class="ph ph-list"></i>
       </button>
-      <h1 class="topbar-title" id="pageTitle">Manage Sales Distributors</h1>
+      <h1 class="topbar-title" id="pageTitle">Digital Marketing Team</h1>
       <div class="user-profile" id="profileToggleBtn" onclick="toggleProfilePanel()" style="cursor:pointer; position:relative;" title="View profile">
         <div class="user-avatar" id="adminAvatarEl">AD</div>
         <div>
@@ -315,32 +320,31 @@
 
       <!-- Tab Contents -->
       
-      <!-- Users Tab -->
-      <div id="usersTab" class="tab-content">
-
-        <!-- Add New User Panel -->
+      <!-- Digital Marketing Team Tab -->
+      <div id="teamTab" class="tab-content">
+        <!-- Add New Team Member Panel -->
         <div class="panel">
           <div class="panel-header">
             <div>
-              <h2 class="panel-title">Add New User</h2>
-              <p class="panel-desc">Create a user account and assign a role with specific dashboard access.</p>
+              <h2 class="panel-title">Add Digital Marketing Team Member</h2>
+              <p class="panel-desc">Create a corporate user account and configure their dashboard access.</p>
             </div>
           </div>
-          <form id="addUserForm">
+          <form id="addTeamMemberForm">
             <div class="form-grid" style="grid-template-columns: repeat(2, 1fr);">
               <div class="form-group">
-                <label for="userUsername">Full Name / Username</label>
-                <input type="text" id="userUsername" placeholder="Enter name or username" required />
+                <label for="teamUsername">Full Name / Username</label>
+                <input type="text" id="teamUsername" placeholder="Enter name or username" required />
               </div>
               <div class="form-group">
-                <label for="userPassword">Password</label>
-                <input type="password" id="userPassword" placeholder="Secure password" required />
+                <label for="teamPassword">Password</label>
+                <input type="password" id="teamPassword" placeholder="Secure password" required />
               </div>
             </div>
 
             <div class="form-group">
-              <label for="userRole">Role</label>
-              <select id="userRole" required onchange="onUserRoleChange()">
+              <label for="teamRole">Role</label>
+              <select id="teamRole" required onchange="onTeamRoleChange()">
                 <option value="">— Select Role —</option>
                 <optgroup label="Administration">
                   <option value="sys_admin">System Administrator</option>
@@ -353,32 +357,11 @@
                   <option value="crm_data_analyst">CRM &amp; Data Analyst</option>
                   <option value="digital_marketing_intern">Digital Marketing Intern</option>
                 </optgroup>
-                <optgroup label="Field">
-                  <option value="sales_distributor">Sales Distributor</option>
-                </optgroup>
               </select>
             </div>
 
-            <!-- Location (Sales Distributor only) -->
-            <div id="userLocationFields" style="display:none;">
-              <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
-                <div class="form-group">
-                  <label for="userProvince">Province</label>
-                  <select id="userProvince"><option value="">Select Province</option></select>
-                </div>
-                <div class="form-group">
-                  <label for="userRegion">Region (District)</label>
-                  <select id="userRegion"><option value="">Select Region</option></select>
-                </div>
-                <div class="form-group">
-                  <label for="userArea">Area</label>
-                  <select id="userArea"><option value="">Select Area</option></select>
-                </div>
-              </div>
-            </div>
-
-            <!-- Dashboard Access Permissions (non-admin roles) -->
-            <div id="userPermissionsSection" style="display:none;">
+            <!-- Dashboard Access Permissions -->
+            <div id="teamPermissionsSection" style="display:none;">
               <div class="permissions-section-header">
                 <div>
                   <span style="font-weight:700; font-size:0.92rem; color:var(--text-primary);">Dashboard Access</span>
@@ -390,52 +373,109 @@
                 </div>
               </div>
               <div class="permissions-grid">
-                <label class="perm-item">
-                  <input type="checkbox" id="perm_users" value="users" />
-                  <span class="perm-label"><i class="ph ph-user-gear"></i> Users</span>
-                </label>
-                <label class="perm-item">
-                  <input type="checkbox" id="perm_shops" value="shops" />
-                  <span class="perm-label"><i class="ph ph-storefront"></i> Shops</span>
-                </label>
-                <label class="perm-item">
-                  <input type="checkbox" id="perm_activity" value="activity" />
-                  <span class="perm-label"><i class="ph ph-activity"></i> Activity Logs</span>
-                </label>
-                <label class="perm-item">
-                  <input type="checkbox" id="perm_campaigns" value="campaigns" />
-                  <span class="perm-label"><i class="ph ph-megaphone"></i> Campaigns</span>
-                </label>
-                <label class="perm-item">
-                  <input type="checkbox" id="perm_stats" value="stats" />
-                  <span class="perm-label"><i class="ph ph-chart-bar"></i> Scan Stats</span>
-                </label>
-                <label class="perm-item">
-                  <input type="checkbox" id="perm_roi" value="roi" />
-                  <span class="perm-label"><i class="ph ph-trend-up"></i> ROI Analytics</span>
-                </label>
+                <label class="perm-item"><input type="checkbox" id="perm_users" value="users" /><span class="perm-label"><i class="ph ph-user-gear"></i> Users</span></label>
+                <label class="perm-item"><input type="checkbox" id="perm_shops" value="shops" /><span class="perm-label"><i class="ph ph-storefront"></i> Shops</span></label>
+                <label class="perm-item"><input type="checkbox" id="perm_activity" value="activity" /><span class="perm-label"><i class="ph ph-activity"></i> Activity Logs</span></label>
+                <label class="perm-item"><input type="checkbox" id="perm_campaigns" value="campaigns" /><span class="perm-label"><i class="ph ph-megaphone"></i> Campaigns</span></label>
+                <label class="perm-item"><input type="checkbox" id="perm_stats" value="stats" /><span class="perm-label"><i class="ph ph-chart-bar"></i> Scan Stats</span></label>
+                <label class="perm-item"><input type="checkbox" id="perm_roi" value="roi" /><span class="perm-label"><i class="ph ph-trend-up"></i> ROI Analytics</span></label>
               </div>
             </div>
 
-            <div id="addUserMsg" style="font-size:0.85rem; min-height:18px; margin-bottom:8px;"></div>
-            <button type="submit" class="btn-primary"><i class="ph ph-user-plus"></i> Add User</button>
+            <div id="addTeamMsg" style="font-size:0.85rem; min-height:18px; margin-bottom:8px;"></div>
+            <button type="submit" class="btn-primary"><i class="ph ph-user-plus"></i> Add Team Member</button>
           </form>
         </div>
 
-        <!-- Existing Users Panel -->
         <div class="panel">
           <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
             <div>
-              <h2 class="panel-title">All Users</h2>
-              <p class="panel-desc">Manage accounts and edit dashboard access permissions.</p>
+              <h2 class="panel-title">Digital Marketing Team</h2>
+              <p class="panel-desc">Manage internal accounts and dashboard access permissions.</p>
             </div>
             <div style="position:relative;">
               <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
-              <input type="text" id="searchUsers" placeholder="Search users..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
+              <input type="text" id="searchTeam" placeholder="Search team..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
             </div>
           </div>
-          <div class="table-responsive" id="usersList">
-            <p>Loading users...</p>
+          <div class="table-responsive" id="teamList">
+            <p>Loading team...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Field Reps Tab -->
+      <div id="repsTab" class="tab-content" style="display:none;">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Add Sales Distributor</h2>
+              <p class="panel-desc">Create a new field rep account for a specific region.</p>
+            </div>
+          </div>
+          <form id="addRepForm">
+            <div class="form-grid" style="grid-template-columns: repeat(2, 1fr);">
+              <div class="form-group">
+                <label for="repUsername">Full Name / Username</label>
+                <input type="text" id="repUsername" placeholder="Enter name or username" required />
+              </div>
+              <div class="form-group">
+                <label for="repPassword">Password</label>
+                <input type="password" id="repPassword" placeholder="Secure password" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="repRole">Role</label>
+              <select id="repRole" required onchange="onRepRoleChange()">
+                <option value="">— Select Role —</option>
+                <optgroup label="Field Management">
+                  <option value="area_sales_manager">Area Sales Manager (Province-level)</option>
+                  <option value="field_sales_manager">Field Sales Manager (Region-level)</option>
+                </optgroup>
+                <optgroup label="Field Execution">
+                  <option value="sales_distributor">Sales Distributor</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <!-- Location fields (shown for all field roles) -->
+            <div id="repLocationFields" style="display:none;">
+              <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="form-group">
+                  <label for="repProvince">Province</label>
+                  <select id="repProvince"><option value="">Select Province</option></select>
+                </div>
+                <div class="form-group" id="repRegionGroup">
+                  <label for="repRegion">Region (District)</label>
+                  <select id="repRegion"><option value="">Select Region</option></select>
+                </div>
+                <div class="form-group" id="repAreaGroup">
+                  <label for="repArea">Area</label>
+                  <select id="repArea"><option value="">Select Area</option></select>
+                </div>
+              </div>
+              <p id="repLocationNote" style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 8px;"></p>
+            </div>
+
+            <div id="addRepMsg" style="font-size:0.85rem; min-height:18px; margin-bottom:8px;"></div>
+            <button type="submit" class="btn-primary"><i class="ph ph-user-plus"></i> Add Sales Distributor</button>
+          </form>
+        </div>
+
+          <div class="panel">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h2 class="panel-title">Field Management Team</h2>
+              <p class="panel-desc">Manage Area Sales Managers, Field Sales Managers and Sales Distributors.</p>
+            </div>
+            <div style="position:relative;">
+              <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary);"></i>
+              <input type="text" id="searchReps" placeholder="Search field team..." style="padding-left:36px; border:1px solid var(--border-color); border-radius:8px; padding-top:8px; padding-bottom:8px; width:250px; font-family:'Plus Jakarta Sans',sans-serif;" />
+            </div>
+          </div>
+          <div class="table-responsive" id="repsList">
+            <p>Loading field team...</p>
           </div>
         </div>
       </div>
@@ -1133,11 +1173,12 @@
   const tabContents = document.querySelectorAll('.tab-content');
   const pageTitle = document.getElementById('pageTitle');
   
-  const addUserForm = document.getElementById('addUserForm');
+  
   const addShopForm = document.getElementById('addShopForm');
   const createCampaignForm = document.getElementById('createCampaignForm');
 
-  const usersList = document.getElementById('usersList');
+  const teamList = document.getElementById('teamList');
+  const repsList = document.getElementById('repsList');
   const shopsList = document.getElementById('shopsList');
   const campaignsList = document.getElementById('campaignsList');
   const logList = document.getElementById('logList');
@@ -1149,7 +1190,8 @@
   const totalScans = document.getElementById('totalScans');
 
   const STAFF_ROLES = ['admin','sys_admin','digital_marketing_manager','digital_content_specialist',
-    'digital_media_performance_manager','social_media_influencer_strategist','crm_data_analyst','digital_marketing_intern'];
+    'digital_media_performance_manager','social_media_influencer_strategist','crm_data_analyst','digital_marketing_intern',
+    'area_sales_manager','field_sales_manager'];
 
   function checkAuth() {
     const token = localStorage.getItem("token");
@@ -1160,6 +1202,11 @@
   }
 
   function isManager() {
+    const user = JSON.parse(localStorage.getItem("user"));
+    return user && (user.role === 'admin' || user.role === 'sys_admin' || user.role === 'area_sales_manager' || user.role === 'field_sales_manager');
+  }
+
+  function isFullAdmin() {
     const user = JSON.parse(localStorage.getItem("user"));
     return user && (user.role === 'admin' || user.role === 'sys_admin');
   }
@@ -1189,7 +1236,7 @@
     const globalGrid = document.getElementById('globalStatGrid');
     if (globalGrid) globalGrid.style.display = tab === 'roi' ? 'none' : '';
     
-    if (tab === 'users') loadUsers();
+    if (tab === 'team' || tab === 'reps') loadUsers();
     if (tab === 'shops') loadShops();
     if (tab === 'log') loadRegistrationLog();
     if (tab === 'activity') loadActivityLog();
@@ -1258,6 +1305,8 @@
     social_media_influencer_strategist: 'Social Media & Influencer Strategist',
     crm_data_analyst: 'CRM & Data Analyst',
     digital_marketing_intern: 'Digital Marketing Intern',
+    area_sales_manager: 'Area Sales Manager',
+    field_sales_manager: 'Field Sales Manager',
   };
 
   const ROLE_CSS = {
@@ -1269,6 +1318,8 @@
     social_media_influencer_strategist: 'role-marketing',
     crm_data_analyst: 'role-crm',
     digital_marketing_intern: 'role-intern',
+    area_sales_manager: 'role-asm',
+    field_sales_manager: 'role-fsm',
   };
 
   const PERM_KEYS = ['users','shops','activity','campaigns','stats','roi'];
@@ -1284,25 +1335,27 @@
       displayUsers(users);
       refreshGlobalSummary();
     } catch (error) {
-      usersList.innerHTML = "<p>Error loading users.</p>";
+      if (typeof teamList !== 'undefined') teamList.innerHTML = "<p>Error loading team.</p>";
+      if (typeof repsList !== 'undefined') repsList.innerHTML = "<p>Error loading reps.</p>";
     }
   }
 
   function displayUsers(users) {
     const canManage = isManager();
-    let html = `<table class='modern-table'>
+    
+    const FIELD_MGR_ROLES = ['area_sales_manager', 'field_sales_manager'];
+    const teamUsers = users.filter(u => u.role !== 'sales_distributor' && !FIELD_MGR_ROLES.includes(u.role));
+    const repUsers  = users.filter(u => u.role === 'sales_distributor' || FIELD_MGR_ROLES.includes(u.role));
+
+    let teamHtml = `<table class='modern-table'>
       <thead><tr>
         <th>Employee ID</th><th>Name</th><th>Role</th>
-        <th>Dashboard Access</th><th>Location</th><th>Created</th><th>Actions</th>
+        <th>Dashboard Access</th><th>Created</th><th>Actions</th>
       </tr></thead><tbody>`;
 
-    users.forEach(u => {
+    teamUsers.forEach(u => {
       const label = ROLE_LABELS[u.role] || u.role;
       const css   = ROLE_CSS[u.role] || 'role-marketing';
-      const loc   = (u.role === 'admin' || u.role === 'sys_admin')
-        ? 'Head Office'
-        : [u.province, u.region, u.area].filter(Boolean).join(', ') || '—';
-
       const perms = u.permissions || {};
       const isFullAccess = u.role === 'admin' || u.role === 'sys_admin';
 
@@ -1327,19 +1380,44 @@
         ? `<button class="btn-danger" style="padding:5px 10px;font-size:0.78rem;" onclick="deleteUser(${u.id})"><i class="ph ph-trash"></i></button>`
         : '';
 
-      html += `<tr>
+      teamHtml += `<tr>
         <td><strong>${u.employee_id || '—'}</strong></td>
         <td>${u.username}</td>
         <td><span class="role-badge ${css}">${label}</span></td>
         <td>${permHtml}</td>
-        <td style="font-size:0.82rem;">${loc}</td>
         <td>${new Date(u.created_at).toLocaleDateString()}</td>
         <td style="white-space:nowrap;">${editBtn}${delBtn}</td>
       </tr>`;
     });
+    teamHtml += '</tbody></table>';
+    if (typeof teamList !== 'undefined') teamList.innerHTML = teamHtml;
 
-    html += '</tbody></table>';
-    usersList.innerHTML = html;
+    let repHtml = `<table class='modern-table'>
+      <thead><tr>
+        <th>Employee ID</th><th>Name</th><th>Role</th>
+        <th>Territory</th><th>Created</th><th>Actions</th>
+      </tr></thead><tbody>`;
+
+    repUsers.forEach(u => {
+      const label = ROLE_LABELS[u.role] || u.role;
+      const css   = ROLE_CSS[u.role] || 'role-sd';
+      const locParts = [u.province, u.region, u.area].filter(Boolean);
+      const loc = locParts.join(' › ') || '—';
+      const delBtn = canManage
+        ? `<button class="btn-danger" style="padding:5px 10px;font-size:0.78rem;" onclick="deleteUser(${u.id})"><i class="ph ph-trash"></i></button>`
+        : '';
+
+      repHtml += `<tr>
+        <td><strong>${u.employee_id || '—'}</strong></td>
+        <td>${u.username}</td>
+        <td><span class="role-badge ${css}">${label}</span></td>
+        <td style="font-size:0.82rem;"><i class="ph ph-map-pin" style="color:var(--text-secondary);"></i> ${loc}</td>
+        <td>${new Date(u.created_at).toLocaleDateString()}</td>
+        <td style="white-space:nowrap;">${delBtn}</td>
+      </tr>`;
+    });
+    repHtml += '</tbody></table>';
+    if (typeof repsList !== 'undefined') repsList.innerHTML = repHtml;
   }
 
   async function deleteUser(id) {
@@ -1362,17 +1440,14 @@
   }
 
   // ── Role change: show/hide location + permissions sections ──────────────────
-  window.onUserRoleChange = function() {
-    const role = document.getElementById('userRole').value;
-    const locFields  = document.getElementById('userLocationFields');
-    const permSec    = document.getElementById('userPermissionsSection');
-    const isSd       = role === 'sales_distributor';
+  window.onTeamRoleChange = function() {
+    const role = document.getElementById('teamRole').value;
+    const permSec    = document.getElementById('teamPermissionsSection');
     const isAdmin    = role === 'admin' || role === 'sys_admin';
 
-    locFields.style.display  = isSd ? '' : 'none';
-    permSec.style.display    = (!isSd && !isAdmin && role) ? '' : 'none';
+    permSec.style.display    = (!isAdmin && role) ? '' : 'none';
 
-    if (role && !isAdmin && !isSd) {
+    if (role && !isAdmin) {
       const defaults = {
         digital_marketing_manager:         { users:false, shops:true,  activity:true,  campaigns:true,  stats:true,  roi:true  },
         digital_content_specialist:        { users:false, shops:false, activity:false, campaigns:true,  stats:true,  roi:false },
@@ -1459,10 +1534,21 @@
   // ── Apply permission-based nav visibility for non-admin staff ────────────────
   function applyNavPermissions(permissions, role) {
     if (role === 'admin' || role === 'sys_admin') return;
-    const tabMap = { users:'users', shops:'shops', log:'activity', activity:'activity', campaigns:'campaigns', stats:'stats', roi:'roi' };
+    const isFieldMgr = role === 'area_sales_manager' || role === 'field_sales_manager';
+    const tabMap = { team:'users', reps:'users', shops:'shops', log:'activity', activity:'activity', campaigns:'campaigns', stats:'stats', roi:'roi' };
     let firstAllowed = null;
     document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
       const tab  = btn.dataset.tab;
+      // Field managers always see the Field Reps tab; never the Digital Marketing Team tab
+      if (tab === 'reps') {
+        btn.style.display = isFieldMgr ? '' : 'none';
+        if (isFieldMgr && !firstAllowed) firstAllowed = 'reps';
+        return;
+      }
+      if (tab === 'team') {
+        btn.style.display = isFieldMgr ? 'none' : '';
+        return;
+      }
       const pkey = tabMap[tab];
       if (!pkey) return;
       if (tab === 'log') {
@@ -1633,64 +1719,82 @@
     statsList.innerHTML = html;
   }
 
-  addUserForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username    = document.getElementById('userUsername').value.trim();
-    const password    = document.getElementById('userPassword').value.trim();
-    const role        = document.getElementById('userRole').value;
-    const province    = document.getElementById('userProvince').value;
-    const region      = document.getElementById('userRegion').value;
-    const area        = document.getElementById('userArea').value;
-    const token       = localStorage.getItem("token");
-    const msgEl       = document.getElementById('addUserMsg');
+  // addTeamMemberForm is handled by its own inline listener (see addTeamMemberForm block)
 
-    if (!username || !password || !role) {
-      msgEl.style.color = '#dc2626';
-      msgEl.textContent = 'Name, password, and role are required.';
-      return;
+  // ── Rep role change: show/hide location fields based on role ────────────────
+  window.onRepRoleChange = function() {
+    const role = document.getElementById('repRole').value;
+    const locFields = document.getElementById('repLocationFields');
+    const regionGroup = document.getElementById('repRegionGroup');
+    const areaGroup = document.getElementById('repAreaGroup');
+    const noteEl = document.getElementById('repLocationNote');
+
+    if (!role) { locFields.style.display = 'none'; return; }
+
+    locFields.style.display = '';
+    if (role === 'area_sales_manager') {
+      regionGroup.style.display = 'none';
+      areaGroup.style.display = 'none';
+      noteEl.textContent = '📍 ASM covers an entire province. Only select the province.';
+    } else if (role === 'field_sales_manager') {
+      regionGroup.style.display = '';
+      areaGroup.style.display = 'none';
+      noteEl.textContent = '📍 FSM covers a specific region. Select province and region.';
+    } else {
+      regionGroup.style.display = '';
+      areaGroup.style.display = '';
+      noteEl.textContent = '';
     }
+  };
 
-    const permissions = {};
-    const isAdmin = role === 'admin' || role === 'sys_admin';
-    const isSd    = role === 'sales_distributor';
-    if (!isAdmin && !isSd) {
-      PERM_KEYS.forEach(k => {
-        permissions[k] = document.getElementById('perm_' + k)?.checked || false;
-      });
-    }
+  const addRepForm = document.getElementById('addRepForm');
+  if (addRepForm) {
+    addRepForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('addRepMsg');
+      const role     = document.getElementById('repRole').value;
+      const username = document.getElementById('repUsername').value.trim();
+      const password = document.getElementById('repPassword').value.trim();
+      const province = document.getElementById('repProvince').value;
+      const region   = document.getElementById('repRegion').value;
+      const area     = document.getElementById('repArea').value;
 
-    const btn = addUserForm.querySelector('button[type="submit"]');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="ph ph-spinner"></i> Adding…';
-    btn.disabled  = true;
-    msgEl.textContent = '';
-
-    try {
-      const response = await fetch(`${API_BASE}/api/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({ username, password, role, province, region, area, permissions }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        msgEl.style.color = '#059669';
-        msgEl.textContent = `✓ User created! Employee ID: ${data.employee_id || '—'}`;
-        addUserForm.reset();
-        document.getElementById('userLocationFields').style.display  = 'none';
-        document.getElementById('userPermissionsSection').style.display = 'none';
-        loadUsers();
-      } else {
-        msgEl.style.color = '#dc2626';
-        msgEl.textContent = data.message || 'Error adding user';
+      if (!role) {
+        msg.style.color = '#dc2626';
+        msg.textContent = 'Please select a role.';
+        return;
       }
-    } catch (error) {
-      msgEl.style.color = '#dc2626';
-      msgEl.textContent = 'Network error. Please try again.';
-    } finally {
-      btn.innerHTML = originalText;
-      btn.disabled  = false;
-    }
-  });
+
+      const body = { username, password, role, province,
+        region: (role === 'area_sales_manager') ? null : region,
+        area:   (role !== 'sales_distributor') ? null : area
+      };
+
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_BASE}/api/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (res.ok) {
+          msg.style.color = '#059669';
+          msg.textContent = `✓ ${ROLE_LABELS[role] || role} added! ID: ${data.employee_id}`;
+          addRepForm.reset();
+          document.getElementById('repLocationFields').style.display = 'none';
+          loadUsers();
+        } else {
+          msg.style.color = '#dc2626';
+          msg.textContent = data.message || 'Error adding user';
+        }
+      } catch (err) {
+        msg.style.color = '#dc2626';
+        msg.textContent = 'Server error. Please try again.';
+      }
+    });
+  }
+
 
   addShopForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -2707,7 +2811,7 @@
       .attr('fill', f => {
         const key = level === 'province'
           ? normProv(f.properties.region)
-          : normDistrict(f.properties['alt-name'] || f.properties.name);
+          : normDistrict(f.properties['woe-name']);
         return getChoroColor((aggData[key]||0) / maxVal);
       })
       .attr('stroke', '#fff')
@@ -2718,10 +2822,10 @@
         d3.select(this).attr('stroke','#1d4ed8').attr('stroke-width',2.5);
         const label  = level === 'province'
           ? (normProv(f.properties.region) || f.properties.region || '').replace(/\b\w/g,c=>c.toUpperCase()) + ' Province'
-          : (f.properties['alt-name'] || f.properties.name || '') + ' District';
+          : (f.properties['woe-name'] || '') + ' District';
         const key = level === 'province'
           ? normProv(f.properties.region)
-          : normDistrict(f.properties['alt-name'] || f.properties.name);
+          : normDistrict(f.properties['woe-name']);
         const cnt = aggData[key] || 0;
         const pct = ((cnt/maxVal)*100).toFixed(1);
         tip.innerHTML = `
@@ -2791,6 +2895,29 @@
         .style('fill','#1e293b').style('pointer-events','none')
         .style('font-family','Plus Jakarta Sans,sans-serif')
         .attr('stroke','#fff').attr('stroke-width','3px')
+        .attr('paint-order','stroke')
+        .text(d => d.name);
+
+    } else {
+      // District-level labels: use woe-name (clean English name e.g. "Kandy", "Colombo")
+      const districtLabels = _slGeoJSON.features.map(f => {
+        const c = pathGen.centroid(f);
+        return isNaN(c[0]) ? null : {
+          name: f.properties['woe-name'] || '',
+          cx: c[0],
+          cy: c[1]
+        };
+      }).filter(Boolean);
+
+      svg.selectAll('text')
+        .data(districtLabels)
+        .join('text')
+        .attr('x', d=>d.cx).attr('y', d=>d.cy)
+        .attr('text-anchor','middle').attr('dominant-baseline','middle')
+        .style('font-size','8px').style('font-weight','600')
+        .style('fill','#1e293b').style('pointer-events','none')
+        .style('font-family','Plus Jakarta Sans,sans-serif')
+        .attr('stroke','#fff').attr('stroke-width','2.5px')
         .attr('paint-order','stroke')
         .text(d => d.name);
     }
@@ -3037,7 +3164,7 @@
     });
   }
 
-  setupCascadingDropdowns('user');
+  setupCascadingDropdowns('rep');
   setupCascadingDropdowns('shop');
 
   // ── Search Filters ────────────────────────────────────────────────────────
@@ -3053,7 +3180,8 @@
     });
   }
 
-  filterTable('searchUsers', 'usersList');
+  filterTable('searchTeam', 'teamList');
+  filterTable('searchReps', 'repsList');
   filterTable('searchShops', 'shopsList');
   filterTable('searchLog', 'logList');
   filterTable('searchActivity', 'activityList');

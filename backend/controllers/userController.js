@@ -6,7 +6,8 @@ const STAFF_ROLES = [
   'admin', 'sys_admin', 'sales_distributor',
   'digital_marketing_manager', 'digital_content_specialist',
   'digital_media_performance_manager', 'social_media_influencer_strategist',
-  'crm_data_analyst', 'digital_marketing_intern'
+  'crm_data_analyst', 'digital_marketing_intern',
+  'area_sales_manager', 'field_sales_manager'
 ];
 
 const ROLE_LABELS = {
@@ -19,6 +20,8 @@ const ROLE_LABELS = {
   social_media_influencer_strategist: 'Social Media & Influencer Strategist',
   crm_data_analyst: 'CRM & Data Analyst',
   digital_marketing_intern: 'Digital Marketing Intern',
+  area_sales_manager: 'Area Sales Manager',
+  field_sales_manager: 'Field Sales Manager',
 };
 
 const ROLE_PREFIXES = {
@@ -30,6 +33,8 @@ const ROLE_PREFIXES = {
   social_media_influencer_strategist: 'SMIS-',
   crm_data_analyst: 'CDA-',
   digital_marketing_intern: 'DMI-',
+  area_sales_manager: 'ASM-',
+  field_sales_manager: 'FSM-',
 };
 
 const DEFAULT_PERMISSIONS = {
@@ -42,6 +47,18 @@ const DEFAULT_PERMISSIONS = {
   crm_data_analyst: { users: false, shops: true, activity: true, campaigns: false, stats: true, roi: true },
   digital_marketing_intern: { users: false, shops: false, activity: false, campaigns: false, stats: true, roi: false },
   sales_distributor: { users: false, shops: false, activity: false, campaigns: false, stats: false, roi: false },
+  // Field management roles — territory-scoped; permissions fixed (not editable per-user)
+  area_sales_manager: { users: true, shops: true, activity: true, campaigns: false, stats: true, roi: false },
+  field_sales_manager: { users: true, shops: true, activity: true, campaigns: false, stats: true, roi: false },
+};
+
+// Roles that can manage Field Reps (territory-scoped)
+const FIELD_MANAGERS = ['area_sales_manager', 'field_sales_manager'];
+
+// What each field manager role is allowed to create
+const CREATABLE_ROLES = {
+  area_sales_manager: ['field_sales_manager', 'sales_distributor'],
+  field_sales_manager: ['sales_distributor'],
 };
 
 async function nextEmployeeId(prefix) {
@@ -106,9 +123,32 @@ const updateMyProfile = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, username, employee_id, role, province, region, area, permissions, created_at FROM users ORDER BY created_at DESC'
-    );
+    const { role, province, region } = req.user;
+    let query, params;
+
+    if (role === 'area_sales_manager') {
+      // ASMs see FSMs and Sales Distributors in their province only
+      query = `SELECT id, username, employee_id, role, province, region, area, permissions, created_at
+               FROM users
+               WHERE province = $1
+                 AND role IN ('field_sales_manager', 'sales_distributor')
+               ORDER BY created_at DESC`;
+      params = [province];
+    } else if (role === 'field_sales_manager') {
+      // FSMs see Sales Distributors in their province + region only
+      query = `SELECT id, username, employee_id, role, province, region, area, permissions, created_at
+               FROM users
+               WHERE province = $1 AND region = $2
+                 AND role = 'sales_distributor'
+               ORDER BY created_at DESC`;
+      params = [province, region];
+    } else {
+      // Admins/sys_admin/digital team see everyone
+      query = 'SELECT id, username, employee_id, role, province, region, area, permissions, created_at FROM users ORDER BY created_at DESC';
+      params = [];
+    }
+
+    const result = await pool.query(query, params);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('getAllUsers error:', error);
@@ -124,10 +164,36 @@ const createUser = async (req, res) => {
   if (!STAFF_ROLES.includes(role)) {
     return res.status(400).json({ message: 'Invalid role' });
   }
+
+  // Territory-scoped creation enforcement for field managers
+  const requesterRole = req.user.role;
+  if (FIELD_MANAGERS.includes(requesterRole)) {
+    const allowed = CREATABLE_ROLES[requesterRole] || [];
+    if (!allowed.includes(role)) {
+      return res.status(403).json({
+        message: `Your role (${ROLE_LABELS[requesterRole]}) cannot create users with role '${ROLE_LABELS[role] || role}'.`
+      });
+    }
+  }
+
   try {
+    let finalProvince = province || null;
+    let finalRegion = region || null;
+    let finalArea = area || null;
+
+    // FSMs can only create reps in their own territory
+    if (requesterRole === 'field_sales_manager') {
+      finalProvince = req.user.province;
+      finalRegion = req.user.region;
+    }
+    // ASMs can only create within their own province
+    if (requesterRole === 'area_sales_manager') {
+      finalProvince = req.user.province;
+    }
+
     let newEmployeeId = null;
     if (role === 'sales_distributor') {
-      const locPrefix = getLocationPrefix(province, region);
+      const locPrefix = getLocationPrefix(finalProvince, finalRegion);
       newEmployeeId = await nextEmployeeId(`SD-${locPrefix}-`);
     } else {
       const prefix = ROLE_PREFIXES[role] || 'USR-';
@@ -140,11 +206,14 @@ const createUser = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const finalPermissions = permissions || DEFAULT_PERMISSIONS[role] || {};
+    // For field managers, use fixed DEFAULT_PERMISSIONS (not editable per-user via UI)
+    const finalPermissions = FIELD_MANAGERS.includes(role)
+      ? DEFAULT_PERMISSIONS[role]
+      : (permissions || DEFAULT_PERMISSIONS[role] || {});
 
     await pool.query(
       'INSERT INTO users (username, password_hash, role, employee_id, province, region, area, permissions) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-      [username, hashedPassword, role, newEmployeeId, province || null, region || null, area || null, JSON.stringify(finalPermissions)]
+      [username, hashedPassword, role, newEmployeeId, finalProvince, finalRegion, finalArea, JSON.stringify(finalPermissions)]
     );
     res.status(201).json({ message: 'User created successfully', employee_id: newEmployeeId });
   } catch (error) {
