@@ -528,16 +528,21 @@
     renderTable(filtered);
   }
 
-  async function deleteMember(id, name) {
+  window.deleteMember = async function(id, name) {
     if (!confirm(`Remove "${name}" from the team? This cannot be undone.`)) return;
     try {
       const res = await fetch(`${API_BASE}/api/users/${id}`, {
         method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) loadTeam();
-      else alert('Could not delete user.');
-    } catch { alert('Server error.'); }
-  }
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        alert(`"${name}" removed successfully.`);
+        loadTeam();
+      } else {
+        alert(data.message || `Could not delete user (HTTP ${res.status})`);
+      }
+    } catch(e) { alert('Server error: ' + e.message); }
+  };
 
   loadTeam();
 </script>

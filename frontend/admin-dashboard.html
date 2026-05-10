@@ -1420,7 +1420,7 @@
     if (typeof repsList !== 'undefined') repsList.innerHTML = repHtml;
   }
 
-  async function deleteUser(id) {
+  window.deleteUser = async function(id) {
     if (!confirm('Delete this user? This cannot be undone.')) return;
     const token = localStorage.getItem("token");
     try {
@@ -1428,16 +1428,17 @@
         method: 'DELETE',
         headers: { "Authorization": `Bearer ${token}` },
       });
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
+        alert('User deleted successfully.');
         loadUsers();
       } else {
-        const err = await response.json();
-        alert(err.message || 'Error deleting user');
+        alert(data.message || `Error deleting user (HTTP ${response.status})`);
       }
     } catch (error) {
-      alert('Error deleting user');
+      alert('Network error: ' + error.message);
     }
-  }
+  };
 
   // ── Role change: show/hide location + permissions sections ──────────────────
   window.onTeamRoleChange = function() {
