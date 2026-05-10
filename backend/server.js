@@ -144,8 +144,10 @@ async function initDatabase() {
       console.log(`✓ Assigned SYS-000001 to ${sysIdAssign.rowCount} admin(s)`);
     }
 
-    // 1f. Expand role constraint to include all digital marketing staff roles + field management roles
+    // 1f. Expand role column size and update constraint for all staff roles
     try {
+      // Expand VARCHAR(20) → VARCHAR(50) so long role names fit (e.g. 'social_media_influencer_strategist' = 34 chars)
+      await pool.query(`ALTER TABLE users ALTER COLUMN role TYPE VARCHAR(50)`);
       await pool.query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`);
       await pool.query(`
         ALTER TABLE users ADD CONSTRAINT users_role_check
