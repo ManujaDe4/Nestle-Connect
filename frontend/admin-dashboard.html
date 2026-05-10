@@ -1471,6 +1471,55 @@
     });
   };
 
+  // ── Add Digital Marketing Team Member ────────────────────────────────────────
+  const addTeamMemberForm = document.getElementById('addTeamMemberForm');
+  if (addTeamMemberForm) {
+    addTeamMemberForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg      = document.getElementById('addTeamMsg');
+      const username = document.getElementById('teamUsername').value.trim();
+      const password = document.getElementById('teamPassword').value.trim();
+      const role     = document.getElementById('teamRole').value;
+
+      if (!role) {
+        msg.style.color = '#dc2626';
+        msg.textContent = 'Please select a role.';
+        return;
+      }
+
+      // Collect permission checkboxes
+      const permissions = {};
+      PERM_KEYS.forEach(k => {
+        const cb = document.getElementById('perm_' + k);
+        permissions[k] = cb ? cb.checked : false;
+      });
+
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_BASE}/api/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ username, password, role, permissions })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          msg.style.color = '#059669';
+          msg.textContent = `✓ ${data.role_label || role} added! Employee ID: ${data.employee_id}`;
+          addTeamMemberForm.reset();
+          document.getElementById('teamPermissionsSection').style.display = 'none';
+          loadUsers();
+        } else {
+          msg.style.color = '#dc2626';
+          msg.textContent = data.message || 'Error adding team member.';
+        }
+      } catch (err) {
+        msg.style.color = '#dc2626';
+        msg.textContent = 'Server error. Please try again.';
+      }
+    });
+  }
+
+
   // ── Permissions modal ────────────────────────────────────────────────────────
   window.openPermissionsModal = function(userId, username, role, permJsonStr) {
     const perms = JSON.parse(permJsonStr);

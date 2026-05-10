@@ -215,7 +215,7 @@ const createUser = async (req, res) => {
       'INSERT INTO users (username, password_hash, role, employee_id, province, region, area, permissions) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
       [username, hashedPassword, role, newEmployeeId, finalProvince, finalRegion, finalArea, JSON.stringify(finalPermissions)]
     );
-    res.status(201).json({ message: 'User created successfully', employee_id: newEmployeeId });
+    res.status(201).json({ message: 'User created successfully', employee_id: newEmployeeId, role_label: ROLE_LABELS[role] || role });
   } catch (error) {
     console.error('createUser error:', error);
     res.status(500).json({ message: 'Server error while creating user' });
