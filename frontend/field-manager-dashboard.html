@@ -336,16 +336,35 @@
   function trySetupLocations(attempts) {
     if (window.SRI_LANKA_LOCATIONS) {
       const prov = document.getElementById('fmProvince');
-      prov.innerHTML = '<option value="">Select Province</option>';
-      Object.keys(window.SRI_LANKA_LOCATIONS).forEach(p => prov.add(new Option(p, p)));
 
-      // Lock province for FSM (inherits from ASM's province)
-      if (user.role === 'field_sales_manager' && user.province) {
-        prov.value = user.province;
+      if (user.role === 'area_sales_manager' && user.province) {
+        // ASM: province locked to their own province — only show their province
+        prov.innerHTML = `<option value="${user.province}">${user.province}</option>`;
         prov.disabled = true;
         populateRegions(user.province);
-        document.getElementById('provinceGroup').title = 'Province locked to your territory';
+        document.getElementById('provinceGroup').title = `Locked to your province: ${user.province}`;
+
+      } else if (user.role === 'field_sales_manager' && user.province) {
+        // FSM: province + region both locked
+        prov.innerHTML = `<option value="${user.province}">${user.province}</option>`;
+        prov.disabled = true;
+        populateRegions(user.province);
+
+        const reg = document.getElementById('fmRegion');
+        if (user.region) {
+          reg.innerHTML = `<option value="${user.region}">${user.region}</option>`;
+          reg.disabled = true;
+          populateAreas(user.province, user.region);
+          document.getElementById('regionGroup').title = `Locked to your region: ${user.region}`;
+        }
+        document.getElementById('provinceGroup').title = `Locked to your province: ${user.province}`;
+
+      } else {
+        // Fallback: show all provinces (shouldn't happen for field managers)
+        prov.innerHTML = '<option value="">Select Province</option>';
+        Object.keys(window.SRI_LANKA_LOCATIONS).forEach(p => prov.add(new Option(p, p)));
       }
+
     } else if (attempts > 0) {
       setTimeout(() => trySetupLocations(attempts - 1), 400);
     }
@@ -353,6 +372,7 @@
 
   function populateRegions(province) {
     const reg = document.getElementById('fmRegion');
+    if (reg.disabled) return; // don't overwrite locked region
     reg.innerHTML = '<option value="">Select Region</option>';
     const data = window.SRI_LANKA_LOCATIONS?.[province];
     if (data) Object.keys(data).forEach(r => reg.add(new Option(r, r)));
@@ -366,11 +386,15 @@
   }
 
   document.getElementById('fmProvince').addEventListener('change', function() {
-    populateRegions(this.value);
-    document.getElementById('fmArea').innerHTML = '<option value="">Select Area</option>';
+    if (!this.disabled) {
+      populateRegions(this.value);
+      document.getElementById('fmArea').innerHTML = '<option value="">Select Area</option>';
+    }
   });
   document.getElementById('fmRegion').addEventListener('change', function() {
-    populateAreas(document.getElementById('fmProvince').value, this.value);
+    if (!this.disabled) {
+      populateAreas(document.getElementById('fmProvince').value, this.value);
+    }
   });
 
   trySetupLocations(20);
@@ -387,15 +411,22 @@
     locFields.style.display = '';
 
     if (role === 'field_sales_manager') {
+      // Only ASM can create FSMs; region is their own, no area needed
       regionGrp.style.display = '';
       areaGrp.style.display = 'none';
-      note.textContent = '📍 FSM covers a region. Select province and region.';
+      note.textContent = `📍 FSM will be assigned to ${user.province} province.`;
     } else {
+      // Sales Distributor: province+region already locked, only area is free
       regionGrp.style.display = '';
       areaGrp.style.display = '';
-      note.textContent = '';
+      if (user.role === 'field_sales_manager' && user.region) {
+        note.textContent = `📍 Distributor will be added to ${user.province} › ${user.region}.`;
+      } else if (user.role === 'area_sales_manager' && user.province) {
+        note.textContent = `📍 Select region and area within ${user.province} province.`;
+      }
     }
   };
+
 
   // ── Add member form ──
   document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
