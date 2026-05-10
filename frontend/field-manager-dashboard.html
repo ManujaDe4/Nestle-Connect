@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Field Manager Dashboard — Nestlé Connect</title>
+  <script src="./js/config.js"></script>
+  <script src="./js/locations.js?v=2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="./css/dashboard.css" />
+  <style>
+    /* ── Page Layout ── */
+    body { background: var(--dash-bg); font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+    .page-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px 60px;
+    }
+
+    /* ── Top Bar ── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 32px; gap: 16px; flex-wrap: wrap;
+      height: auto !important; background: transparent !important;
+      border-bottom: none !important; backdrop-filter: none !important; padding: 0 !important;
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 12px; }
+    .topbar-logo {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: #fff; border: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .topbar-logo img { width: 28px; height: 28px; object-fit: contain; }
+    .topbar-title { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); }
+    .topbar-sub { font-size: 0.78rem; color: var(--text-secondary); }
+
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .badge-role {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; padding: 4px 12px; border-radius: 100px;
+      background: rgba(15,76,129,0.1); color: var(--accent-color); border: 1px solid rgba(15,76,129,0.2);
+    }
+    .btn-logout {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.82rem; font-weight: 600; padding: 8px 14px;
+      border-radius: 8px; border: 1px solid var(--border-color);
+      background: #fff; color: var(--text-secondary);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-logout:hover { color: #dc2626; border-color: #fca5a5; background: #fff1f2; }
+
+    /* ── Info Banner ── */
+    .info-banner {
+      background: #fff; border: 1px solid var(--border-color);
+      border-radius: 14px; padding: 18px 22px;
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 24px; box-shadow: var(--shadow-sm);
+    }
+    .info-icon { font-size: 1.5rem; }
+    .info-text { flex: 1; }
+    .info-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+    .info-territory { font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px; }
+    .info-stats { display: flex; gap: 20px; }
+    .info-stat { text-align: center; }
+    .info-stat-num { font-size: 1.4rem; font-weight: 800; color: var(--accent-color); }
+    .info-stat-lbl { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* ── Panels ── */
+    .panel {
+      background: #fff; border: 1px solid var(--border-color);
+      border-radius: 16px; box-shadow: var(--shadow-sm); margin-bottom: 24px;
+      padding: 0 !important;
+    }
+    .panel-header {
+      padding: 20px 24px 0; display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    .panel-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 3px; }
+    .panel-desc { font-size: 0.8rem; color: var(--text-secondary); }
+    .panel-body { padding: 20px 24px 24px; }
+
+    /* ── Form ── */
+    .form-grid { display: grid; gap: 14px; }
+    .form-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .form-grid-3 { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 640px) {
+      .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label {
+      font-size: 0.74rem; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--text-secondary);
+    }
+    .form-input, .form-select {
+      padding: 11px 14px; border: 1.5px solid var(--border-color);
+      border-radius: 10px; font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.9rem; color: var(--text-primary);
+      background: var(--dash-bg); outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(15,76,129,0.12);
+    }
+
+    .form-note {
+      font-size: 0.78rem; color: var(--text-secondary);
+      margin-top: 2px; font-style: italic;
+    }
+    .form-msg { font-size: 0.84rem; min-height: 18px; margin-top: 4px; font-weight: 500; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px; background: var(--accent-color); color: #fff;
+      border: none; border-radius: 10px; font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      transition: all 0.2s, transform 0.15s;
+      box-shadow: 0 4px 12px rgba(15,76,129,0.2);
+    }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 16px rgba(15,76,129,0.3); }
+
+    .btn-danger {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; background: #fee2e2; color: #dc2626;
+      border: 1px solid #fca5a5; border-radius: 8px;
+      font-size: 0.78rem; font-weight: 600; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-danger:hover { background: #fecaca; }
+
+    /* ── Search ── */
+    .search-wrap { position: relative; }
+    .search-wrap input {
+      padding: 9px 14px 9px 38px; border: 1px solid var(--border-color);
+      border-radius: 8px; font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.85rem; background: var(--dash-bg); color: var(--text-primary);
+      width: 240px; outline: none;
+    }
+    .search-wrap input:focus { border-color: var(--accent-color); }
+    .search-icon {
+      position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+      color: var(--text-secondary); font-size: 1rem; pointer-events: none;
+    }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; margin-top: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    thead th {
+      background: var(--dash-bg); color: var(--text-secondary);
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; padding: 10px 14px; text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+    tbody td { padding: 12px 14px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(59,130,246,0.03); }
+
+    .role-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 100px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+    }
+    .role-asm { background: #ede9fe; color: #6d28d9; }
+    .role-fsm { background: #fef3c7; color: #b45309; }
+    .role-sd  { background: #d1fae5; color: #065f46; }
+
+    .empty-state {
+      text-align: center; padding: 40px 20px;
+      color: var(--text-secondary); font-size: 0.9rem;
+    }
+    .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 10px; opacity: 0.4; }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- ── Top Bar ── -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">
+        <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé" />
+      </div>
+      <div>
+        <div class="topbar-title">Field Manager Dashboard</div>
+        <div class="topbar-sub">Nestlé Connect · Field Operations</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge-role" id="roleLabel">Loading...</span>
+      <button class="btn-logout" onclick="logout()">
+        <i class="ph ph-sign-out"></i> Sign Out
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Info Banner ── -->
+  <div class="info-banner">
+    <div class="info-icon">👤</div>
+    <div class="info-text">
+      <div class="info-name" id="bannerName">—</div>
+      <div class="info-territory" id="bannerTerritory">—</div>
+    </div>
+    <div class="info-stats">
+      <div class="info-stat">
+        <div class="info-stat-num" id="statCount">—</div>
+        <div class="info-stat-lbl">Team Members</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Add Member Panel ── -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Add Field Team Member</div>
+        <div class="panel-desc">Create a new Sales Distributor or Field Sales Manager account.</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <form id="addMemberForm">
+        <div class="form-grid form-grid-2" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label">Full Name / Username</label>
+            <input type="text" id="fmUsername" class="form-input" placeholder="Enter name" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="fmPassword" class="form-input" placeholder="Secure password" required />
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label">Role</label>
+          <select id="fmRole" class="form-select" required onchange="onRoleChange()">
+            <option value="">— Select Role —</option>
+            <optgroup id="fsmOptGroup" label="Field Management">
+              <option value="field_sales_manager">Field Sales Manager (Region-level)</option>
+            </optgroup>
+            <optgroup label="Field Execution">
+              <option value="sales_distributor">Sales Distributor</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Location fields -->
+        <div id="locationFields" style="display:none; margin-bottom:14px;">
+          <div class="form-grid form-grid-3">
+            <div class="form-group" id="provinceGroup">
+              <label class="form-label">Province</label>
+              <select id="fmProvince" class="form-select"><option value="">Select Province</option></select>
+            </div>
+            <div class="form-group" id="regionGroup">
+              <label class="form-label">Region (District)</label>
+              <select id="fmRegion" class="form-select"><option value="">Select Region</option></select>
+            </div>
+            <div class="form-group" id="areaGroup">
+              <label class="form-label">Area</label>
+              <select id="fmArea" class="form-select"><option value="">Select Area</option></select>
+            </div>
+          </div>
+          <p class="form-note" id="locationNote"></p>
+        </div>
+
+        <div class="form-msg" id="addMsg"></div>
+        <button type="submit" class="btn-primary">
+          <i class="ph ph-user-plus"></i> Add Team Member
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Team List Panel ── -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">My Field Team</div>
+        <div class="panel-desc">View and manage your assigned field team members.</div>
+      </div>
+      <div class="search-wrap">
+        <i class="ph ph-magnifying-glass search-icon"></i>
+        <input type="text" id="searchInput" placeholder="Search team..." oninput="filterTable()" />
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="table-wrap">
+        <div id="teamTable"><p class="empty-state"><i class="ph ph-spinner"></i>Loading team...</p></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Auth check ──
+  const token = localStorage.getItem('token');
+  const user  = JSON.parse(localStorage.getItem('user') || 'null');
+  const FIELD_MGR_ROLES = ['area_sales_manager', 'field_sales_manager'];
+
+  if (!token || !user || !FIELD_MGR_ROLES.includes(user.role)) {
+    window.location.href = 'login.html';
+  }
+
+  const ROLE_LABELS = {
+    area_sales_manager: 'Area Sales Manager',
+    field_sales_manager: 'Field Sales Manager',
+    sales_distributor: 'Sales Distributor'
+  };
+  const ROLE_CSS = {
+    area_sales_manager: 'role-asm',
+    field_sales_manager: 'role-fsm',
+    sales_distributor: 'role-sd'
+  };
+
+  // ── Populate top bar ──
+  document.getElementById('roleLabel').textContent = ROLE_LABELS[user.role] || user.role;
+  document.getElementById('bannerName').textContent = user.username;
+  const territory = [user.province, user.region, user.area].filter(Boolean).join(' › ') || 'All Territories';
+  document.getElementById('bannerTerritory').textContent = '📍 ' + territory;
+
+  // ASM cannot create FSM (only SD); FSM can create both FSM sub-region and SD
+  if (user.role === 'area_sales_manager') {
+    document.getElementById('fsmOptGroup').style.display = 'none';
+  }
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = 'login.html';
+  }
+
+  // ── Location cascading dropdowns ──
+  function trySetupLocations(attempts) {
+    if (window.SRI_LANKA_LOCATIONS) {
+      const prov = document.getElementById('fmProvince');
+      prov.innerHTML = '<option value="">Select Province</option>';
+      Object.keys(window.SRI_LANKA_LOCATIONS).forEach(p => prov.add(new Option(p, p)));
+
+      // Lock province for FSM (inherits from ASM's province)
+      if (user.role === 'field_sales_manager' && user.province) {
+        prov.value = user.province;
+        prov.disabled = true;
+        populateRegions(user.province);
+        document.getElementById('provinceGroup').title = 'Province locked to your territory';
+      }
+    } else if (attempts > 0) {
+      setTimeout(() => trySetupLocations(attempts - 1), 400);
+    }
+  }
+
+  function populateRegions(province) {
+    const reg = document.getElementById('fmRegion');
+    reg.innerHTML = '<option value="">Select Region</option>';
+    const data = window.SRI_LANKA_LOCATIONS?.[province];
+    if (data) Object.keys(data).forEach(r => reg.add(new Option(r, r)));
+  }
+
+  function populateAreas(province, region) {
+    const area = document.getElementById('fmArea');
+    area.innerHTML = '<option value="">Select Area</option>';
+    const arr = window.SRI_LANKA_LOCATIONS?.[province]?.[region];
+    if (arr) arr.forEach(a => area.add(new Option(a, a)));
+  }
+
+  document.getElementById('fmProvince').addEventListener('change', function() {
+    populateRegions(this.value);
+    document.getElementById('fmArea').innerHTML = '<option value="">Select Area</option>';
+  });
+  document.getElementById('fmRegion').addEventListener('change', function() {
+    populateAreas(document.getElementById('fmProvince').value, this.value);
+  });
+
+  trySetupLocations(20);
+
+  // ── Role change handler ──
+  window.onRoleChange = function() {
+    const role = document.getElementById('fmRole').value;
+    const locFields = document.getElementById('locationFields');
+    const regionGrp = document.getElementById('regionGroup');
+    const areaGrp   = document.getElementById('areaGroup');
+    const note      = document.getElementById('locationNote');
+
+    if (!role) { locFields.style.display = 'none'; return; }
+    locFields.style.display = '';
+
+    if (role === 'field_sales_manager') {
+      regionGrp.style.display = '';
+      areaGrp.style.display = 'none';
+      note.textContent = '📍 FSM covers a region. Select province and region.';
+    } else {
+      regionGrp.style.display = '';
+      areaGrp.style.display = '';
+      note.textContent = '';
+    }
+  };
+
+  // ── Add member form ──
+  document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg      = document.getElementById('addMsg');
+    const role     = document.getElementById('fmRole').value;
+    const username = document.getElementById('fmUsername').value.trim();
+    const password = document.getElementById('fmPassword').value.trim();
+    const province = document.getElementById('fmProvince').value;
+    const region   = document.getElementById('fmRegion').value;
+    const area     = document.getElementById('fmArea').value;
+
+    if (!role) { msg.style.color = '#dc2626'; msg.textContent = 'Please select a role.'; return; }
+
+    const body = {
+      username, password, role, province,
+      region: role === 'field_sales_manager' ? region : region,
+      area:   role === 'sales_distributor' ? area : null
+    };
+
+    try {
+      const res  = await fetch(`${API_BASE}/api/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msg.style.color = '#059669';
+        msg.textContent = `✓ ${ROLE_LABELS[role]} added! Employee ID: ${data.employee_id}`;
+        document.getElementById('addMemberForm').reset();
+        document.getElementById('locationFields').style.display = 'none';
+        if (document.getElementById('fmProvince').disabled) {
+          document.getElementById('fmProvince').value = user.province;
+        }
+        loadTeam();
+      } else {
+        msg.style.color = '#dc2626';
+        msg.textContent = data.message || 'Error adding member.';
+      }
+    } catch {
+      msg.style.color = '#dc2626';
+      msg.textContent = 'Server error. Please try again.';
+    }
+  });
+
+  // ── Load team ──
+  let allMembers = [];
+
+  async function loadTeam() {
+    const res  = await fetch(`${API_BASE}/api/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+
+    // Filter to only show relevant members based on this manager's territory
+    allMembers = data.filter(u => {
+      if (!FIELD_MGR_ROLES.includes(u.role) && u.role !== 'sales_distributor') return false;
+      if (u.id === user.id) return false; // don't show self
+      if (user.role === 'area_sales_manager') return u.province === user.province || !user.province;
+      if (user.role === 'field_sales_manager') return u.region === user.region || !user.region;
+      return true;
+    });
+
+    document.getElementById('statCount').textContent = allMembers.length;
+    renderTable(allMembers);
+  }
+
+  function renderTable(members) {
+    const el = document.getElementById('teamTable');
+    if (!members.length) {
+      el.innerHTML = `<div class="empty-state"><i class="ph ph-users"></i>No team members yet. Add your first one above.</div>`;
+      return;
+    }
+    let html = `<table>
+      <thead><tr>
+        <th>Employee ID</th><th>Name</th><th>Role</th>
+        <th>Territory</th><th>Added</th><th></th>
+      </tr></thead><tbody>`;
+    members.forEach(m => {
+      const loc = [m.province, m.region, m.area].filter(Boolean).join(' › ') || '—';
+      const css  = ROLE_CSS[m.role] || 'role-sd';
+      html += `<tr>
+        <td><strong>${m.employee_id || '—'}</strong></td>
+        <td>${m.username}</td>
+        <td><span class="role-badge ${css}">${ROLE_LABELS[m.role] || m.role}</span></td>
+        <td>${loc}</td>
+        <td>${new Date(m.created_at).toLocaleDateString()}</td>
+        <td><button class="btn-danger" onclick="deleteMember(${m.id}, '${m.username}')"><i class="ph ph-trash"></i></button></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  }
+
+  function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allMembers.filter(m =>
+      (m.username + m.employee_id + (m.province||'') + (m.region||'') + (m.area||'')).toLowerCase().includes(q)
+    );
+    renderTable(filtered);
+  }
+
+  async function deleteMember(id, name) {
+    if (!confirm(`Remove "${name}" from the team? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/users/${id}`, {
+        method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) loadTeam();
+      else alert('Could not delete user.');
+    } catch { alert('Server error.'); }
+  }
+
+  loadTeam();
+</script>
+</body>
+</html>

@@ -331,12 +331,16 @@
             'admin','sys_admin',
             'digital_marketing_manager','digital_content_specialist',
             'digital_media_performance_manager','social_media_influencer_strategist',
-            'crm_data_analyst','digital_marketing_intern',
-            'area_sales_manager','field_sales_manager'
+            'crm_data_analyst','digital_marketing_intern'
           ];
-          window.location.href = staffRoles.includes(data.user.role)
-            ? 'admin-dashboard.html'
-            : 'rep-dashboard.html';
+          const fieldMgrRoles = ['area_sales_manager','field_sales_manager'];
+          if (staffRoles.includes(data.user.role)) {
+            window.location.href = 'admin-dashboard.html';
+          } else if (fieldMgrRoles.includes(data.user.role)) {
+            window.location.href = 'field-manager-dashboard.html';
+          } else if (data.user.role === 'sales_distributor') {
+            window.location.href = 'rep-dashboard.html';
+          }
         }, 900);
       } else {
         showMsg(data.message || 'Invalid Employee ID or password.', 'error');
