@@ -4,8 +4,8 @@ test.describe('Module 2: Shop Registration', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/login.html'); 
-    await page.fill('input[id="employeeId"]', 'sd1');
-    await page.fill('input[id="password"]', 'password');
+    await page.fill('input[id="employeeId"]', 'SD-NCE-ANU-000001');
+    await page.fill('input[id="password"]', '123456');
     await page.click('button[type="submit"]');
     await page.waitForURL(/.*rep-dashboard.html/);
     await page.goto('/shop-owner-registration.html');
@@ -22,9 +22,9 @@ test.describe('Module 2: Shop Registration', () => {
     await page.fill('input[id="ownerMobile"]', uniqueMobile);
     await page.fill('input[id="nicNumber"]', uniqueNIC);
 
-    // Province & Region are pre-locked for manu (Western / Colombo).
+    // Province & Region are pre-locked for SD-NCE-ANU-000001 (North Central / Anuradhapura).
     // Area options are pre-populated from locations.js — select directly by value.
-    await page.selectOption('select[id="shopArea"]', { value: 'Colombo 1 (Fort)' });
+    await page.selectOption('select[id="shopArea"]', { value: 'Thirappane' });
 
     await page.click('button[id="registerBtn"]');
 

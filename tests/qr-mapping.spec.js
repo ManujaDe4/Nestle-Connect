@@ -7,8 +7,8 @@ test.describe('Module 3: QR Mapping & Linking', () => {
     await page.goto('/login.html'); 
     
     // 2. Log in using the Rep credentials
-    await page.fill('input[id="employeeId"]', 'sd1');
-    await page.fill('input[id="password"]', 'password');
+    await page.fill('input[id="employeeId"]', 'SD-NCE-ANU-000001');
+    await page.fill('input[id="password"]', '123456');
     await page.click('button[type="submit"]');
 
     // 3. Wait until the dashboard loads, then go to the QR mapping page

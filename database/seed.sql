@@ -12,7 +12,10 @@ VALUES
    'sales_distributor', 'Western', 'Colombo', 'Colombo 1-15'),
   ('sd2', 'SD-CEN-KAN-000001',
    '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-   'sales_distributor', 'Central', 'Kandy', 'Kandy City')
+   'sales_distributor', 'Central', 'Kandy', 'Kandy City'),
+  ('sd_nce_anu', 'SD-NCE-ANU-000001',
+   '$2b$10$7cjZud3Uc8nzMvIxbVUE9uXEvYhQFWICyJ6Lj1ayEXMijgdJTTJaa',
+   'sales_distributor', 'North Central', 'Anuradhapura', 'Thirappane')
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO shops (shop_id, shop_name, owner_mobile, qr_slug, rep_id, province, region, area)
@@ -25,7 +28,13 @@ VALUES
    'Western', 'Colombo', 'Colombo 1-15'),
   ('SHOP003', 'Maharagama Mini Mart', '0777000003', 'maharagama-mini-mart',
    (SELECT id FROM users WHERE username = 'sd2'),
-   'Central', 'Kandy', 'Kandy City')
+   'Central', 'Kandy', 'Kandy City'),
+  ('SHOP004', 'Thirappane General Store', '0777000004', 'thirappane-general-store',
+   (SELECT id FROM users WHERE employee_id = 'SD-NCE-ANU-000001'),
+   'North Central', 'Anuradhapura', 'Thirappane'),
+  ('SHOP005', 'Anuradhapura Kade', '0777000005', 'anuradhapura-kade',
+   (SELECT id FROM users WHERE employee_id = 'SD-NCE-ANU-000001'),
+   'North Central', 'Anuradhapura', 'Thirappane')
 ON CONFLICT (shop_id) DO NOTHING;
 
 INSERT INTO campaigns (campaign_id, campaign_name, description, start_date, end_date, status)
