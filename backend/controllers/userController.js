@@ -259,4 +259,19 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, createUser, deleteUser, getMyProfile, updateMyProfile, updateUserPermissions, ROLE_LABELS };
+const purgeAllUsers = async (req, res) => {
+  try {
+    // 1. Remove activity logs for all non-admin users
+    await pool.query(`DELETE FROM activity_logs WHERE user_id IN (SELECT id FROM users WHERE role != 'admin')`);
+    // 2. Nullify shop references for non-admin users
+    await pool.query(`UPDATE shops SET rep_id = NULL, created_by_rep_id = NULL WHERE rep_id IN (SELECT id FROM users WHERE role != 'admin') OR created_by_rep_id IN (SELECT id FROM users WHERE role != 'admin')`);
+    // 3. Delete all non-admin users
+    const result = await pool.query(`DELETE FROM users WHERE role != 'admin'`);
+    res.status(200).json({ message: `Purged ${result.rowCount} user(s). Admin account preserved.`, count: result.rowCount });
+  } catch (error) {
+    console.error('purgeAllUsers error:', error);
+    res.status(500).json({ message: `Server error during purge: ${error.message}` });
+  }
+};
+
+module.exports = { getAllUsers, createUser, deleteUser, purgeAllUsers, getMyProfile, updateMyProfile, updateUserPermissions, ROLE_LABELS };
