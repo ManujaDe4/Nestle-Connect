@@ -200,7 +200,7 @@
 
   <!-- ── Info Banner ── -->
   <div class="info-banner">
-    <div class="info-icon">👤</div>
+    <div class="info-icon"><i class="ph ph-user"></i></div>
     <div class="info-text">
       <div class="info-name" id="bannerName">—</div>
       <div class="info-territory" id="bannerTerritory">—</div>
@@ -320,7 +320,7 @@
   document.getElementById('roleLabel').textContent = ROLE_LABELS[user.role] || user.role;
   document.getElementById('bannerName').textContent = user.username;
   const territory = [user.province, user.region, user.area].filter(Boolean).join(' › ') || 'All Territories';
-  document.getElementById('bannerTerritory').textContent = '📍 ' + territory;
+  document.getElementById('bannerTerritory').innerHTML = '<i class="ph ph-map-pin"></i> ' + territory;
 
   // ASM cannot create FSM (only SD); FSM can create both FSM sub-region and SD
   if (user.role === 'area_sales_manager') {
@@ -414,15 +414,15 @@
       // Only ASM can create FSMs; region is their own, no area needed
       regionGrp.style.display = '';
       areaGrp.style.display = 'none';
-      note.textContent = `📍 FSM will be assigned to ${user.province} province.`;
+      note.innerHTML = `<i class="ph ph-map-pin"></i> FSM will be assigned to ${user.province} province.`;
     } else {
       // Sales Distributor: province+region already locked, only area is free
       regionGrp.style.display = '';
       areaGrp.style.display = '';
       if (user.role === 'field_sales_manager' && user.region) {
-        note.textContent = `📍 Distributor will be added to ${user.province} › ${user.region}.`;
+        note.innerHTML = `<i class="ph ph-map-pin"></i> Distributor will be added to ${user.province} › ${user.region}.`;
       } else if (user.role === 'area_sales_manager' && user.province) {
-        note.textContent = `📍 Select region and area within ${user.province} province.`;
+        note.innerHTML = `<i class="ph ph-map-pin"></i> Select region and area within ${user.province} province.`;
       }
     }
   };
