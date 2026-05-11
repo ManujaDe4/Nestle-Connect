@@ -3318,7 +3318,32 @@
     });
   });
 
-  switchTab('users', 'Manage Users');
+  switchTab('team', 'Digital Marketing Team');
+
+  // ── Nav Permission Guard (for non-admin staff) ──────────────────────────
+  function applyNavPermissions(permissions, role) {
+    // Map tab keys to nav data-tab attributes
+    const TAB_PERM_MAP = {
+      users:     'team',
+      shops:     'shops',
+      activity:  'activity',
+      campaigns: 'campaigns',
+      stats:     'stats',
+      roi:       'roi',
+    };
+    // Always allow log tab
+    tabBtns.forEach(btn => {
+      const tab = btn.dataset.tab;
+      // Find matching permission key
+      const permKey = Object.keys(TAB_PERM_MAP).find(k => TAB_PERM_MAP[k] === tab);
+      if (permKey && permissions[permKey] === false) {
+        btn.style.display = 'none';
+      }
+    });
+    // Always hide Danger Zone for non-admins
+    const dz = document.getElementById('dangerZonePanel');
+    if (dz) dz.style.display = 'none';
+  }
 
   // ── Profile Panel ─────────────────────────────────────────────────────────
   let _profileOpen = false;
@@ -3384,6 +3409,9 @@
       // Apply permission-based nav for non-admin staff
       if (u.role !== 'admin' && u.role !== 'sys_admin') {
         applyNavPermissions(u.permissions || {}, u.role);
+        // Hide Danger Zone for non-admins
+        const dz = document.getElementById('dangerZonePanel');
+        if (dz) dz.style.display = 'none';
       }
       document.getElementById('panelSince').textContent        = since;
       document.getElementById('editDisplayName').value         = u.username;
