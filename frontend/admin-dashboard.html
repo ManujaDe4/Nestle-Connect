@@ -1395,7 +1395,11 @@
              <i class="ph ph-sliders"></i></button>`
         : '';
 
-      const delBtn = canManage && u.role !== 'admin'
+      // sys_admin rows: only the top-level admin can delete them
+      const currentUserRole = (JSON.parse(localStorage.getItem('user')) || {}).role;
+      const canDelete = u.role !== 'admin' && canManage &&
+        (u.role !== 'sys_admin' || currentUserRole === 'admin');
+      const delBtn = canDelete
         ? `<button class="btn-danger" style="padding:5px 10px;font-size:0.78rem;" onclick="deleteUser(${u.id})"><i class="ph ph-trash"></i></button>`
         : '';
 

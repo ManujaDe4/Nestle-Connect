@@ -245,10 +245,28 @@ const updateUserPermissions = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   const { id } = req.params;
+  const requesterRole = req.user.role; // set by authenticate middleware
   try {
+    // Fetch target user role first
+    const targetRes = await pool.query('SELECT role FROM users WHERE id = $1', [id]);
+    if (targetRes.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const targetRole = targetRes.rows[0].role;
+
+    // Block deleting admin accounts entirely
+    if (targetRole === 'admin') {
+      return res.status(403).json({ message: 'Cannot delete the system admin account.' });
+    }
+
+    // Only the top-level admin can delete sys_admin accounts
+    if (targetRole === 'sys_admin' && requesterRole !== 'admin') {
+      return res.status(403).json({ message: 'Only the System Administrator can delete System Admin accounts.' });
+    }
+
     await pool.query('DELETE FROM activity_logs WHERE user_id = $1', [id]);
     await pool.query('UPDATE shops SET rep_id = NULL, created_by_rep_id = NULL WHERE rep_id = $1 OR created_by_rep_id = $1', [id]);
-    const result = await pool.query('DELETE FROM users WHERE id = $1 AND role != $2', [id, 'admin']);
+    const result = await pool.query('DELETE FROM users WHERE id = $1', [id]);
     if (result.rowCount === 0) {
       return res.status(404).json({ message: 'User not found or cannot delete' });
     }
