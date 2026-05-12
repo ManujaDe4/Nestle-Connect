@@ -13,8 +13,10 @@
   <!-- Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js (pinned version + cdnjs fallback) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
+    onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js'">
+  </script>
 
   <!-- D3.js — Sri Lanka SVG Map -->
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
@@ -2298,8 +2300,10 @@
   let roiCharts = {};
   let _roiAllData = null; // cache overview data
 
-  Chart.defaults.font.family = "'Inter', sans-serif";
-  Chart.defaults.color = '#64748b';
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#64748b';
+  }
 
   // ── Platform Colors (hoisted so all functions can use it) ──────────────────
   const PLATFORM_COLORS = {
