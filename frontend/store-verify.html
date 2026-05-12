@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Store Verification</title>
+  <title>Store Verification – Nestlé Connect</title>
   <link rel="stylesheet" href="./css/styles.css" />
   <script src="./js/config.js"></script>
 </head>
@@ -13,58 +13,63 @@
 
     <!-- BRAND -->
     <div class="brand">
-
-      <!-- ✅ NEW LOGO -->
       <img src="./assets/images/nestle-logo-brown.png" alt="Nestlé Logo" class="brand-logo" />
-
       <span class="brand-name">Nestlé Connect</span>
       <span class="brand-divider">·</span>
-      <span class="brand-sub">Customer Verification</span>
+      <span class="brand-sub">Voucher Redemption</span>
     </div>
-
 
     <!-- Card -->
     <div class="card">
       <div class="corner-mark">C</div>
 
       <div class="card-header">
-        <h1 class="card-title">Customer <span>Voucher Entry</span></h1>
+        <h1 class="card-title">Voucher <span>Redemption</span></h1>
         <p id="shopName">Loading shop details…</p>
       </div>
 
       <hr class="divider" />
 
-      <!-- Input -->
-      <div class="form-group">
-        <label for="voucherCode">Voucher Code</label>
-        <input
-          type="text"
-          id="voucherCode"
-          placeholder="Enter voucher code"
-          autocomplete="off"
-          spellcheck="false"
-        />
+      <!-- Input form (hidden after success) -->
+      <div id="entrySection">
+        <div class="form-group">
+          <label for="voucherCode">Voucher Code</label>
+          <input
+            type="text"
+            id="voucherCode"
+            placeholder="Enter voucher code"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+
+        <button id="submitBtn"><span>Redeem Voucher</span></button>
+
+        <hr class="divider" />
+
+        <!-- Response message -->
+        <div id="responseMsg">Awaiting voucher submission…</div>
       </div>
 
-      <!-- Button -->
-      <button id="submitBtn"><span>Send OTP</span></button>
-
-      <hr class="divider" />
-
-      <!-- Response -->
-      <div id="responseMsg">Awaiting voucher submission…</div>
-
-      <!-- Success -->
-      <div id="successSection" style="display: none; margin-top: 20px;">
-        <p class="card-footer success-note">
-          OTP has been sent to both the customer and the shop owner.<br><br>
-          Please provide the OTP to the shop owner to complete verification.
+      <!-- ✅ Success state shown after redemption -->
+      <div id="successSection" style="display: none; text-align: center; padding: 16px 0;">
+        <div style="font-size: 64px; line-height: 1;">✅</div>
+        <h2 style="margin: 12px 0 6px; color: #1a7f3c; font-size: 1.4rem;">Offer Redeemed!</h2>
+        <p style="color: #444; margin: 0 0 12px;">
+          The voucher has been successfully redeemed at <strong id="confirmedShopName"></strong>.
+        </p>
+        <p id="demoCode" style="display:none; background:#f0fdf4; border:1px solid #86efac;
+           border-radius:8px; padding:10px; font-size:0.9rem; color:#166534; margin: 8px 0;">
+          📋 Confirmation Code: <strong id="confirmationCodeVal"></strong>
+        </p>
+        <p style="color: #888; font-size: 0.82rem; margin-top: 12px;">
+          A confirmation SMS has been sent to both the customer and the shop owner.
         </p>
       </div>
 
       <!-- Footer -->
       <p class="card-footer">
-        This page is used only to validate the voucher and trigger OTP generation.
+        Scan this shop's QR code and enter your voucher code to redeem the offer instantly.
       </p>
     </div>
 
@@ -72,28 +77,28 @@
 
   <script>
     let shopSlug = "";
+    let shopDisplayName = "";
     let hasActiveCampaigns = false;
 
-    const shopEl = document.getElementById("shopName");
-    const voucherInput = document.getElementById("voucherCode");
-    const submitBtn = document.getElementById("submitBtn");
-    const responseMsg = document.getElementById("responseMsg");
+    const shopEl        = document.getElementById("shopName");
+    const voucherInput  = document.getElementById("voucherCode");
+    const submitBtn     = document.getElementById("submitBtn");
+    const responseMsg   = document.getElementById("responseMsg");
+    const entrySection  = document.getElementById("entrySection");
     const successSection = document.getElementById("successSection");
+    const confirmedShop = document.getElementById("confirmedShopName");
+    const demoCodeBox   = document.getElementById("demoCode");
+    const confirmCodeVal = document.getElementById("confirmationCodeVal");
 
     function getShopSlug() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("shop");
+      return new URLSearchParams(window.location.search).get("shop");
     }
 
     function setMessage(message, type = "") {
       responseMsg.className = "";
       responseMsg.innerHTML = message;
-
-      if (type === "success") {
-        responseMsg.classList.add("state-success");
-      } else if (type === "error") {
-        responseMsg.classList.add("state-error");
-      }
+      if (type === "success") responseMsg.classList.add("state-success");
+      else if (type === "error") responseMsg.classList.add("state-error");
     }
 
     function setButtonState(button, disabled, text) {
@@ -104,32 +109,28 @@
 
     async function loadShop() {
       shopSlug = getShopSlug();
-
       if (!shopSlug) {
         shopEl.innerText = "No shop selected.";
-        disableVoucherEntry("No shop selected in QR code.");
+        disableEntry("No shop selected in QR code.");
         return;
       }
 
       try {
-        const res = await fetch(`${API_BASE}/api/shops/${shopSlug}`);
+        const res  = await fetch(`${API_BASE}/api/shops/${shopSlug}`);
         const data = await res.json();
-
         if (!res.ok) {
           shopEl.innerText = data.message || "Shop not found.";
-          disableVoucherEntry("Invalid shop QR code.");
+          disableEntry("Invalid shop QR code.");
           return;
         }
-
-        shopEl.innerText = data.shop_name;
+        shopDisplayName = data.shop_name;
+        shopEl.innerText = shopDisplayName;
         shopEl.classList.add("loaded");
-
-        // Check for active campaigns
         await checkActiveCampaigns();
       } catch (err) {
         console.error(err);
         shopEl.innerText = "Error loading shop details.";
-        disableVoucherEntry("Error loading shop information.");
+        disableEntry("Error loading shop information.");
       }
     }
 
@@ -137,23 +138,20 @@
       try {
         const res = await fetch(`${API_BASE}/api/campaigns/active`);
         const campaigns = await res.json();
-
         if (!res.ok || campaigns.length === 0) {
           hasActiveCampaigns = false;
-          disableVoucherEntry("No active campaigns available at this time. Please check back later.");
+          disableEntry("No active campaigns available at this time. Please check back later.");
           return;
         }
-
         hasActiveCampaigns = true;
-        enableVoucherEntry();
+        enableEntry();
       } catch (err) {
         console.error("Error checking campaigns:", err);
-        hasActiveCampaigns = false;
-        disableVoucherEntry("Unable to verify campaign status. Please try again later.");
+        disableEntry("Unable to verify campaign status. Please try again later.");
       }
     }
 
-    function disableVoucherEntry(message) {
+    function disableEntry(message) {
       voucherInput.disabled = true;
       voucherInput.placeholder = "Not available";
       submitBtn.disabled = true;
@@ -161,85 +159,67 @@
       setMessage(message, "error");
     }
 
-    function enableVoucherEntry() {
+    function enableEntry() {
       voucherInput.disabled = false;
       voucherInput.placeholder = "Enter voucher code";
       submitBtn.disabled = false;
-      submitBtn.innerHTML = "<span>Send OTP</span>";
+      submitBtn.innerHTML = "<span>Redeem Voucher</span>";
       setMessage("Awaiting voucher submission…");
     }
 
-    async function startRedemption() {
+    async function redeemVoucher() {
       if (!hasActiveCampaigns) {
         setMessage("No active campaigns available. Cannot process voucher.", "error");
         return;
       }
 
       const voucherCode = voucherInput.value.trim();
-      successSection.style.display = "none";
-
       if (!voucherCode) {
         setMessage("Please enter a voucher code before submitting.", "error");
         return;
       }
-
       if (voucherCode.length < 4) {
         setMessage("Invalid voucher format. Please check the code and try again.", "error");
         return;
       }
 
-      setButtonState(submitBtn, true, "Processing...");
-      setMessage("Generating OTP and notifying both parties...");
+      setButtonState(submitBtn, true, "Processing…");
+      setMessage("Redeeming voucher…");
 
       try {
         const res = await fetch(`${API_BASE}/api/redemptions/start`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            voucher_code: voucherCode,
-            shop_slug: shopSlug
-          })
+          body: JSON.stringify({ voucher_code: voucherCode, shop_slug: shopSlug })
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-          setMessage(data.message || "Failed to start redemption.", "error");
-          setButtonState(submitBtn, false, "Send OTP");
+          setMessage(data.message || "Failed to redeem voucher.", "error");
+          setButtonState(submitBtn, false, "Redeem Voucher");
           return;
         }
 
-        const redemptionId = data.redemption?.redemption_id || data.redemption_id || null;
-        const otpCode = data.redemption?.otp_code || data.otp_code || null;
+        // ✅ Success — swap to confirmation view
+        entrySection.style.display = "none";
+        confirmedShop.textContent  = shopDisplayName;
 
-        if (redemptionId) {
-          localStorage.setItem("latestRedemptionId", redemptionId);
-        }
-
-        // Backend only returns the OTP when DEMO_MODE=true. In production
-        // the OTP is sent only by SMS, never echoed in the API response.
-        if (data.demo_mode && otpCode) {
-          setMessage(
-            `OTP sent successfully.<br><br><b>Demo OTP:</b> ${otpCode}`,
-            "success"
-          );
-        } else {
-          setMessage(
-            "OTP sent successfully via SMS to the customer and shop owner.",
-            "success"
-          );
+        if (data.demo_mode && data.confirmation_code) {
+          demoCodeBox.style.display = "block";
+          confirmCodeVal.textContent = data.confirmation_code;
         }
 
         successSection.style.display = "block";
+
       } catch (err) {
         console.error(err);
-        setMessage("Server error while starting redemption.", "error");
-      } finally {
-        setButtonState(submitBtn, false, "Send OTP");
+        setMessage("Server error while redeeming voucher.", "error");
+        setButtonState(submitBtn, false, "Redeem Voucher");
       }
     }
 
-    submitBtn.addEventListener("click", startRedemption);
+    submitBtn.addEventListener("click", redeemVoucher);
     loadShop();
   </script>
 
