@@ -15,7 +15,7 @@ test.describe('Module 1: Authentication', () => {
   });
 
   test('TC_02: Rep Login Success', async ({ page }) => {
-    await page.fill('input[id="employeeId"]', 'SD-NCE-ANU-000001');
+    await page.fill('input[id="employeeId"]', 'SD-WES-COL-000001');
     await page.fill('input[id="password"]', '123456');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/.*rep-dashboard.html/);
