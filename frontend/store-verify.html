@@ -51,20 +51,30 @@
         <div id="responseMsg">Awaiting voucher submission…</div>
       </div>
 
-      <!-- ✅ Success state shown after redemption -->
-      <div id="successSection" style="display: none; text-align: center; padding: 16px 0;">
-        <div style="font-size: 64px; line-height: 1;">✅</div>
-        <h2 style="margin: 12px 0 6px; color: #1a7f3c; font-size: 1.4rem;">Offer Redeemed!</h2>
-        <p style="color: #444; margin: 0 0 12px;">
-          The voucher has been successfully redeemed at <strong id="confirmedShopName"></strong>.
+      <!-- ✅ Professional Success State -->
+      <div id="successSection" style="display: none; text-align: center; padding: 30px 15px; animation: fadeIn 0.4s ease-out;">
+        <div class="success-icon" style="margin-bottom: 25px;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto; background: #ecfdf5; border-radius: 50%; padding: 15px;">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        
+        <h2 style="margin: 0 0 10px; color: #064e3b; font-size: 1.6rem; font-weight: 700;">Redemption Verified</h2>
+        <p style="color: #4b5563; font-size: 1.05rem; margin: 0 0 20px; line-height: 1.5;">
+          Transaction processed successfully at<br>
+          <strong id="confirmedShopName" style="color: #059669; font-weight: 700;"></strong>
         </p>
-        <p id="demoCode" style="display:none; background:#f0fdf4; border:1px solid #86efac;
-           border-radius:8px; padding:10px; font-size:0.9rem; color:#166534; margin: 8px 0;">
-          📋 Confirmation Code: <strong id="confirmationCodeVal"></strong>
-        </p>
-        <p style="color: #888; font-size: 0.82rem; margin-top: 12px;">
-          A confirmation SMS has been sent to both the customer and the shop owner.
-        </p>
+
+        <div id="demoCode" style="display:none; background: #ffffff; border: 1px dashed #10b981; border-radius: 12px; padding: 15px; margin: 20px 0;">
+          <span style="display: block; color: #6b7280; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px;">Reference ID</span>
+          <strong id="confirmationCodeVal" style="color: #065f46; font-size: 1.4rem; font-family: 'Courier New', Courier, monospace;"></strong>
+        </div>
+
+        <div style="background: #f9fafb; border-radius: 10px; padding: 15px; border: 1px solid #f3f4f6;">
+          <p style="color: #6b7280; font-size: 0.85rem; margin: 0;">
+            A confirmation receipt has been dispatched via SMS to both the customer and the retail partner.
+          </p>
+        </div>
       </div>
 
       <!-- Footer -->
