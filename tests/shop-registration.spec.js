@@ -14,11 +14,14 @@ test.describe('Module 2: Shop Registration', () => {
   });
 
   test('TC_14: Shop Reg - Valid Submit', async ({ page }) => {
-    // Use unique values each run to avoid duplicate registration errors
-    const uniqueMobile = `077${Date.now().toString().slice(-7)}`;
-    const uniqueNIC    = `NIC${Date.now().toString().slice(-9)}`;
+    // Use unique values each run to avoid duplicate registration errors.
+    // Shop name also unique so the qr_slug loop is always O(1) and fast.
+    const ts           = Date.now();
+    const uniqueShop   = `Test Shop PW-${ts}`;
+    const uniqueMobile = `077${ts.toString().slice(-7)}`;
+    const uniqueNIC    = `NIC${ts.toString().slice(-9)}`;
 
-    await page.fill('input[id="shopName"]', 'Test Shop PW');
+    await page.fill('input[id="shopName"]', uniqueShop);
     await page.fill('input[id="ownerMobile"]', uniqueMobile);
     await page.fill('input[id="nicNumber"]', uniqueNIC);
 

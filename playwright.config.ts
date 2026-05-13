@@ -10,10 +10,14 @@ import { defineConfig, devices } from '@playwright/test';
  * run begins, so you don't need to manually start the server first.
  */
 export default defineConfig({
+  /* Run once before all tests: reset admin password + clean stale test data */
+  globalSetup: './tests/globalSetup.js',
+
   testDir: './tests',
 
-  /* Run tests in files in parallel */
-  fullyParallel: true,
+  /* Run tests sequentially — prevents cloud-DB connection-pool exhaustion
+     which caused TC_14 (createShop) to hang when all suites ran in parallel. */
+  fullyParallel: false,
 
   /* Fail the build on CI if you accidentally left test.only in the source code */
   forbidOnly: !!process.env.CI,
@@ -22,10 +26,13 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
 
   /* Limit parallelism on CI; use all available workers locally */
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
 
   /* Reporter */
   reporter: 'html',
+
+  /* Default per-action timeout: 30 s to absorb cloud-DB round-trip latency */
+  timeout: 60_000,
 
   use: {
     /**
