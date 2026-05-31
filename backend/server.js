@@ -351,12 +351,40 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS reward_audit_logs (
         id              SERIAL PRIMARY KEY,
         event_type      VARCHAR(30) NOT NULL
-                        CHECK (event_type IN ('issued', 'distributed', 'acknowledged', 'viewed')),
+                        CHECK (event_type IN ('issued', 'distributed', 'acknowledged', 'viewed', 'customer_rewarded')),
         allocation_id   INTEGER REFERENCES reward_allocations(id),
         distribution_id INTEGER REFERENCES reward_distributions(id),
         actor_id        INTEGER NOT NULL REFERENCES users(id),
         detail          JSONB NOT NULL DEFAULT '{}',
         created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Expand reward_audit_logs event_type constraint to include 'customer_rewarded'
+    try {
+      await pool.query(`ALTER TABLE reward_audit_logs DROP CONSTRAINT IF EXISTS reward_audit_logs_event_type_check`);
+      await pool.query(`
+        ALTER TABLE reward_audit_logs ADD CONSTRAINT reward_audit_logs_event_type_check
+        CHECK (event_type IN ('issued','distributed','acknowledged','viewed','customer_rewarded'))
+      `);
+    } catch (e) {
+      console.log('reward_audit_logs constraint update skipped:', e.message);
+    }
+
+    // 10. Customer Rewards table (DM Team → end consumer loyalty rewards)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS customer_rewards (
+        id                  SERIAL PRIMARY KEY,
+        reward_id           VARCHAR(30) UNIQUE NOT NULL,
+        issued_by           INTEGER NOT NULL REFERENCES users(id),
+        customer_mobile     VARCHAR(15) NOT NULL,
+        reward_type         VARCHAR(50) NOT NULL,
+        reward_value        NUMERIC(12,2),
+        reward_description  TEXT NOT NULL,
+        status              VARCHAR(20) NOT NULL DEFAULT 'issued'
+                            CHECK (status IN ('issued', 'notified', 'redeemed')),
+        sms_sent            BOOLEAN DEFAULT FALSE,
+        created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 

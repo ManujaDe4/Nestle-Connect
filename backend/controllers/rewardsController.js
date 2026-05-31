@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const sendSMS = require('../services/sms');
 
 const DM_TEAM = [
   'admin', 'sys_admin',
@@ -393,11 +394,148 @@ const getRewardAudit = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/rewards/customer
+ * DM Team issues a loyalty reward directly to a top customer (by mobile number).
+ * Sends an SMS notification immediately after insertion.
+ */
+const issueCustomerReward = async (req, res) => {
+  const { customer_mobile, reward_type, reward_value, reward_description } = req.body;
+
+  if (!customer_mobile || !reward_type || !reward_description) {
+    return res.status(400).json({ message: 'customer_mobile, reward_type, and reward_description are required.' });
+  }
+  if (reward_value != null && Number(reward_value) <= 0) {
+    return res.status(400).json({ message: 'reward_value must be greater than 0 if provided.' });
+  }
+
+  try {
+    // Verify this mobile belongs to a known customer (has at least one redemption)
+    const customerCheck = await pool.query(
+      'SELECT v.customer_mobile FROM vouchers v JOIN redemptions r ON v.claim_id = r.claim_id WHERE v.customer_mobile = $1 AND r.final_status = $2 LIMIT 1',
+      [customer_mobile, 'redeemed']
+    );
+    if (customerCheck.rows.length === 0) {
+      return res.status(400).json({ message: 'No redemption history found for this mobile number. Only customers with confirmed redemptions can be rewarded.' });
+    }
+
+    const reward_id = await generateSequentialId('CUST-', 'customer_rewards', 'reward_id');
+
+    const insertResult = await pool.query(`
+      INSERT INTO customer_rewards
+        (reward_id, issued_by, customer_mobile, reward_type, reward_value, reward_description)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+    `, [reward_id, req.user.id, customer_mobile, reward_type, reward_value || null, reward_description]);
+
+    const reward = insertResult.rows[0];
+
+    // Send SMS notification to the customer
+    const valueText = reward_value ? ` Reward value: LKR ${Number(reward_value).toLocaleString()}.` : '';
+    const smsMessage = `Congratulations! You have been selected as a top loyal Nestle Connect customer.${valueText} Your reward: ${reward_description}. Reward ID: ${reward_id}. Contact your nearest shop for redemption.`;
+
+    try {
+      await sendSMS(customer_mobile, smsMessage, 'customer_reward', reward_id);
+      await pool.query(
+        `UPDATE customer_rewards SET status = 'notified', sms_sent = TRUE WHERE id = $1`,
+        [reward.id]
+      );
+      reward.status = 'notified';
+      reward.sms_sent = true;
+    } catch (smsErr) {
+      console.error('Customer reward SMS failed (reward still created):', smsErr.message);
+    }
+
+    // Audit log
+    await pool.query(`
+      INSERT INTO reward_audit_logs (event_type, actor_id, detail)
+      VALUES ('customer_rewarded', $1, $2)
+    `, [req.user.id, JSON.stringify({
+      reward_id,
+      customer_mobile,
+      reward_type,
+      reward_value: reward_value ? Number(reward_value) : null
+    })]);
+
+    res.status(201).json({ message: 'Customer reward issued successfully.', reward });
+  } catch (err) {
+    console.error('issueCustomerReward error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * GET /api/rewards/customer
+ * DM Team: list all customer rewards issued.
+ */
+const getCustomerRewards = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        cr.*,
+        u.username AS issued_by_username,
+        u.employee_id AS issued_by_employee_id,
+        (SELECT COUNT(*) FROM vouchers v
+         JOIN redemptions r ON v.claim_id = r.claim_id
+         WHERE v.customer_mobile = cr.customer_mobile AND r.final_status = 'redeemed'
+        ) AS customer_total_redemptions
+      FROM customer_rewards cr
+      JOIN users u ON cr.issued_by = u.id
+      ORDER BY cr.created_at DESC
+    `);
+    res.json({ customer_rewards: result.rows });
+  } catch (err) {
+    console.error('getCustomerRewards error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/**
+ * GET /api/rewards/customer/:mobile
+ * DM Team: reward history + redemption profile for a specific customer mobile.
+ */
+const getCustomerRewardHistory = async (req, res) => {
+  const { mobile } = req.params;
+  try {
+    const [rewardsResult, analyticsResult] = await Promise.all([
+      pool.query(`
+        SELECT cr.*, u.username AS issued_by_username
+        FROM customer_rewards cr
+        JOIN users u ON cr.issued_by = u.id
+        WHERE cr.customer_mobile = $1
+        ORDER BY cr.created_at DESC
+      `, [mobile]),
+      pool.query(`
+        SELECT
+          COUNT(*) AS total_redemptions,
+          MIN(r.redeemed_at) AS first_redemption,
+          MAX(r.redeemed_at) AS last_redemption,
+          COUNT(DISTINCT r.shop_id) AS unique_shops
+        FROM redemptions r
+        JOIN vouchers v ON r.claim_id = v.claim_id
+        WHERE v.customer_mobile = $1 AND r.final_status = 'redeemed'
+      `, [mobile])
+    ]);
+
+    res.json({
+      customer_mobile: mobile,
+      analytics: analyticsResult.rows[0],
+      rewards: rewardsResult.rows
+    });
+  } catch (err) {
+    console.error('getCustomerRewardHistory error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   allocateReward,
   getAllocations,
   distributeReward,
   getDistributions,
   getMyRewards,
-  getRewardAudit
+  getRewardAudit,
+  issueCustomerReward,
+  getCustomerRewards,
+  getCustomerRewardHistory
 };

@@ -1211,6 +1211,20 @@
           </div>
         </div>
 
+        <!-- Customer Loyalty Rewards (DM Team only) -->
+        <div id="rewardsCustomerPanel" style="display:none; margin-bottom:24px;">
+          <div class="panel">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+              <i class="ph ph-star" style="font-size:1.3rem; color:#f59e0b;"></i>
+              <div>
+                <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin:0;">Customer Loyalty Rewards Issued</h3>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;">Rewards issued to top loyal customers by the Digital Marketing Team</p>
+              </div>
+            </div>
+            <div class="table-responsive" id="customerRewardsTable"><p style="color:var(--text-secondary);">Loading...</p></div>
+          </div>
+        </div>
+
         <!-- Allocations List -->
         <div id="rewardsAllocationsPanel" style="margin-bottom:24px;">
           <div class="panel">
@@ -1323,6 +1337,46 @@
 
     </div>
   </main>
+</div>
+
+<!-- ── Customer Reward Modal ── -->
+<div class="modal-overlay" id="customerRewardModal">
+  <div class="modal-box" style="max-width:500px;">
+    <div class="modal-title"><i class="ph ph-gift" style="color:#f59e0b;"></i> Issue Customer Reward</div>
+    <p class="modal-desc">Issue a loyalty reward to a top-performing customer. An SMS notification will be sent immediately.</p>
+    <div style="background:#fef3c7; border:1px solid rgba(245,158,11,0.3); border-radius:10px; padding:10px 14px; font-size:0.85rem; color:#92400e; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+      <i class="ph ph-device-mobile"></i>
+      <div>Recipient: <strong id="crmMobileDisplay">—</strong> &nbsp;·&nbsp; <span id="crmRedemptionCount" style="color:#78350f;"></span></div>
+    </div>
+    <input type="hidden" id="crmCustomerMobile" />
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:0.82rem; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:6px;">Reward Type</label>
+        <select id="crmRewardType" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc;">
+          <option value="voucher_bundle">Voucher Bundle</option>
+          <option value="cash_prize">Cash Prize</option>
+          <option value="product_gift">Product Gift</option>
+          <option value="loyalty_points">Loyalty Points</option>
+          <option value="recognition">Recognition Award</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label style="font-size:0.82rem; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:6px;">Value (LKR) — optional</label>
+        <input type="number" id="crmRewardValue" min="1" step="0.01" placeholder="e.g. 5000" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc; box-sizing:border-box;" />
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label style="font-size:0.82rem; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:6px;">Reward Description <span style="color:#dc2626;">*</span></label>
+      <input type="text" id="crmRewardDescription" required placeholder="e.g. Free Nestlé product bundle for top loyalty" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc; box-sizing:border-box;" />
+    </div>
+    <div id="crmRewardMsg" style="font-size:0.85rem; margin-bottom:10px;"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel-modal" onclick="closeCustomerRewardModal()">Cancel</button>
+      <button id="crmSubmitBtn" onclick="submitCustomerReward()" style="flex:1; padding:12px 20px; background:#f59e0b; color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; display:flex; align-items:center; justify-content:center; gap:6px; transition:background 0.2s;">
+        <i class="ph ph-paper-plane-tilt"></i> Issue & Notify via SMS
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- ── Delete Campaign Password Modal ── -->
@@ -3797,13 +3851,14 @@
     const el = document.getElementById('topCustomersTable');
     if (!rows.length) { el.innerHTML = '<p style="color:var(--text-secondary);">No redemption data yet.</p>'; return; }
     el.innerHTML = `<table class="modern-table"><thead><tr>
-      <th>#</th><th>Mobile Number</th><th>Total Redemptions</th><th>First Redemption</th><th>Last Redemption</th>
+      <th>#</th><th>Mobile Number</th><th>Total Redemptions</th><th>First Redemption</th><th>Last Redemption</th><th>Action</th>
     </tr></thead><tbody>${rows.map((r,i) => `<tr>
       <td>${i+1}</td>
       <td>${r.customer_mobile}</td>
       <td><strong>${r.total_redemptions}</strong></td>
       <td>${r.first_redemption ? new Date(r.first_redemption).toLocaleDateString() : '—'}</td>
       <td>${r.last_redemption  ? new Date(r.last_redemption).toLocaleDateString()  : '—'}</td>
+      <td><button onclick="openCustomerRewardModal('${r.customer_mobile}', ${r.total_redemptions})" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:background 0.2s;" onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'"><i class="ph ph-gift"></i> Issue Reward</button></td>
     </tr>`).join('')}</tbody></table>`;
   }
 
@@ -3887,6 +3942,7 @@
 
     // Show/hide panels based on role
     document.getElementById('rewardsIssuePanel').style.display      = isDM ? '' : 'none';
+    document.getElementById('rewardsCustomerPanel').style.display   = isDM ? '' : 'none';
     document.getElementById('rewardsDistributePanel').style.display = isASM ? '' : 'none';
     document.getElementById('rewardsAuditPanel').style.display      = isDM ? '' : 'none';
 
@@ -3912,13 +3968,19 @@
       renderDistributionsTable(d.distributions || []);
     } catch(e) { document.getElementById('distributionsTable').innerHTML = '<p style="color:#dc2626;">Failed to load.</p>'; }
 
-    // Load audit trail (DM Team only)
+    // Load audit trail and customer rewards (DM Team only)
     if (isDM) {
       try {
         const r = await fetch(`${API_BASE}/api/rewards/audit`, auth);
         const d = await r.json();
         renderAuditTable(d.audit_logs || []);
       } catch(e) { document.getElementById('auditTable').innerHTML = '<p style="color:#dc2626;">Failed to load.</p>'; }
+
+      try {
+        const r = await fetch(`${API_BASE}/api/rewards/customer`, auth);
+        const d = await r.json();
+        renderCustomerRewardsTable(d.customer_rewards || []);
+      } catch(e) { document.getElementById('customerRewardsTable').innerHTML = '<p style="color:#dc2626;">Failed to load.</p>'; }
     }
 
     // Populate recipient select for issue form (DM Team: load ASM list)
@@ -4121,10 +4183,11 @@
     const el = document.getElementById('auditTable');
     if (!rows.length) { el.innerHTML = '<p style="color:var(--text-secondary);">No audit events yet.</p>'; return; }
     const evtBadge = e => ({
-      issued:       '<span class="badge active">Issued</span>',
-      distributed:  '<span class="badge" style="background:#e0f2fe;color:#075985;">Distributed</span>',
-      acknowledged: '<span class="badge" style="background:#fef3c7;color:#92400e;">Acknowledged</span>',
-      viewed:       '<span class="badge" style="background:#f3e8ff;color:#6d28d9;">Viewed</span>'
+      issued:            '<span class="badge active">Issued</span>',
+      distributed:       '<span class="badge" style="background:#e0f2fe;color:#075985;">Distributed</span>',
+      acknowledged:      '<span class="badge" style="background:#fef3c7;color:#92400e;">Acknowledged</span>',
+      viewed:            '<span class="badge" style="background:#f3e8ff;color:#6d28d9;">Viewed</span>',
+      customer_rewarded: '<span class="badge" style="background:#fef9c3;color:#854d0e;">Customer Rewarded</span>'
     }[e] || e);
     el.innerHTML = `<table class="modern-table"><thead><tr>
       <th>Event</th><th>Actor</th><th>Role</th><th>Allocation</th><th>Distribution</th><th>Detail</th><th>Timestamp</th>
@@ -4138,6 +4201,100 @@
       <td>${new Date(r.created_at).toLocaleString()}</td>
     </tr>`).join('')}</tbody></table>`;
   }
+
+  function renderCustomerRewardsTable(rows) {
+    const el = document.getElementById('customerRewardsTable');
+    if (!rows.length) { el.innerHTML = '<p style="color:var(--text-secondary);">No customer rewards issued yet.</p>'; return; }
+    const statusBadge = s => ({
+      issued:   '<span class="badge" style="background:#fef3c7;color:#92400e;">Issued</span>',
+      notified: '<span class="badge active">Notified via SMS</span>',
+      redeemed: '<span class="badge expired">Redeemed</span>'
+    }[s] || s);
+    el.innerHTML = `<table class="modern-table"><thead><tr>
+      <th>Reward ID</th><th>Mobile</th><th>Total Redemptions</th><th>Type</th><th>Value (LKR)</th><th>Description</th><th>SMS</th><th>Status</th><th>Issued By</th><th>Date</th>
+    </tr></thead><tbody>${rows.map(r => `<tr>
+      <td><strong>${r.reward_id}</strong></td>
+      <td>${r.customer_mobile}</td>
+      <td><strong>${r.customer_total_redemptions}</strong></td>
+      <td>${r.reward_type}</td>
+      <td>${r.reward_value ? Number(r.reward_value).toLocaleString() : '—'}</td>
+      <td style="max-width:180px;">${r.reward_description}</td>
+      <td>${r.sms_sent ? '<span style="color:#059669;">✓ Sent</span>' : '<span style="color:#dc2626;">✗</span>'}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td>${r.issued_by_username}</td>
+      <td>${new Date(r.created_at).toLocaleDateString()}</td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+
+  /* ── Customer Reward Modal ──────────────────────────────────────── */
+  window.openCustomerRewardModal = function(mobile, redemptionCount) {
+    document.getElementById('crmCustomerMobile').value    = mobile;
+    document.getElementById('crmMobileDisplay').textContent = mobile;
+    document.getElementById('crmRedemptionCount').textContent = `${redemptionCount} redemptions`;
+    document.getElementById('crmRewardDescription').value = '';
+    document.getElementById('crmRewardValue').value       = '';
+    document.getElementById('crmRewardMsg').textContent   = '';
+    document.getElementById('crmRewardType').selectedIndex = 0;
+    document.getElementById('customerRewardModal').classList.add('open');
+  };
+
+  window.closeCustomerRewardModal = function() {
+    document.getElementById('customerRewardModal').classList.remove('open');
+  };
+
+  window.submitCustomerReward = async function() {
+    const token = localStorage.getItem('token');
+    const btn   = document.getElementById('crmSubmitBtn');
+    const msg   = document.getElementById('crmRewardMsg');
+    const mobile      = document.getElementById('crmCustomerMobile').value;
+    const rewardType  = document.getElementById('crmRewardType').value;
+    const rewardValue = document.getElementById('crmRewardValue').value;
+    const description = document.getElementById('crmRewardDescription').value.trim();
+
+    if (!description) {
+      msg.style.color = '#dc2626';
+      msg.textContent = 'Reward description is required.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner"></i> Issuing…';
+    msg.style.color = '#94a3b8';
+    msg.textContent = 'Sending reward and SMS notification…';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/rewards/customer`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_mobile:     mobile,
+          reward_type:         rewardType,
+          reward_value:        rewardValue ? Number(rewardValue) : null,
+          reward_description:  description
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msg.style.color = '#059669';
+        const smsStatus = data.reward.sms_sent ? '✓ SMS sent.' : '(SMS delivery pending)';
+        msg.textContent = `✓ Reward ${data.reward.reward_id} issued. ${smsStatus}`;
+        setTimeout(() => {
+          closeCustomerRewardModal();
+          _rewardsLoaded = false;
+          loadRewards();
+        }, 1500);
+      } else {
+        msg.style.color = '#dc2626';
+        msg.textContent = data.message || 'Error issuing reward.';
+      }
+    } catch(err) {
+      msg.style.color = '#dc2626';
+      msg.textContent = 'Network error. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Issue & Notify via SMS';
+    }
+  };
 </script>
 
 </body>

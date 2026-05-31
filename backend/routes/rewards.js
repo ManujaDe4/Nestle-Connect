@@ -6,7 +6,10 @@ const {
   distributeReward,
   getDistributions,
   getMyRewards,
-  getRewardAudit
+  getRewardAudit,
+  issueCustomerReward,
+  getCustomerRewards,
+  getCustomerRewardHistory
 } = require('../controllers/rewardsController');
 const { authenticate, authorize } = require('../middleware/auth');
 
@@ -37,5 +40,11 @@ router.get('/my-rewards', authenticate, getMyRewards);
 
 // Full audit trail — admin + DM Team only
 router.get('/audit', authenticate, authorize(ADMIN_DM), getRewardAudit);
+
+// Customer loyalty rewards — DM Team only
+// NOTE: specific routes must come before /:mobile to avoid route collision
+router.post('/customer',        authenticate, authorize(DM_TEAM), issueCustomerReward);
+router.get('/customer',         authenticate, authorize(DM_TEAM), getCustomerRewards);
+router.get('/customer/:mobile', authenticate, authorize(DM_TEAM), getCustomerRewardHistory);
 
 module.exports = router;
