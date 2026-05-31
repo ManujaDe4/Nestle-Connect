@@ -196,6 +196,12 @@
       <button class="nav-item" data-tab="roi">
         <i class="ph ph-trend-up"></i> ROI Analytics
       </button>
+      <button class="nav-item" data-tab="analytics" id="navAnalytics">
+        <i class="ph ph-chart-line-up"></i> Performance Analytics
+      </button>
+      <button class="nav-item" data-tab="rewards" id="navRewards">
+        <i class="ph ph-gift"></i> Rewards
+      </button>
     </nav>
     
     <div class="sidebar-footer">
@@ -1078,6 +1084,243 @@
       </div>
 
 
+      <!-- ===== Performance Analytics Tab ===== -->
+      <div id="analyticsTab" class="tab-content" style="display:none;">
+
+        <!-- Track A: Top Customers (DM Team only) -->
+        <div id="analyticsSectionCustomer" style="display:none;">
+          <div class="panel" style="margin-bottom:24px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+              <i class="ph ph-star" style="font-size:1.3rem; color:#f59e0b;"></i>
+              <div>
+                <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin:0;">Top Loyal Customers</h3>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;">Customers ranked by total voucher redemptions</p>
+              </div>
+            </div>
+            <div class="table-responsive" id="topCustomersTable"><p style="color:var(--text-secondary);">Loading...</p></div>
+          </div>
+        </div>
+
+        <!-- Track B-A: Shop Performance (DM Team + ASM + FSM) -->
+        <div id="analyticsSectionShops">
+          <div class="panel" style="margin-bottom:24px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+              <i class="ph ph-storefront" style="font-size:1.3rem; color:#10b981;"></i>
+              <div>
+                <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin:0;">Shop Sales Performance</h3>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;">Total redemptions and unique customers per retail shop</p>
+              </div>
+            </div>
+            <div class="table-responsive" id="shopPerformanceTable"><p style="color:var(--text-secondary);">Loading...</p></div>
+          </div>
+        </div>
+
+        <!-- Track B-B: Field Rep Performance (ASM + FSM) -->
+        <div id="analyticsSectionReps" style="display:none;">
+          <div class="panel" style="margin-bottom:24px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+              <i class="ph ph-user-list" style="font-size:1.3rem; color:#3b82f6;"></i>
+              <div>
+                <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin:0;">Field Rep Performance</h3>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;">Shops registered and total sales per sales distributor</p>
+              </div>
+            </div>
+            <div class="table-responsive" id="repPerformanceTable"><p style="color:var(--text-secondary);">Loading...</p></div>
+          </div>
+        </div>
+
+        <!-- Track B-C: Regional Manager Performance (ASM only) -->
+        <div id="analyticsSectionFSM" style="display:none;">
+          <div class="panel" style="margin-bottom:24px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+              <i class="ph ph-map-trifold" style="font-size:1.3rem; color:#8b5cf6;"></i>
+              <div>
+                <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin:0;">Regional Manager Performance</h3>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;">Aggregate sales and active campaigns per field sales manager</p>
+              </div>
+            </div>
+            <div class="table-responsive" id="fsmPerformanceTable"><p style="color:var(--text-secondary);">Loading...</p></div>
+          </div>
+        </div>
+
+        <!-- Track B-D: Zonal Manager Performance (DM Team only) -->
+        <div id="analyticsSectionASM" style="display:none;">
+          <div class="panel" style="margin-bottom:24px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+              <i class="ph ph-globe" style="font-size:1.3rem; color:#0f4c81;"></i>
+              <div>
+                <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin:0;">Zonal Manager Performance</h3>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;">Province-level aggregate sales and campaigns per area sales manager</p>
+              </div>
+            </div>
+            <div class="table-responsive" id="asmPerformanceTable"><p style="color:var(--text-secondary);">Loading...</p></div>
+          </div>
+        </div>
+
+      </div><!-- end analyticsTab -->
+
+
+      <!-- ===== Rewards Tab ===== -->
+      <div id="rewardsTab" class="tab-content" style="display:none;">
+
+        <!-- Issue Reward (DM Team only) -->
+        <div id="rewardsIssuePanel" style="display:none; margin-bottom:24px;">
+          <div class="panel">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+              <i class="ph ph-gift" style="font-size:1.3rem; color:#f59e0b;"></i>
+              <div>
+                <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin:0;">Issue Reward to Zonal Manager</h3>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;">Allocate a reward to a top-performing Area Sales Manager</p>
+              </div>
+            </div>
+            <form id="issueRewardForm" onsubmit="submitIssueReward(event)">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                <div class="form-group">
+                  <label>Recipient (Zonal Manager)</label>
+                  <select id="rewardRecipientId" required style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc;">
+                    <option value="">Select ASM...</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Reward Type</label>
+                  <select id="rewardType" required style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc;">
+                    <option value="monetary">Monetary Bonus</option>
+                    <option value="voucher">Voucher Package</option>
+                    <option value="recognition">Recognition Award</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Reward Value (LKR)</label>
+                  <input type="number" id="rewardValue" min="1" step="0.01" required placeholder="e.g. 50000" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc; box-sizing:border-box;" />
+                </div>
+                <div class="form-group">
+                  <label>Description</label>
+                  <input type="text" id="rewardDescription" placeholder="e.g. Q1 Top Province Award" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc; box-sizing:border-box;" />
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:16px;">
+                <label>Notes (optional)</label>
+                <textarea id="rewardNotes" rows="2" placeholder="Additional context..." style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc; box-sizing:border-box; resize:vertical;"></textarea>
+              </div>
+              <div id="issueRewardMsg" style="font-size:0.85rem; margin-bottom:8px;"></div>
+              <button type="submit" class="btn-primary" id="issueRewardBtn">
+                <i class="ph ph-paper-plane-tilt"></i> Issue Reward
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Allocations List -->
+        <div id="rewardsAllocationsPanel" style="margin-bottom:24px;">
+          <div class="panel">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+              <i class="ph ph-hand-coins" style="font-size:1.3rem; color:#10b981;"></i>
+              <div>
+                <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin:0;">Reward Allocations</h3>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;" id="allocationsSubtitle">All top-level reward allocations</p>
+              </div>
+            </div>
+            <div class="table-responsive" id="allocationsTable"><p style="color:var(--text-secondary);">Loading...</p></div>
+          </div>
+        </div>
+
+        <!-- Distribute Reward (ASM only) -->
+        <div id="rewardsDistributePanel" style="display:none; margin-bottom:24px;">
+          <div class="panel">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+              <i class="ph ph-arrow-split" style="font-size:1.3rem; color:#3b82f6;"></i>
+              <div>
+                <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin:0;">Distribute Reward</h3>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;">Cascade your reward allocation to Regional Managers, Field Reps, or Shops</p>
+              </div>
+            </div>
+            <form id="distributeRewardForm" onsubmit="submitDistributeReward(event)">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                <div class="form-group">
+                  <label>Allocation to Distribute From</label>
+                  <select id="distAllocationId" required style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc;">
+                    <option value="">Select allocation...</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Recipient Type</label>
+                  <select id="distRecipientType" required onchange="updateDistRecipientList()" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc;">
+                    <option value="">Select type...</option>
+                    <option value="regional_manager">Regional Manager (FSM)</option>
+                    <option value="field_rep">Field Rep (SD)</option>
+                    <option value="shop">Retail Shop</option>
+                  </select>
+                </div>
+                <div class="form-group" id="distUserRecipientGroup">
+                  <label>Recipient</label>
+                  <select id="distRecipientUserId" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc;">
+                    <option value="">Select recipient...</option>
+                  </select>
+                </div>
+                <div class="form-group" id="distShopRecipientGroup" style="display:none;">
+                  <label>Recipient Shop</label>
+                  <select id="distRecipientShopId" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc;">
+                    <option value="">Select shop...</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Reward Type</label>
+                  <select id="distRewardType" required style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc;">
+                    <option value="monetary">Monetary Bonus</option>
+                    <option value="voucher">Voucher Package</option>
+                    <option value="recognition">Recognition Award</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Reward Value (LKR)</label>
+                  <input type="number" id="distRewardValue" min="1" step="0.01" required placeholder="e.g. 10000" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc; box-sizing:border-box;" />
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:16px;">
+                <label>Description</label>
+                <input type="text" id="distRewardDescription" placeholder="e.g. Regional Top Performance Q1" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; background:#f8fafc; box-sizing:border-box;" />
+              </div>
+              <div id="distributeRewardMsg" style="font-size:0.85rem; margin-bottom:8px;"></div>
+              <button type="submit" class="btn-primary" id="distributeRewardBtn">
+                <i class="ph ph-arrow-split"></i> Distribute Reward
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Distributions List -->
+        <div id="rewardsDistributionsPanel" style="margin-bottom:24px;">
+          <div class="panel">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+              <i class="ph ph-share-network" style="font-size:1.3rem; color:#8b5cf6;"></i>
+              <div>
+                <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin:0;">Reward Distributions</h3>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;" id="distributionsSubtitle">Cascaded reward distributions</p>
+              </div>
+            </div>
+            <div class="table-responsive" id="distributionsTable"><p style="color:var(--text-secondary);">Loading...</p></div>
+          </div>
+        </div>
+
+        <!-- Audit Trail (Admin + DM Team only) -->
+        <div id="rewardsAuditPanel" style="display:none; margin-bottom:24px;">
+          <div class="panel">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+              <i class="ph ph-scroll" style="font-size:1.3rem; color:#64748b;"></i>
+              <div>
+                <h3 style="font-size:1rem; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-primary); margin:0;">Reward Audit Trail</h3>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin:2px 0 0;">Immutable log of all reward events</p>
+              </div>
+            </div>
+            <div class="table-responsive" id="auditTable"><p style="color:var(--text-secondary);">Loading...</p></div>
+          </div>
+        </div>
+
+      </div><!-- end rewardsTab -->
+
+
     </div>
   </main>
 </div>
@@ -1247,6 +1490,8 @@
     if (tab === 'campaigns') loadCampaigns();
     if (tab === 'stats') loadStats();
     if (tab === 'roi') { loadRoiAnalytics(); setTimeout(initSriLankaMap, 200); }
+    if (tab === 'analytics') loadAnalytics();
+    if (tab === 'rewards') loadRewards();
 
     // Always refresh ALL three global summary cards on every tab switch,
     // regardless of which tab is active. Otherwise users see stale numbers
@@ -1618,10 +1863,16 @@
     const isFieldMgr = role === 'area_sales_manager' || role === 'field_sales_manager';
 
     if (isFieldMgr) {
-      // Field managers ONLY see the Field Reps tab — hide everything else
+      // Field managers see Field Reps, Analytics, and (ASM only) Rewards
       document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
-        btn.style.display = btn.dataset.tab === 'reps' ? '' : 'none';
+        const allowed = ['reps', 'analytics', 'rewards'].includes(btn.dataset.tab);
+        btn.style.display = allowed ? '' : 'none';
       });
+      // FSM does not distribute rewards — hide rewards tab for them
+      if (role === 'field_sales_manager') {
+        const rewardsBtn = document.querySelector('[data-tab="rewards"]');
+        if (rewardsBtn) rewardsBtn.style.display = 'none';
+      }
       switchTab('reps', 'Field Reps');
       return;
     }
@@ -1633,6 +1884,8 @@
       const tab = btn.dataset.tab;
       if (tab === 'reps') { btn.style.display = 'none'; return; }  // DM staff never see Field Reps
       if (tab === 'team') { firstAllowed = firstAllowed || 'users'; return; } // always visible for DM staff
+      // Analytics and Rewards are always visible for DM staff
+      if (tab === 'analytics' || tab === 'rewards') return;
       const pkey = tabMap[tab];
       if (!pkey) return;
       const allowed = tab === 'log' ? (permissions.activity === true) : (permissions[pkey] === true);
@@ -3313,7 +3566,22 @@
 
   // ── Nav Permission Guard (for non-admin staff) ──────────────────────────
   function applyNavPermissions(permissions, role) {
-    // Map tab keys to nav data-tab attributes
+    const isFieldMgr = role === 'area_sales_manager' || role === 'field_sales_manager';
+
+    if (isFieldMgr) {
+      // Field managers: show reps, analytics, and (ASM only) rewards
+      tabBtns.forEach(btn => {
+        const tab = btn.dataset.tab;
+        const allowed = tab === 'reps' || tab === 'analytics' ||
+                        (tab === 'rewards' && role === 'area_sales_manager');
+        btn.style.display = allowed ? '' : 'none';
+      });
+      switchTab('reps', 'Field Reps');
+      return;
+    }
+
+    // DM Team / other staff — hide based on permission flags
+    // analytics and rewards are always shown to DM Team
     const TAB_PERM_MAP = {
       users:     'team',
       shops:     'shops',
@@ -3322,10 +3590,11 @@
       stats:     'stats',
       roi:       'roi',
     };
-    // Always allow log tab
     tabBtns.forEach(btn => {
       const tab = btn.dataset.tab;
-      // Find matching permission key
+      if (tab === 'reps')      { btn.style.display = 'none'; return; }
+      if (tab === 'analytics') return; // always visible for DM Team
+      if (tab === 'rewards')   return; // always visible for DM Team
       const permKey = Object.keys(TAB_PERM_MAP).find(k => TAB_PERM_MAP[k] === tab);
       if (permKey && permissions[permKey] === false) {
         btn.style.display = 'none';
@@ -3455,6 +3724,420 @@
   };
 
   loadProfileData();
+
+  /* ═══════════════════════════════════════════════════════
+     ANALYTICS TAB
+  ═══════════════════════════════════════════════════════ */
+  const DM_TEAM_ROLES = [
+    'admin','sys_admin','digital_marketing_manager','digital_content_specialist',
+    'digital_media_performance_manager','social_media_influencer_strategist',
+    'crm_data_analyst','digital_marketing_intern'
+  ];
+
+  let _analyticsLoaded = false;
+
+  async function loadAnalytics() {
+    if (_analyticsLoaded) return;
+    _analyticsLoaded = true;
+
+    const user  = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+    const auth  = { headers: { 'Authorization': `Bearer ${token}` } };
+    const isDM  = DM_TEAM_ROLES.includes(user.role);
+    const isASM = user.role === 'area_sales_manager';
+    const isFSM = user.role === 'field_sales_manager';
+
+    // Show/hide sub-sections based on role
+    document.getElementById('analyticsSectionCustomer').style.display = isDM ? '' : 'none';
+    document.getElementById('analyticsSectionShops').style.display    = (isDM || isASM || isFSM) ? '' : 'none';
+    document.getElementById('analyticsSectionReps').style.display     = (isASM || isFSM) ? '' : 'none';
+    document.getElementById('analyticsSectionFSM').style.display      = isASM ? '' : 'none';
+    document.getElementById('analyticsSectionASM').style.display      = isDM ? '' : 'none';
+
+    if (isDM) {
+      try {
+        const r = await fetch(`${API_BASE}/api/analytics/customers/top`, auth);
+        const d = await r.json();
+        renderTopCustomersTable(d.customers || []);
+      } catch(e) { document.getElementById('topCustomersTable').innerHTML = '<p style="color:#dc2626;">Failed to load.</p>'; }
+
+      try {
+        const r = await fetch(`${API_BASE}/api/analytics/zonal-managers/performance`, auth);
+        const d = await r.json();
+        renderASMPerformanceTable(d.zonal_managers || []);
+      } catch(e) { document.getElementById('asmPerformanceTable').innerHTML = '<p style="color:#dc2626;">Failed to load.</p>'; }
+    }
+
+    if (isDM || isASM || isFSM) {
+      try {
+        const r = await fetch(`${API_BASE}/api/analytics/shops/performance`, auth);
+        const d = await r.json();
+        renderShopPerformanceTable(d.shops || []);
+      } catch(e) { document.getElementById('shopPerformanceTable').innerHTML = '<p style="color:#dc2626;">Failed to load.</p>'; }
+    }
+
+    if (isASM || isFSM) {
+      try {
+        const r = await fetch(`${API_BASE}/api/analytics/reps/performance`, auth);
+        const d = await r.json();
+        renderRepPerformanceTable(d.reps || []);
+      } catch(e) { document.getElementById('repPerformanceTable').innerHTML = '<p style="color:#dc2626;">Failed to load.</p>'; }
+    }
+
+    if (isASM) {
+      try {
+        const r = await fetch(`${API_BASE}/api/analytics/regional-managers/performance`, auth);
+        const d = await r.json();
+        renderFSMPerformanceTable(d.regional_managers || []);
+      } catch(e) { document.getElementById('fsmPerformanceTable').innerHTML = '<p style="color:#dc2626;">Failed to load.</p>'; }
+    }
+  }
+
+  function renderTopCustomersTable(rows) {
+    const el = document.getElementById('topCustomersTable');
+    if (!rows.length) { el.innerHTML = '<p style="color:var(--text-secondary);">No redemption data yet.</p>'; return; }
+    el.innerHTML = `<table class="modern-table"><thead><tr>
+      <th>#</th><th>Mobile Number</th><th>Total Redemptions</th><th>First Redemption</th><th>Last Redemption</th>
+    </tr></thead><tbody>${rows.map((r,i) => `<tr>
+      <td>${i+1}</td>
+      <td>${r.customer_mobile}</td>
+      <td><strong>${r.total_redemptions}</strong></td>
+      <td>${r.first_redemption ? new Date(r.first_redemption).toLocaleDateString() : '—'}</td>
+      <td>${r.last_redemption  ? new Date(r.last_redemption).toLocaleDateString()  : '—'}</td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+
+  function renderShopPerformanceTable(rows) {
+    const el = document.getElementById('shopPerformanceTable');
+    if (!rows.length) { el.innerHTML = '<p style="color:var(--text-secondary);">No shop data found.</p>'; return; }
+    el.innerHTML = `<table class="modern-table"><thead><tr>
+      <th>Shop ID</th><th>Shop Name</th><th>Province</th><th>Region</th><th>Area</th><th>Total Redemptions</th><th>Unique Customers</th>
+    </tr></thead><tbody>${rows.map(r => `<tr>
+      <td>${r.shop_id}</td>
+      <td>${r.shop_name}</td>
+      <td>${r.province||'—'}</td><td>${r.region||'—'}</td><td>${r.area||'—'}</td>
+      <td><strong>${r.total_redemptions}</strong></td>
+      <td>${r.unique_customers}</td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+
+  function renderRepPerformanceTable(rows) {
+    const el = document.getElementById('repPerformanceTable');
+    if (!rows.length) { el.innerHTML = '<p style="color:var(--text-secondary);">No field rep data found.</p>'; return; }
+    el.innerHTML = `<table class="modern-table"><thead><tr>
+      <th>Employee ID</th><th>Username</th><th>Province</th><th>Region</th><th>Area</th><th>Shops Registered</th><th>Total Sales</th>
+    </tr></thead><tbody>${rows.map(r => `<tr>
+      <td>${r.employee_id||'—'}</td>
+      <td>${r.username}</td>
+      <td>${r.province||'—'}</td><td>${r.region||'—'}</td><td>${r.area||'—'}</td>
+      <td>${r.shops_registered}</td>
+      <td><strong>${r.total_sales}</strong></td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+
+  function renderFSMPerformanceTable(rows) {
+    const el = document.getElementById('fsmPerformanceTable');
+    if (!rows.length) { el.innerHTML = '<p style="color:var(--text-secondary);">No regional manager data found.</p>'; return; }
+    el.innerHTML = `<table class="modern-table"><thead><tr>
+      <th>Employee ID</th><th>Username</th><th>Province</th><th>Region</th><th>Shops in Region</th><th>Aggregate Sales</th><th>Active Campaigns</th>
+    </tr></thead><tbody>${rows.map(r => `<tr>
+      <td>${r.employee_id||'—'}</td>
+      <td>${r.username}</td>
+      <td>${r.province||'—'}</td><td>${r.region||'—'}</td>
+      <td>${r.shops_in_region}</td>
+      <td><strong>${r.aggregate_sales}</strong></td>
+      <td>${r.active_campaigns}</td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+
+  function renderASMPerformanceTable(rows) {
+    const el = document.getElementById('asmPerformanceTable');
+    if (!rows.length) { el.innerHTML = '<p style="color:var(--text-secondary);">No zonal manager data found.</p>'; return; }
+    el.innerHTML = `<table class="modern-table"><thead><tr>
+      <th>Employee ID</th><th>Username</th><th>Province</th><th>Shops in Province</th><th>Aggregate Sales</th><th>Active Campaigns</th>
+    </tr></thead><tbody>${rows.map(r => `<tr>
+      <td>${r.employee_id||'—'}</td>
+      <td>${r.username}</td>
+      <td>${r.province||'—'}</td>
+      <td>${r.shops_in_province}</td>
+      <td><strong>${r.aggregate_sales}</strong></td>
+      <td>${r.active_campaigns}</td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+
+
+  /* ═══════════════════════════════════════════════════════
+     REWARDS TAB
+  ═══════════════════════════════════════════════════════ */
+  let _rewardsLoaded = false;
+  let _asmList = [];
+  let _fsmList = [];
+  let _sdList  = [];
+  let _shopList = [];
+
+  async function loadRewards() {
+    if (_rewardsLoaded) return;
+    _rewardsLoaded = true;
+
+    const user  = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+    const auth  = { headers: { 'Authorization': `Bearer ${token}` } };
+    const isDM  = DM_TEAM_ROLES.includes(user.role);
+    const isASM = user.role === 'area_sales_manager';
+
+    // Show/hide panels based on role
+    document.getElementById('rewardsIssuePanel').style.display      = isDM ? '' : 'none';
+    document.getElementById('rewardsDistributePanel').style.display = isASM ? '' : 'none';
+    document.getElementById('rewardsAuditPanel').style.display      = isDM ? '' : 'none';
+
+    document.getElementById('allocationsSubtitle').textContent = isDM
+      ? 'All top-level reward allocations issued by Digital Marketing Team'
+      : 'Rewards allocated to you by the Digital Marketing Team';
+    document.getElementById('distributionsSubtitle').textContent = isASM
+      ? 'Rewards you have distributed to your team'
+      : (isDM ? 'All cascaded reward distributions' : 'Rewards distributed to you');
+
+    // Load allocations
+    try {
+      const r = await fetch(`${API_BASE}/api/rewards/allocations`, auth);
+      const d = await r.json();
+      renderAllocationsTable(d.allocations || []);
+      if (isASM) populateDistAllocationSelect(d.allocations || []);
+    } catch(e) { document.getElementById('allocationsTable').innerHTML = '<p style="color:#dc2626;">Failed to load.</p>'; }
+
+    // Load distributions
+    try {
+      const r = await fetch(`${API_BASE}/api/rewards/distributions`, auth);
+      const d = await r.json();
+      renderDistributionsTable(d.distributions || []);
+    } catch(e) { document.getElementById('distributionsTable').innerHTML = '<p style="color:#dc2626;">Failed to load.</p>'; }
+
+    // Load audit trail (DM Team only)
+    if (isDM) {
+      try {
+        const r = await fetch(`${API_BASE}/api/rewards/audit`, auth);
+        const d = await r.json();
+        renderAuditTable(d.audit_logs || []);
+      } catch(e) { document.getElementById('auditTable').innerHTML = '<p style="color:#dc2626;">Failed to load.</p>'; }
+    }
+
+    // Populate recipient select for issue form (DM Team: load ASM list)
+    if (isDM) {
+      try {
+        const r = await fetch(`${API_BASE}/api/users`, auth);
+        const users = await r.json();
+        _asmList = (users.users || users).filter(u => u.role === 'area_sales_manager');
+        const sel = document.getElementById('rewardRecipientId');
+        sel.innerHTML = '<option value="">Select ASM...</option>' +
+          _asmList.map(u => `<option value="${u.id}">${u.username} (${u.employee_id||'—'}) — ${u.province||'?'}</option>`).join('');
+      } catch(e) {}
+    }
+
+    // Populate FSM/SD/Shop lists for distribute form (ASM only)
+    if (isASM) {
+      try {
+        const [usersRes, shopsRes] = await Promise.all([
+          fetch(`${API_BASE}/api/users`, auth),
+          fetch(`${API_BASE}/api/shops`, auth)
+        ]);
+        const allUsers = await usersRes.json();
+        const allShops = await shopsRes.json();
+        const ul = allUsers.users || allUsers;
+        _fsmList  = ul.filter(u => u.role === 'field_sales_manager');
+        _sdList   = ul.filter(u => u.role === 'sales_distributor');
+        _shopList = allShops;
+      } catch(e) {}
+    }
+  }
+
+  function populateDistAllocationSelect(allocations) {
+    const sel = document.getElementById('distAllocationId');
+    const active = allocations.filter(a => a.status !== 'distributed');
+    sel.innerHTML = '<option value="">Select allocation...</option>' +
+      active.map(a => {
+        const remaining = (Number(a.reward_value) - Number(a.total_distributed)).toFixed(2);
+        return `<option value="${a.id}">${a.allocation_id} — LKR ${Number(a.reward_value).toLocaleString()} (Remaining: ${remaining})</option>`;
+      }).join('');
+  }
+
+  window.updateDistRecipientList = function() {
+    const type = document.getElementById('distRecipientType').value;
+    const userGroup = document.getElementById('distUserRecipientGroup');
+    const shopGroup = document.getElementById('distShopRecipientGroup');
+    const userSel   = document.getElementById('distRecipientUserId');
+    const shopSel   = document.getElementById('distRecipientShopId');
+
+    if (type === 'shop') {
+      userGroup.style.display = 'none';
+      shopGroup.style.display = '';
+      shopSel.innerHTML = '<option value="">Select shop...</option>' +
+        _shopList.map(s => `<option value="${s.id}">${s.shop_name} (${s.shop_id}) — ${s.province||'?'}</option>`).join('');
+    } else {
+      userGroup.style.display = '';
+      shopGroup.style.display = 'none';
+      const list = type === 'regional_manager' ? _fsmList : _sdList;
+      userSel.innerHTML = '<option value="">Select recipient...</option>' +
+        list.map(u => `<option value="${u.id}">${u.username} (${u.employee_id||'—'}) — ${u.province||'?'}, ${u.region||'?'}</option>`).join('');
+    }
+  };
+
+  window.submitIssueReward = async function(e) {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    const btn   = document.getElementById('issueRewardBtn');
+    const msg   = document.getElementById('issueRewardMsg');
+    btn.disabled = true;
+    btn.textContent = 'Issuing...';
+    msg.style.color = '#94a3b8';
+    msg.textContent = '';
+    try {
+      const res = await fetch(`${API_BASE}/api/rewards/allocate`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipient_id:       Number(document.getElementById('rewardRecipientId').value),
+          reward_type:        document.getElementById('rewardType').value,
+          reward_value:       Number(document.getElementById('rewardValue').value),
+          reward_description: document.getElementById('rewardDescription').value || null,
+          notes:              document.getElementById('rewardNotes').value || null
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msg.style.color = '#059669';
+        msg.textContent = `✓ Reward ${data.allocation.allocation_id} issued successfully.`;
+        document.getElementById('issueRewardForm').reset();
+        _rewardsLoaded = false;
+        loadRewards();
+      } else {
+        msg.style.color = '#dc2626';
+        msg.textContent = data.message || 'Error issuing reward.';
+      }
+    } catch(err) {
+      msg.style.color = '#dc2626';
+      msg.textContent = 'Network error. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Issue Reward';
+    }
+  };
+
+  window.submitDistributeReward = async function(e) {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    const btn   = document.getElementById('distributeRewardBtn');
+    const msg   = document.getElementById('distributeRewardMsg');
+    const type  = document.getElementById('distRecipientType').value;
+    btn.disabled = true;
+    btn.textContent = 'Distributing...';
+    msg.style.color = '#94a3b8';
+    msg.textContent = '';
+    const body = {
+      parent_allocation_id: Number(document.getElementById('distAllocationId').value),
+      recipient_type:       type,
+      reward_type:          document.getElementById('distRewardType').value,
+      reward_value:         Number(document.getElementById('distRewardValue').value),
+      reward_description:   document.getElementById('distRewardDescription').value || null
+    };
+    if (type === 'shop') {
+      body.recipient_shop_id = Number(document.getElementById('distRecipientShopId').value);
+    } else {
+      body.recipient_user_id = Number(document.getElementById('distRecipientUserId').value);
+    }
+    try {
+      const res = await fetch(`${API_BASE}/api/rewards/distribute`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msg.style.color = '#059669';
+        msg.textContent = `✓ Distribution ${data.distribution.distribution_id} created.`;
+        document.getElementById('distributeRewardForm').reset();
+        _rewardsLoaded = false;
+        loadRewards();
+      } else {
+        msg.style.color = '#dc2626';
+        msg.textContent = data.message || 'Error distributing reward.';
+      }
+    } catch(err) {
+      msg.style.color = '#dc2626';
+      msg.textContent = 'Network error. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ph ph-arrow-split"></i> Distribute Reward';
+    }
+  };
+
+  function renderAllocationsTable(rows) {
+    const el = document.getElementById('allocationsTable');
+    if (!rows.length) { el.innerHTML = '<p style="color:var(--text-secondary);">No allocations yet.</p>'; return; }
+    const statusBadge = s => ({
+      issued: '<span class="badge active">Issued</span>',
+      acknowledged: '<span class="badge" style="background:#fef3c7;color:#92400e;">Acknowledged</span>',
+      distributed: '<span class="badge expired">Distributed</span>'
+    }[s] || s);
+    el.innerHTML = `<table class="modern-table"><thead><tr>
+      <th>Allocation ID</th><th>Issued By</th><th>Recipient (ASM)</th><th>Province</th>
+      <th>Type</th><th>Value (LKR)</th><th>Distributed</th><th>Status</th><th>Issued On</th>
+    </tr></thead><tbody>${rows.map(r => `<tr>
+      <td><strong>${r.allocation_id}</strong></td>
+      <td>${r.issued_by_username}</td>
+      <td>${r.recipient_username} (${r.recipient_employee_id||'—'})</td>
+      <td>${r.recipient_province||'—'}</td>
+      <td>${r.reward_type}</td>
+      <td>${Number(r.reward_value).toLocaleString()}</td>
+      <td>${Number(r.total_distributed).toLocaleString()}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td>${new Date(r.created_at).toLocaleDateString()}</td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+
+  function renderDistributionsTable(rows) {
+    const el = document.getElementById('distributionsTable');
+    if (!rows.length) { el.innerHTML = '<p style="color:var(--text-secondary);">No distributions yet.</p>'; return; }
+    const typeBadge = t => ({
+      regional_manager: '<span class="badge" style="background:#e0f2fe;color:#075985;">Regional Mgr</span>',
+      field_rep:        '<span class="badge active">Field Rep</span>',
+      shop:             '<span class="badge" style="background:#fef3c7;color:#92400e;">Shop</span>'
+    }[t] || t);
+    el.innerHTML = `<table class="modern-table"><thead><tr>
+      <th>Distribution ID</th><th>Allocation</th><th>Distributed By</th><th>Recipient</th>
+      <th>Type</th><th>Reward Type</th><th>Value (LKR)</th><th>Date</th>
+    </tr></thead><tbody>${rows.map(r => `<tr>
+      <td><strong>${r.distribution_id}</strong></td>
+      <td>${r.allocation_ref}</td>
+      <td>${r.distributed_by_username}</td>
+      <td>${r.recipient_username || r.recipient_shop_name || '—'}</td>
+      <td>${typeBadge(r.recipient_type)}</td>
+      <td>${r.reward_type}</td>
+      <td>${Number(r.reward_value).toLocaleString()}</td>
+      <td>${new Date(r.created_at).toLocaleDateString()}</td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+
+  function renderAuditTable(rows) {
+    const el = document.getElementById('auditTable');
+    if (!rows.length) { el.innerHTML = '<p style="color:var(--text-secondary);">No audit events yet.</p>'; return; }
+    const evtBadge = e => ({
+      issued:       '<span class="badge active">Issued</span>',
+      distributed:  '<span class="badge" style="background:#e0f2fe;color:#075985;">Distributed</span>',
+      acknowledged: '<span class="badge" style="background:#fef3c7;color:#92400e;">Acknowledged</span>',
+      viewed:       '<span class="badge" style="background:#f3e8ff;color:#6d28d9;">Viewed</span>'
+    }[e] || e);
+    el.innerHTML = `<table class="modern-table"><thead><tr>
+      <th>Event</th><th>Actor</th><th>Role</th><th>Allocation</th><th>Distribution</th><th>Detail</th><th>Timestamp</th>
+    </tr></thead><tbody>${rows.map(r => `<tr>
+      <td>${evtBadge(r.event_type)}</td>
+      <td>${r.actor_username}</td>
+      <td>${r.actor_role}</td>
+      <td>${r.allocation_ref||'—'}</td>
+      <td>${r.distribution_ref||'—'}</td>
+      <td style="font-size:0.78rem;color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;">${JSON.stringify(r.detail)}</td>
+      <td>${new Date(r.created_at).toLocaleString()}</td>
+    </tr>`).join('')}</tbody></table>`;
+  }
 </script>
 
 </body>

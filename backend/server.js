@@ -13,6 +13,8 @@ const userRoutes = require("./routes/users");
 const activityRoutes = require("./routes/activity");
 const campaignRoutes = require("./routes/campaigns");
 const roiRoutes = require("./routes/roi");
+const analyticsRoutes = require("./routes/analytics");
+const rewardsRoutes = require("./routes/rewards");
 const { checkAndExpireCampaigns } = require("./controllers/campaignController");
 const pool = require("./config/db");
 const bcrypt = require("bcrypt");
@@ -45,6 +47,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/campaigns", campaignRoutes);
 app.use("/api/roi", roiRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/rewards", rewardsRoutes);
 
 /* =========================
    FRONTEND STATIC FILES
@@ -295,6 +299,64 @@ async function initDatabase() {
         action VARCHAR(50) NOT NULL,
         detail TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 7. Reward Allocations table (DM Team → ASM top-level awards)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reward_allocations (
+        id                  SERIAL PRIMARY KEY,
+        allocation_id       VARCHAR(30) UNIQUE NOT NULL,
+        issued_by           INTEGER NOT NULL REFERENCES users(id),
+        recipient_id        INTEGER NOT NULL REFERENCES users(id),
+        reward_type         VARCHAR(50) NOT NULL,
+        reward_value        NUMERIC(12,2) NOT NULL,
+        reward_description  TEXT,
+        status              VARCHAR(20) NOT NULL DEFAULT 'issued'
+                            CHECK (status IN ('issued', 'acknowledged', 'distributed')),
+        notes               TEXT,
+        created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 8. Reward Distributions table (ASM → FSM / SD / Shop cascades)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reward_distributions (
+        id                    SERIAL PRIMARY KEY,
+        distribution_id       VARCHAR(30) UNIQUE NOT NULL,
+        parent_allocation_id  INTEGER NOT NULL REFERENCES reward_allocations(id),
+        distributed_by        INTEGER NOT NULL REFERENCES users(id),
+        recipient_user_id     INTEGER REFERENCES users(id),
+        recipient_shop_id     INTEGER REFERENCES shops(id),
+        recipient_type        VARCHAR(30) NOT NULL
+                              CHECK (recipient_type IN ('regional_manager', 'field_rep', 'shop')),
+        reward_type           VARCHAR(50) NOT NULL,
+        reward_value          NUMERIC(12,2) NOT NULL,
+        reward_description    TEXT,
+        status                VARCHAR(20) NOT NULL DEFAULT 'issued'
+                              CHECK (status IN ('issued', 'acknowledged')),
+        notes                 TEXT,
+        created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT chk_recipient_set CHECK (
+          (recipient_user_id IS NOT NULL AND recipient_shop_id IS NULL) OR
+          (recipient_shop_id IS NOT NULL AND recipient_user_id IS NULL)
+        )
+      )
+    `);
+
+    // 9. Reward Audit Logs table (immutable event trail)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reward_audit_logs (
+        id              SERIAL PRIMARY KEY,
+        event_type      VARCHAR(30) NOT NULL
+                        CHECK (event_type IN ('issued', 'distributed', 'acknowledged', 'viewed')),
+        allocation_id   INTEGER REFERENCES reward_allocations(id),
+        distribution_id INTEGER REFERENCES reward_distributions(id),
+        actor_id        INTEGER NOT NULL REFERENCES users(id),
+        detail          JSONB NOT NULL DEFAULT '{}',
+        created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 

@@ -174,6 +174,22 @@
       color: var(--text-secondary); font-size: 0.9rem;
     }
     .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 10px; opacity: 0.4; }
+
+    /* ── Tab Navigation ── */
+    .fm-tabs {
+      display: flex; gap: 4px; background: #f1f5f9;
+      border-radius: 12px; padding: 4px; margin-bottom: 24px;
+    }
+    .fm-tab-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.85rem; font-weight: 600;
+      color: var(--text-secondary); background: transparent; transition: all 0.2s;
+    }
+    .fm-tab-btn:hover { background: rgba(255,255,255,0.6); color: var(--text-primary); }
+    .fm-tab-btn.active { background: #fff; color: var(--accent-color); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .fm-tab-content { display: none; }
+    .fm-tab-content.active { display: block; }
   </style>
 </head>
 <body>
@@ -212,6 +228,22 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Tab Navigation ── -->
+  <nav class="fm-tabs" id="fmTabNav">
+    <button class="fm-tab-btn active" data-tab="team" onclick="switchFMTab('team')">
+      <i class="ph ph-users"></i> My Team
+    </button>
+    <button class="fm-tab-btn" data-tab="analytics" onclick="switchFMTab('analytics')">
+      <i class="ph ph-chart-line-up"></i> Analytics
+    </button>
+    <button class="fm-tab-btn" data-tab="rewards" id="fmRewardsTabBtn" onclick="switchFMTab('rewards')" style="display:none;">
+      <i class="ph ph-gift"></i> Rewards
+    </button>
+  </nav>
+
+  <!-- ── Team Tab ── -->
+  <div id="fmTeamTab" class="fm-tab-content active">
 
   <!-- ── Add Member Panel ── -->
   <div class="panel">
@@ -292,6 +324,150 @@
       </div>
     </div>
   </div>
+
+  </div><!-- end fmTeamTab -->
+
+
+  <!-- ── Analytics Tab ── -->
+  <div id="fmAnalyticsTab" class="fm-tab-content">
+
+    <!-- Shop Performance (ASM + FSM) -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title"><i class="ph ph-storefront" style="color:#10b981;"></i> Shop Sales Performance</div>
+          <div class="panel-desc">Total redemptions and unique customers per retail shop in your territory</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap" id="fmShopPerfTable"><p class="empty-state"><i class="ph ph-spinner"></i>Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- Rep Performance (ASM + FSM) -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title"><i class="ph ph-user-list" style="color:#3b82f6;"></i> Field Rep Performance</div>
+          <div class="panel-desc">Shops registered and total sales per sales distributor</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap" id="fmRepPerfTable"><p class="empty-state"><i class="ph ph-spinner"></i>Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- Regional Manager Performance (ASM only) -->
+    <div class="panel" id="fmFSMPerfPanel" style="display:none;">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title"><i class="ph ph-map-trifold" style="color:#8b5cf6;"></i> Regional Manager Performance</div>
+          <div class="panel-desc">Aggregate sales and active campaigns per field sales manager in your province</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap" id="fmFSMTable"><p class="empty-state"><i class="ph ph-spinner"></i>Loading...</p></div>
+      </div>
+    </div>
+
+  </div><!-- end fmAnalyticsTab -->
+
+
+  <!-- ── Rewards Tab (ASM only) ── -->
+  <div id="fmRewardsTab" class="fm-tab-content">
+
+    <!-- Allocations received -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title"><i class="ph ph-hand-coins" style="color:#10b981;"></i> My Reward Allocations</div>
+          <div class="panel-desc">Rewards issued to you by the Digital Marketing Team</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap" id="fmAllocTable"><p class="empty-state"><i class="ph ph-spinner"></i>Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- Distribute Reward Form -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title"><i class="ph ph-arrow-split" style="color:#3b82f6;"></i> Distribute Reward</div>
+          <div class="panel-desc">Cascade your allocation to Regional Managers, Field Reps, or Shops in your province</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <form id="fmDistributeForm" onsubmit="fmSubmitDistribute(event)">
+          <div class="form-grid form-grid-2" style="margin-bottom:14px;">
+            <div class="form-group">
+              <label class="form-label">Allocation</label>
+              <select id="fmDistAllocId" class="form-select" required>
+                <option value="">Select allocation...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Recipient Type</label>
+              <select id="fmDistRecipType" class="form-select" required onchange="fmUpdateRecipList()">
+                <option value="">Select type...</option>
+                <option value="regional_manager">Regional Manager (FSM)</option>
+                <option value="field_rep">Field Rep (SD)</option>
+                <option value="shop">Retail Shop</option>
+              </select>
+            </div>
+            <div class="form-group" id="fmDistUserGroup">
+              <label class="form-label">Recipient</label>
+              <select id="fmDistRecipUserId" class="form-select">
+                <option value="">Select recipient...</option>
+              </select>
+            </div>
+            <div class="form-group" id="fmDistShopGroup" style="display:none;">
+              <label class="form-label">Recipient Shop</label>
+              <select id="fmDistRecipShopId" class="form-select">
+                <option value="">Select shop...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reward Type</label>
+              <select id="fmDistRewardType" class="form-select" required>
+                <option value="monetary">Monetary Bonus</option>
+                <option value="voucher">Voucher Package</option>
+                <option value="recognition">Recognition Award</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Value (LKR)</label>
+              <input type="number" id="fmDistValue" class="form-input" min="1" step="0.01" required placeholder="e.g. 10000" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Description</label>
+            <input type="text" id="fmDistDesc" class="form-input" placeholder="e.g. Regional Top Performance Q1" />
+          </div>
+          <div class="form-msg" id="fmDistMsg"></div>
+          <button type="submit" class="btn-primary" id="fmDistBtn">
+            <i class="ph ph-arrow-split"></i> Distribute Reward
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Distributions issued -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title"><i class="ph ph-share-network" style="color:#8b5cf6;"></i> Distributions Issued</div>
+          <div class="panel-desc">Rewards you have distributed to your team</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap" id="fmDistTable"><p class="empty-state"><i class="ph ph-spinner"></i>Loading...</p></div>
+      </div>
+    </div>
+
+  </div><!-- end fmRewardsTab -->
+
 
 </div>
 
@@ -545,6 +721,194 @@
   };
 
   loadTeam();
+
+  // Show Rewards tab for ASM; show FSM performance section in Analytics for ASM
+  if (user.role === 'area_sales_manager') {
+    document.getElementById('fmRewardsTabBtn').style.display = '';
+    document.getElementById('fmFSMPerfPanel').style.display  = '';
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     FM TAB SWITCHING
+  ═══════════════════════════════════════════════════════ */
+  const _fmAnalyticsLoaded = { done: false };
+  const _fmRewardsLoaded   = { done: false };
+  let _fmFsmList = [], _fmSdList = [], _fmShopList = [];
+
+  window.switchFMTab = function(tab) {
+    document.querySelectorAll('.fm-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.fm-tab-content').forEach(c => c.classList.remove('active'));
+    const btn = document.querySelector(`.fm-tab-btn[data-tab="${tab}"]`);
+    if (btn) btn.classList.add('active');
+    const el = document.getElementById(`fm${tab.charAt(0).toUpperCase() + tab.slice(1)}Tab`);
+    if (el) el.classList.add('active');
+    if (tab === 'analytics' && !_fmAnalyticsLoaded.done) { _fmAnalyticsLoaded.done = true; loadFMAnalytics(); }
+    if (tab === 'rewards'   && !_fmRewardsLoaded.done)   { _fmRewardsLoaded.done = true;   loadFMRewards();   }
+  };
+
+  /* ═══════════════════════════════════════════════════════
+     FM ANALYTICS
+  ═══════════════════════════════════════════════════════ */
+  async function loadFMAnalytics() {
+    const auth = { headers: { 'Authorization': `Bearer ${token}` } };
+
+    // Shop performance
+    try {
+      const r = await fetch(`${API_BASE}/api/analytics/shops/performance`, auth);
+      const d = await r.json();
+      const el = document.getElementById('fmShopPerfTable');
+      if (!d.shops || !d.shops.length) { el.innerHTML = '<p class="empty-state">No shop data yet.</p>'; }
+      else el.innerHTML = `<table><thead><tr><th>Shop ID</th><th>Shop Name</th><th>Province</th><th>Region</th><th>Area</th><th>Total Redemptions</th><th>Unique Customers</th></tr></thead><tbody>${
+        d.shops.map(s => `<tr><td>${s.shop_id}</td><td>${s.shop_name}</td><td>${s.province||'—'}</td><td>${s.region||'—'}</td><td>${s.area||'—'}</td><td><strong>${s.total_redemptions}</strong></td><td>${s.unique_customers}</td></tr>`).join('')
+      }</tbody></table>`;
+    } catch(e) { document.getElementById('fmShopPerfTable').innerHTML = '<p style="color:#dc2626;">Failed to load shops.</p>'; }
+
+    // Rep performance
+    try {
+      const r = await fetch(`${API_BASE}/api/analytics/reps/performance`, auth);
+      const d = await r.json();
+      const el = document.getElementById('fmRepPerfTable');
+      if (!d.reps || !d.reps.length) { el.innerHTML = '<p class="empty-state">No rep data yet.</p>'; }
+      else el.innerHTML = `<table><thead><tr><th>Employee ID</th><th>Username</th><th>Province</th><th>Region</th><th>Area</th><th>Shops Registered</th><th>Total Sales</th></tr></thead><tbody>${
+        d.reps.map(r => `<tr><td>${r.employee_id||'—'}</td><td>${r.username}</td><td>${r.province||'—'}</td><td>${r.region||'—'}</td><td>${r.area||'—'}</td><td>${r.shops_registered}</td><td><strong>${r.total_sales}</strong></td></tr>`).join('')
+      }</tbody></table>`;
+    } catch(e) { document.getElementById('fmRepPerfTable').innerHTML = '<p style="color:#dc2626;">Failed to load reps.</p>'; }
+
+    // Regional manager performance (ASM only)
+    if (user.role === 'area_sales_manager') {
+      try {
+        const r = await fetch(`${API_BASE}/api/analytics/regional-managers/performance`, auth);
+        const d = await r.json();
+        const el = document.getElementById('fmFSMTable');
+        if (!d.regional_managers || !d.regional_managers.length) { el.innerHTML = '<p class="empty-state">No regional manager data yet.</p>'; }
+        else el.innerHTML = `<table><thead><tr><th>Employee ID</th><th>Username</th><th>Province</th><th>Region</th><th>Shops in Region</th><th>Aggregate Sales</th><th>Active Campaigns</th></tr></thead><tbody>${
+          d.regional_managers.map(m => `<tr><td>${m.employee_id||'—'}</td><td>${m.username}</td><td>${m.province||'—'}</td><td>${m.region||'—'}</td><td>${m.shops_in_region}</td><td><strong>${m.aggregate_sales}</strong></td><td>${m.active_campaigns}</td></tr>`).join('')
+        }</tbody></table>`;
+      } catch(e) { document.getElementById('fmFSMTable').innerHTML = '<p style="color:#dc2626;">Failed to load.</p>'; }
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     FM REWARDS (ASM only)
+  ═══════════════════════════════════════════════════════ */
+  async function loadFMRewards() {
+    const auth = { headers: { 'Authorization': `Bearer ${token}` } };
+
+    // Load allocations
+    try {
+      const r = await fetch(`${API_BASE}/api/rewards/allocations`, auth);
+      const d = await r.json();
+      const allocs = d.allocations || [];
+      const el = document.getElementById('fmAllocTable');
+      if (!allocs.length) { el.innerHTML = '<p class="empty-state">No allocations received yet.</p>'; }
+      else el.innerHTML = `<table><thead><tr><th>Allocation ID</th><th>Issued By</th><th>Type</th><th>Value (LKR)</th><th>Distributed</th><th>Status</th><th>Issued On</th></tr></thead><tbody>${
+        allocs.map(a => {
+          const remaining = (Number(a.reward_value) - Number(a.total_distributed)).toFixed(2);
+          return `<tr><td><strong>${a.allocation_id}</strong></td><td>${a.issued_by_username}</td><td>${a.reward_type}</td><td>${Number(a.reward_value).toLocaleString()}</td><td>${Number(a.total_distributed).toLocaleString()} <small style="color:var(--text-secondary);">(${remaining} left)</small></td><td>${a.status}</td><td>${new Date(a.created_at).toLocaleDateString()}</td></tr>`;
+        }).join('')
+      }</tbody></table>`;
+
+      // Populate allocation dropdown for distribute form
+      const sel = document.getElementById('fmDistAllocId');
+      const active = allocs.filter(a => a.status !== 'distributed');
+      sel.innerHTML = '<option value="">Select allocation...</option>' +
+        active.map(a => `<option value="${a.id}">${a.allocation_id} — LKR ${Number(a.reward_value).toLocaleString()} (Remaining: ${(Number(a.reward_value)-Number(a.total_distributed)).toFixed(2)})</option>`).join('');
+    } catch(e) { document.getElementById('fmAllocTable').innerHTML = '<p style="color:#dc2626;">Failed to load allocations.</p>'; }
+
+    // Load distributions issued
+    try {
+      const r = await fetch(`${API_BASE}/api/rewards/distributions`, auth);
+      const d = await r.json();
+      const dists = d.distributions || [];
+      const el = document.getElementById('fmDistTable');
+      if (!dists.length) { el.innerHTML = '<p class="empty-state">No distributions yet.</p>'; }
+      else el.innerHTML = `<table><thead><tr><th>Distribution ID</th><th>Allocation</th><th>Recipient</th><th>Type</th><th>Reward Type</th><th>Value (LKR)</th><th>Date</th></tr></thead><tbody>${
+        dists.map(d => `<tr><td><strong>${d.distribution_id}</strong></td><td>${d.allocation_ref}</td><td>${d.recipient_username||d.recipient_shop_name||'—'}</td><td>${d.recipient_type}</td><td>${d.reward_type}</td><td>${Number(d.reward_value).toLocaleString()}</td><td>${new Date(d.created_at).toLocaleDateString()}</td></tr>`).join('')
+      }</tbody></table>`;
+    } catch(e) { document.getElementById('fmDistTable').innerHTML = '<p style="color:#dc2626;">Failed to load distributions.</p>'; }
+
+    // Load FSM/SD/Shop lists for recipient dropdowns
+    try {
+      const [usersRes, shopsRes] = await Promise.all([
+        fetch(`${API_BASE}/api/users`, auth),
+        fetch(`${API_BASE}/api/shops`, auth)
+      ]);
+      const allUsers = await usersRes.json();
+      const allShops = await shopsRes.json();
+      const ul = allUsers.users || allUsers;
+      _fmFsmList  = ul.filter(u => u.role === 'field_sales_manager');
+      _fmSdList   = ul.filter(u => u.role === 'sales_distributor');
+      _fmShopList = allShops;
+    } catch(e) {}
+  }
+
+  window.fmUpdateRecipList = function() {
+    const type = document.getElementById('fmDistRecipType').value;
+    const userGrp = document.getElementById('fmDistUserGroup');
+    const shopGrp = document.getElementById('fmDistShopGroup');
+    const userSel = document.getElementById('fmDistRecipUserId');
+    const shopSel = document.getElementById('fmDistRecipShopId');
+
+    if (type === 'shop') {
+      userGrp.style.display = 'none';
+      shopGrp.style.display = '';
+      shopSel.innerHTML = '<option value="">Select shop...</option>' +
+        _fmShopList.map(s => `<option value="${s.id}">${s.shop_name} (${s.shop_id})</option>`).join('');
+    } else {
+      userGrp.style.display = '';
+      shopGrp.style.display = 'none';
+      const list = type === 'regional_manager' ? _fmFsmList : _fmSdList;
+      userSel.innerHTML = '<option value="">Select recipient...</option>' +
+        list.map(u => `<option value="${u.id}">${u.username} (${u.employee_id||'—'})</option>`).join('');
+    }
+  };
+
+  window.fmSubmitDistribute = async function(e) {
+    e.preventDefault();
+    const btn  = document.getElementById('fmDistBtn');
+    const msg  = document.getElementById('fmDistMsg');
+    const type = document.getElementById('fmDistRecipType').value;
+    btn.disabled = true;
+    btn.textContent = 'Distributing...';
+    msg.style.color = '#94a3b8';
+    msg.textContent = '';
+    const body = {
+      parent_allocation_id: Number(document.getElementById('fmDistAllocId').value),
+      recipient_type:       type,
+      reward_type:          document.getElementById('fmDistRewardType').value,
+      reward_value:         Number(document.getElementById('fmDistValue').value),
+      reward_description:   document.getElementById('fmDistDesc').value || null
+    };
+    if (type === 'shop') {
+      body.recipient_shop_id = Number(document.getElementById('fmDistRecipShopId').value);
+    } else {
+      body.recipient_user_id = Number(document.getElementById('fmDistRecipUserId').value);
+    }
+    try {
+      const res  = await fetch(`${API_BASE}/api/rewards/distribute`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msg.style.color = '#059669';
+        msg.textContent = `✓ Distribution ${data.distribution.distribution_id} created.`;
+        document.getElementById('fmDistributeForm').reset();
+        _fmRewardsLoaded.done = false;
+        loadFMRewards();
+      } else {
+        msg.style.color = '#dc2626';
+        msg.textContent = data.message || 'Error distributing reward.';
+      }
+    } catch(err) {
+      msg.style.color = '#dc2626';
+      msg.textContent = 'Network error. Please try again.';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ph ph-arrow-split"></i> Distribute Reward';
+    }
+  };
 </script>
 </body>
 </html>
