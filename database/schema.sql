@@ -74,6 +74,10 @@ CREATE TABLE vouchers (
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- One claim per customer per campaign (allows same customer across different campaigns)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_vouchers_mobile_campaign
+ON vouchers (customer_mobile, campaign_id);
+
 CREATE TABLE redemptions (
     id              SERIAL PRIMARY KEY,
     redemption_id   VARCHAR(30) UNIQUE NOT NULL,

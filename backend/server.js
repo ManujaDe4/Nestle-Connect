@@ -400,6 +400,31 @@ async function initDatabase() {
       );
       console.log('Created default admin user: sysadmin / password  (change this immediately!)');
     }
+    /* =========================================================
+       PHASE 4 — CAMPAIGN-SCOPED CLAIM UNIQUENESS MIGRATION
+       Enforces one voucher claim per (customer_mobile, campaign_id).
+       Safe to run multiple times — index creation is idempotent.
+       ========================================================= */
+    try {
+      // Remove any duplicate claims that would violate the new constraint,
+      // keeping only the earliest claim per (customer_mobile, campaign_id) pair.
+      await pool.query(`
+        DELETE FROM vouchers
+        WHERE id NOT IN (
+          SELECT MIN(id) FROM vouchers GROUP BY customer_mobile, campaign_id
+        )
+      `);
+
+      // Add composite unique index to enforce the campaign-scoped boundary at DB level.
+      await pool.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_vouchers_mobile_campaign
+        ON vouchers (customer_mobile, campaign_id)
+      `);
+      console.log('✓ Campaign-scoped voucher claim constraint applied');
+    } catch (e) {
+      console.log('Campaign claim constraint migration skipped:', e.message);
+    }
+
     console.log('✓ Database schema up to date');
   } catch (error) {
     console.error('Database initialization failed:', error);

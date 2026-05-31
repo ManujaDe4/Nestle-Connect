@@ -38,20 +38,21 @@ const claimVoucher = async (req, res) => {
       }
     }
 
+    // One claim per customer per campaign (not per ad — allows same customer across different campaigns)
     const existingVoucherQuery = `
       SELECT * FROM vouchers
-      WHERE customer_mobile = $1 AND ad_id = $2
+      WHERE customer_mobile = $1 AND campaign_id = $2
       LIMIT 1;
     `;
 
     const existingVoucherResult = await pool.query(existingVoucherQuery, [
       customer_mobile,
-      ad_id
+      campaign_id
     ]);
 
     if (existingVoucherResult.rows.length > 0) {
       return res.status(200).json({
-        message: "This customer has already claimed a voucher for this advertisement.",
+        message: "This customer has already claimed a voucher for this campaign.",
         already_claimed: true,
         voucher: existingVoucherResult.rows[0]
       });
@@ -88,7 +89,7 @@ const claimVoucher = async (req, res) => {
 
     if (error.code === "23505") {
       return res.status(409).json({
-        message: "A voucher has already been claimed for this advertisement by this customer."
+        message: "A voucher has already been claimed for this campaign by this customer."
       });
     }
 
