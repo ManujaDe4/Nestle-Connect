@@ -54,7 +54,27 @@ module.exports = async function globalSetup() {
       "DELETE FROM shops WHERE shop_name LIKE 'Test Shop PW%'"
     );
     if (del.rowCount > 0) {
-      console.log(`[globalSetup] ✓ Removed ${del.rowCount} stale "Test Shop PW*" shop(s)\n`);
+      console.log(`[globalSetup] ✓ Removed ${del.rowCount} stale "Test Shop PW*" shop(s)`);
+    }
+
+    /* ── 3. Ensure test users for analytics/rewards tests ───────────────── */
+    await pool.query(`
+      INSERT INTO users (username, employee_id, password_hash, role, province, region, area)
+      VALUES
+        ('dmm_test',  'DMM-TEST-000001', $1, 'digital_marketing_manager', NULL,      NULL,      NULL),
+        ('asm_test',  'ASM-WES-001',     $1, 'area_sales_manager',        'Western', NULL,      NULL),
+        ('fsm_test',  'FSM-WES-COL-001', $1, 'field_sales_manager',       'Western', 'Colombo', NULL)
+      ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash
+    `, [hash]);
+    console.log('[globalSetup] ✓ Test users (DMM/ASM/FSM) ensured in DB');
+
+    /* ── 4. Clear stale voucher claims for TC_50/TC_51 test phone ────────── */
+    // +94771234567 normalises to 0771234567 via normalizeMobile()
+    const cleared = await pool.query(
+      "DELETE FROM vouchers WHERE customer_mobile = '0771234567'"
+    );
+    if (cleared.rowCount > 0) {
+      console.log(`[globalSetup] ✓ Removed ${cleared.rowCount} stale claim(s) for 0771234567\n`);
     }
 
   } finally {
